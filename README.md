@@ -58,10 +58,10 @@ The HACS bundle includes both the base and standalone cards.
 
 ## Publishing an update
 
-Run `node build.mjs`, validate the source and bundle, and commit all changes.
-Push the commit, then create a GitHub release with a new version tag.
-Attach `dist/home-device-cards.js` to the release. HACS installs the bundle
-from `dist/` in that version.
+Run the checks in [CONTRIBUTING.md](CONTRIBUTING.md), update the version, and
+commit the sources and generated bundle. Push the commit and a `vX.Y.Z` tag.
+GitHub Actions validates the code and publishes the release with the bundle.
+HACS installs the bundle from `dist/` in that version.
 
 ## Validation
 

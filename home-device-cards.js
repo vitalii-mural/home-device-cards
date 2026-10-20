@@ -426,21 +426,27 @@ if (!HOME_DEVICE_BASE) {
       }
 
       setConfig(config) {
-        for (const pending of this._pendingTargets.values()) clearTimeout(pending.timer);
-        if (this._socketPending) clearTimeout(this._socketPending.timer);
-        this._socketPending = null;
-        this._config = { ...HOME_DEVICE_CARD_DEFAULTS[kind], ...config };
-        for (const [name] of HOME_DEVICE_CARD_FIELDS[kind]) {
-          if (Object.prototype.hasOwnProperty.call(config, name) && (config[name] === null || config[name] === '')) this._config[name] = null;
+        const entityKeys = HOME_DEVICE_CARD_FIELDS[kind].filter(([, , type]) => type !== 'text').map(([name]) => name);
+        const stringKeys = ['energy_path', 'battery_path', ...HOME_DEVICE_CARD_FIELDS[kind].filter(([, , type]) => type === 'text').map(([name]) => name)];
+        const normalized = this._validatedConfig(config, entityKeys, stringKeys);
+        if (normalized.title !== null && normalized.title !== undefined && typeof normalized.title !== 'string' &&
+          (typeof normalized.title !== 'object' || Array.isArray(normalized.title))) {
+          throw new Error('Configuration option "title" must be text or an entity name selector.');
         }
+        this._clearPendingTimers();
+        this._generation++;
+        this._config = { ...HOME_DEVICE_CARD_DEFAULTS[kind], ...normalized };
         this._rendered = false;
         this._entitySignatures.clear();
-        this._pendingTargets.clear();
         this._render();
       }
 
       connectedCallback() {
         if (this._config && this._hass && !this._rendered) this._render();
+      }
+
+      _entityIds() {
+        return HOME_DEVICE_CARD_FIELDS[kind].filter(([, , type]) => type !== 'text').map(([name]) => this._config?.[name]).filter(Boolean);
       }
 
       getCardSize() { return kind === 'battery' || kind === 'energy' ? 8 : 5; }
@@ -566,6 +572,7 @@ if (!HOME_DEVICE_BASE) {
       async _toggleSocket() {
         const entity = this._config.switch_entity;
         if (!this._available(entity) || this._busy(entity) || this._socketPending) return;
+        const generation = this._generation;
         const on = this._state(entity).state !== 'on';
         this._error = '';
         this._setHidden('[data-live="error"]', true);
@@ -582,8 +589,9 @@ if (!HOME_DEVICE_BASE) {
         }, 15000);
         try {
           await this._hass.callService('switch', on ? 'turn_on' : 'turn_off', { entity_id: entity });
-          this._updateSocket();
+          if (generation === this._generation) this._updateSocket();
         } catch (error) {
+          if (generation !== this._generation) return;
           if (this._socketPending === pending) {
             clearTimeout(pending.timer);
             this._socketPending = null;
@@ -1238,6 +1246,7 @@ if (!HOME_DEVICE_BASE) {
             slot.replaceChildren(card);
           }
         } catch {
+          if (generation !== this._generation) return;
           for (const slot of slots) slot.innerHTML = '<span class="secondary">Історію можна відкрити через подробиці відповідної сутності.</span>';
         }
       }

@@ -78,20 +78,53 @@ class HomeDashboard extends HTMLElement {
       }
     });
     this._resizeObserver.observe(this);
+    if (this._config && this._hass && !this._rendered) this._render();
   }
 
-  disconnectedCallback() { this._resizeObserver?.disconnect(); }
+  disconnectedCallback() {
+    this._resizeObserver?.disconnect();
+    this._resizeObserver = null;
+    this._generation++;
+    this._rendered = false;
+    this._clearPendingTimers();
+  }
+
+  _clearPendingTimers() {
+    for (const pending of this._pendingTargets.values()) clearTimeout(pending.timer);
+    this._pendingTargets.clear();
+    if (this._socketPending) clearTimeout(this._socketPending.timer);
+    this._socketPending = null;
+    this._busyEntities.clear();
+  }
+
+  _validatedConfig(config, entityKeys, stringKeys = []) {
+    if (!config || typeof config !== 'object' || Array.isArray(config)) throw new Error('Card configuration must be an object.');
+    const normalized = { ...config };
+    for (const key of entityKeys) {
+      const value = normalized[key];
+      if (value === '' || value === null || value === undefined) normalized[key] = null;
+      else if (typeof value !== 'string') throw new Error(`Configuration option "${key}" must be an entity ID or empty.`);
+    }
+    for (const key of stringKeys) {
+      const value = normalized[key];
+      if (value !== null && value !== undefined && typeof value !== 'string') throw new Error(`Configuration option "${key}" must be text.`);
+    }
+    return normalized;
+  }
 
   setConfig(config) {
-    this._config = { ...HOME_DASHBOARD_DEFAULTS, ...config };
+    const entityKeys = Object.keys(HOME_DASHBOARD_DEFAULTS);
+    const normalized = this._validatedConfig(config, entityKeys);
+    this._clearPendingTimers();
+    this._generation++;
+    this._entitySignatures.clear();
+    this._config = { ...HOME_DASHBOARD_DEFAULTS, ...normalized };
     this._render();
   }
 
   set hass(hass) {
     this._hass = hass;
-    const air = this._airId();
-    const ids = [...Object.values(this._config || {}).filter(v => typeof v === 'string' && /^(climate|water_heater|sensor|switch)\./.test(v)), air,
-      ...Object.keys(hass.states).filter(id => id.startsWith(null))];
+    const ids = this._entityIds();
     const changed=[];
     for(const id of new Set(ids)){
       const signature=JSON.stringify(hass.states[id]);
@@ -110,6 +143,7 @@ class HomeDashboard extends HTMLElement {
   getCardSize() { return this._view === 'home' ? 15 : 10; }
   static getStubConfig() { return { type: 'custom:home-dashboard' }; }
   _state(id) { return id ? this._hass?.states[id] : undefined; }
+  _entityIds() { return Object.keys(HOME_DASHBOARD_DEFAULTS).map(key => this._config?.[key]).filter(Boolean); }
   _available(id) { const s = this._state(id); return !!s && !['unknown', 'unavailable'].includes(s.state); }
   _number(value) { return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) ? Number(value) : null; }
   _value(id) { return this._number(this._state(id)?.state); }
@@ -118,7 +152,7 @@ class HomeDashboard extends HTMLElement {
   _icon(name, className = '') { return `<ha-icon icon="mdi:${name}" class="${className}" aria-hidden="true"></ha-icon>`; }
   _busy(entity) { return !!entity&&this._busyEntities.has(entity); }
   _disabled(disabled,entity) { return disabled || this._busy(entity) ? 'disabled' : ''; }
-  _airId() { return this._config?.air_entity || Object.keys(this._hass?.states || {}).find(id => id.startsWith('climate.') && id !== this._config?.boiler_entity && id !== null) || null; }
+  _airId() { return this._config?.air_entity || null; }
   _row(label, value, key=null) { return `<div class="data-row"><span>${this._escape(label)}</span><span>${key?`<span data-live="${key}">`:''}${this._escape(value)}${key?'</span>':''}</span></div>`; }
   _setText(selector,value,root=this.shadowRoot) { const el=root.querySelector(selector),text=String(value??''); if(el&&el.textContent!==text)el.textContent=text; }
   _setHidden(selector,hidden,root=this.shadowRoot) { const el=root.querySelector(selector),value=!!hidden; if(el&&el.hidden!==value)el.hidden=value; }
@@ -131,7 +165,7 @@ class HomeDashboard extends HTMLElement {
     const min = this._number(a.min_temp) ?? 30;
     const progress = current !== null && target !== null && target > min ? Math.min(100, Math.max(0, (current - min) / (target - min) * 100)) : 0;
     const h = this._value(c.boiler_hours), m = this._value(c.boiler_minutes);
-    const remaining = c.boiler_entity.startsWith('water_heater.') ? this._number(a.heating_time_remaining) : h !== null && m !== null && h >= 0 && m >= 0 ? h * 60 + m : null;
+    const remaining = c.boiler_entity?.startsWith('water_heater.') ? this._number(a.heating_time_remaining) : h !== null && m !== null && h >= 0 && m >= 0 ? h * 60 + m : null;
     const time = remaining !== null && remaining > 0 ? `${remaining >= 60 ? Math.floor(remaining / 60) + ' год ' : ''}${remaining % 60} хв` : '';
     const status = !state ? 'Не підключено' : !available ? 'Недоступний' : !on ? 'Вимкнено' : heating ? 'Нагрівання' : (a.hvac_action === 'idle' || a.keep_warm === true) ? 'Підтримання температури' : 'Увімкнено';
     const features = [[c.memo_entity, 'Memo U'], [c.mega_entity, 'Mega Water'], [c.sterilization_entity, 'Стерилізація']].map(([id,label]) =>
@@ -215,12 +249,12 @@ class HomeDashboard extends HTMLElement {
       if(all||has(boiler)||has(this._config.boiler_hours)||has(this._config.boiler_minutes)||serviceEntity===boiler||features.some(id=>has(id)||serviceEntity===id))this._updateBoiler();
       if(all||has(air)||serviceEntity===air)this._updateAir();
       if(all||has(air)||has(this._config.room_temperature_entity)||has(this._config.humidity_entity))this._updateMetrics();
-      if(all||has(this._config.river_status)||Object.keys(this._hass.states).some(id=>id.startsWith(null)&&has(id)))this._updateRiver();
+      if(all||[this._config.river_status,this._config.river_battery,this._config.river_input,this._config.river_output].some(has))this._updateRiver();
       if(all||[this._config.power_entity,this._config.energy_daily,this._config.energy_monthly].some(has))this._updateEnergy();
     } else if(this._view==='energy'){
       if(all||[this._config.power_entity,this._config.voltage_entity,this._config.current_entity,this._config.energy_total,this._config.energy_daily,this._config.energy_monthly].some(has))this._updateEnergy();
     } else if(this._view==='battery'){
-      const riverChanged=all||has(this._config.river_status)||Object.keys(this._hass.states).some(id=>id.startsWith(null)&&has(id));
+      const riverChanged=all||[this._config.river_status,this._config.river_battery,this._config.river_input,this._config.river_output].some(has);
       if(riverChanged){this._updateRiver();this._updateBattery();}
     } else if(this._view==='devices'){
       if(all||has(air)||has(this._config.room_temperature_entity)||has(this._config.mega_entity))this._updateDevices();
@@ -241,7 +275,7 @@ class HomeDashboard extends HTMLElement {
     const min=this._number(a.min_temp)??30,max=this._number(a.max_temp)??80,heating=on&&(a.hvac_action==='heating'||a.heating===true);
     const progress=current!==null&&target!==null&&target>min?Math.min(100,Math.max(0,(current-min)/(target-min)*100)):0;
     const h=this._value(this._config.boiler_hours),m=this._value(this._config.boiler_minutes);
-    const remaining=id.startsWith('water_heater.')?this._number(a.heating_time_remaining):h!==null&&m!==null&&h>=0&&m>=0?h*60+m:null;
+    const remaining=id?.startsWith('water_heater.')?this._number(a.heating_time_remaining):h!==null&&m!==null&&h>=0&&m>=0?h*60+m:null;
     const time=remaining!==null&&remaining>0?`${remaining>=60?Math.floor(remaining/60)+' год ':''}${remaining%60} хв`:'';
     const status=!state?'Не підключено':!available?'Недоступний':!on?'Вимкнено':heating?'Нагрівання':(a.hvac_action==='idle'||a.keep_warm===true)?'Підтримання температури':'Увімкнено';
     this._setText('[data-live="boiler-status"]',status,panel);
@@ -366,6 +400,7 @@ class HomeDashboard extends HTMLElement {
         slot.replaceChildren(card);
       }
     } catch {
+      if(generation!==this._generation)return;
       for(const slot of slots)slot.innerHTML='<span class="secondary">Історію можна відкрити через подробиці відповідної сутності.</span>';
     }
   }
@@ -373,13 +408,15 @@ class HomeDashboard extends HTMLElement {
   async _service(domain,service,data,pendingTarget=null) {
     const entity=pendingTarget?.entity||data.entity_id;
     if(this._busy(entity))return;
+    const generation=this._generation;
     this._busyEntities.add(entity);this._error='';this._updateDynamic([],false,entity);
     try { await this._hass.callService(domain,service,data); }
     catch(error){
+      if(generation!==this._generation)return;
       if(pendingTarget&&this._pendingTargets.get(pendingTarget.entity)===pendingTarget){clearTimeout(pendingTarget.timer);this._pendingTargets.delete(pendingTarget.entity);}
       this._error=error?.message||'Команду не виконано. Перевірте з’єднання з пристроєм.';
     }
-    finally{this._busyEntities.delete(entity);this._updateDynamic([],false,entity);}
+    finally{if(generation===this._generation){this._busyEntities.delete(entity);this._updateDynamic([],false,entity);}}
   }
 
   _temperature(entity,delta) {
@@ -416,7 +453,7 @@ class HomeDashboard extends HTMLElement {
     if(action==='air-plus'||action==='air-minus'){this._temperature(this._airId(),action.endsWith('plus')?1:-1);return;}
     if(action==='feature'&&this._available(button.dataset.entity)){this._service('switch','toggle',{entity_id:button.dataset.entity});return;}
     if(action==='boiler-power'&&this._available(c.boiler_entity)){
-      if(c.boiler_entity.startsWith('water_heater.'))this._service('water_heater',this._state(c.boiler_entity).state==='off'?'turn_on':'turn_off',{entity_id:c.boiler_entity});
+      if(c.boiler_entity?.startsWith('water_heater.'))this._service('water_heater',this._state(c.boiler_entity).state==='off'?'turn_on':'turn_off',{entity_id:c.boiler_entity});
       else this._service('climate','set_hvac_mode',{entity_id:c.boiler_entity,hvac_mode:this._state(c.boiler_entity).state==='off'?'heat':'off'});return;
     }
     const air=this._airId();
