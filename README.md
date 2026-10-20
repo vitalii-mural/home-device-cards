@@ -44,6 +44,14 @@ cleared for this repository; existing installations should keep their explicit
 card configuration. Device features require matching entities/integrations;
 these cards do not add device protocol support.
 
+For the boiler, Midea Local Memo U and sterilization switches are detected
+automatically when they share the selected water heater's Midea Local device
+entry. The card also uses that device's remaining-heating-time sensor when the
+water heater does not expose `heating_time_remaining`. Manual feature bindings
+remain available under **Додаткові налаштування**. Detection uses Home
+Assistant entity-registry identity; it does not infer entities from names or
+entity IDs, and does not auto-map Mega Water.
+
 ```yaml
 type: custom:home-room-card
 room_temperature_entity: sensor.example_temperature

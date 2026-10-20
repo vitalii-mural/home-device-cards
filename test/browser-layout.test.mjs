@@ -148,6 +148,54 @@ test("desktop and narrow cards follow their own container width", async () => {
   }
 });
 
+test("standalone boiler uses natural panel height at phone and desktop widths", async () => {
+  for (const width of [360, 480, 900]) {
+    const page = await openFixture(width, 1500, {
+      isMobile: width === 360,
+      hasTouch: width === 360,
+    });
+    try {
+      const boiler = page.locator("home-boiler-card");
+      const panel = boiler.locator('[data-live-panel="boiler"]');
+      const initial = await panel.evaluate((element) => ({
+        minHeight: getComputedStyle(element).minHeight,
+        timeHidden: element.querySelector('[data-live="boiler-time"]').hidden,
+        bottomGap: element.getBoundingClientRect().bottom -
+          element.querySelector(".features").getBoundingClientRect().bottom,
+        paddingBottom: parseFloat(getComputedStyle(element).paddingBottom),
+      }));
+      assert.equal(initial.minHeight, "0px", `boiler min-height at ${width}px`);
+      assert.equal(initial.timeHidden, false, `heating time visible at ${width}px`);
+      assert.ok(
+        Math.abs(initial.bottomGap - initial.paddingBottom) <= 1,
+        `no excess bottom space at ${width}px`,
+      );
+
+      await page.evaluate(() => {
+        const { hass, refresh } = window.fixture;
+        hass.states = {
+          ...hass.states,
+          "water_heater.example_1": {
+            ...hass.states["water_heater.example_1"],
+            attributes: {
+              ...hass.states["water_heater.example_1"].attributes,
+              heating: false,
+              hvac_action: "idle",
+            },
+          },
+        };
+        refresh();
+      });
+      assert.equal(
+        await panel.locator('[data-live="boiler-time"]').isHidden(),
+        true,
+        `heating time hidden when not heating at ${width}px`,
+      );
+    } finally {
+      await page.close();
+    }
+  }
+});
 test("dark mode, offline recovery, and controls stay synthetic", async () => {
   const page = await openFixture(900);
   try {

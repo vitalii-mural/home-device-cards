@@ -138,6 +138,239 @@ test("registers the dashboard and standalone card types", async () => {
   }
 });
 
+test("boiler editor keeps the Midea water heater primary and manual bindings advanced", async () => {
+  const { registry } = await loadCards();
+  const schema = registry.get("home-boiler-card").getConfigForm().schema;
+  assert.equal(schema.find((field) => field.name === "boiler_entity").required, true);
+  const advanced = schema.find((field) => field.type === "expandable");
+  assert.equal(advanced.name, "advanced");
+  assert.equal(advanced.flatten, true);
+  assert.equal(advanced.expanded, false);
+  assert.deepEqual(
+    Array.from(advanced.schema, (field) => field.name),
+    ["memo_entity", "mega_entity", "sterilization_entity", "boiler_hours", "boiler_minutes"],
+  );
+});
+
+test("Midea Local features resolve by exact registry identity and explicit bindings win", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-boiler-card"))();
+  card._render = () => {
+    card._rendered = true;
+  };
+  card._updateDynamic = () => {};
+  card.connectedCallback();
+  const primary = {
+    entity_id: "water_heater.tank",
+    unique_id: "midea_ac_lan.DEVICE_water_heater",
+    platform: "midea_ac_lan",
+    device_id: "device-1",
+    config_entry_id: "entry-1",
+    disabled_by: null,
+  };
+  const entry = (entity_id, suffix, overrides = {}) => ({
+    entity_id,
+    unique_id: `midea_ac_lan.DEVICE${suffix}`,
+    platform: "midea_ac_lan",
+    device_id: "device-1",
+    config_entry_id: "entry-1",
+    disabled_by: null,
+    ...overrides,
+  });
+  const entries = [
+    primary,
+    entry("switch.memo", "_memory"),
+    entry("switch.sterilization", "_sterilization"),
+    entry("sensor.heating_time", "_heating_time_remaining"),
+    entry("switch.other_device", "_memory", { device_id: "device-2" }),
+    entry("switch.other_entry", "_sterilization", { config_entry_id: "entry-2" }),
+    entry("switch.disabled", "_memory", { disabled_by: "user" }),
+    entry("switch.other_platform", "_memory", { platform: "tuya" }),
+  ];
+  const listeners = new Map();
+  const connectionListeners = new Map();
+  const connection = {
+    subscribeEvents(callback, eventType) {
+      listeners.set(eventType, callback);
+      return () => listeners.delete(eventType);
+    },
+    addEventListener(eventType, callback) {
+      connectionListeners.set(eventType, callback);
+    },
+    removeEventListener(eventType) {
+      connectionListeners.delete(eventType);
+    },
+  };
+  let registryCalls = 0;
+  card.setConfig({ boiler_entity: "water_heater.tank", memo_entity: "switch.manual" });
+  card.hass = {
+    states: { "water_heater.tank": { state: "heat", attributes: {} } },
+    connection,
+    callWS: async ({ type }) => {
+      assert.equal(type, "config/entity_registry/list");
+      registryCalls++;
+      return entries;
+    },
+  };
+  await new Promise(setImmediate);
+  assert.equal(registryCalls, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(card._autoEntities)), {
+    sterilization_entity: "switch.sterilization",
+  });
+  assert.equal(card._autoHeatingTimeSensor, "sensor.heating_time");
+  assert.equal(card._featureEntity("memo_entity"), "switch.manual");
+  assert.ok(card._entityIds().includes("sensor.heating_time"));
+
+  const renamed = entries.map((item) =>
+    item.entity_id === "switch.sterilization"
+      ? { ...item, entity_id: "switch.uv_sterilization" }
+      : item,
+  );
+  card._hass.callWS = async () => {
+    registryCalls++;
+    return renamed;
+  };
+  listeners.get("entity_registry_updated")();
+  await new Promise(setImmediate);
+  assert.equal(card._featureEntity("sterilization_entity"), "switch.uv_sterilization");
+  connectionListeners.get("disconnected")();
+  assert.equal(registryCalls, 2);
+  connectionListeners.get("ready")();
+  await new Promise(setImmediate);
+  assert.equal(registryCalls, 3);
+  assert.equal(card._featureEntity("sterilization_entity"), "switch.uv_sterilization");
+  const replacementConnection = { subscribeEvents: () => () => {} };
+  card.hass = {
+    states: card._hass.states,
+    connection: replacementConnection,
+    callWS: async () =>
+      renamed.map((item) =>
+        item.entity_id === "switch.uv_sterilization"
+          ? { ...item, entity_id: "switch.replaced_sterilization" }
+          : item,
+      ),
+  };
+  await new Promise(setImmediate);
+  assert.equal(
+    card._featureEntity("sterilization_entity"),
+    "switch.replaced_sterilization",
+  );
+});
+
+test("boiler discovery ignores stale responses and API errors", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-boiler-card"))();
+  card._render = () => {
+    card._rendered = true;
+  };
+  card._updateDynamic = () => {};
+  card.connectedCallback();
+  let resolveRegistry;
+  const connection = { subscribeEvents: () => () => {} };
+  card.setConfig({ boiler_entity: "water_heater.first" });
+  card.hass = {
+    states: {},
+    connection,
+    callWS: () => new Promise((resolve) => (resolveRegistry = resolve)),
+  };
+  await new Promise(setImmediate);
+  await new Promise(setImmediate);
+  card.setConfig({ boiler_entity: "climate.not_midea" });
+  resolveRegistry([
+    {
+      entity_id: "water_heater.first",
+      unique_id: "midea_ac_lan.DEVICE_water_heater",
+      platform: "midea_ac_lan",
+      device_id: "device-1",
+      config_entry_id: "entry-1",
+      disabled_by: null,
+    },
+    {
+      entity_id: "switch.memo",
+      unique_id: "midea_ac_lan.DEVICE_memory",
+      platform: "midea_ac_lan",
+      device_id: "device-1",
+      config_entry_id: "entry-1",
+      disabled_by: null,
+    },
+  ]);
+  await new Promise(setImmediate);
+  assert.deepEqual(JSON.parse(JSON.stringify(card._autoEntities)), {});
+
+  const failing = new (registry.get("home-boiler-card"))();
+  failing._render = () => {
+    failing._rendered = true;
+  };
+  failing._updateDynamic = () => {};
+  failing.connectedCallback();
+  failing.setConfig({ boiler_entity: "water_heater.explicit" });
+  const retryListeners = new Map();
+  let failingCalls = 0;
+  const retryConnection = {
+    subscribeEvents(callback, eventType) {
+      retryListeners.set(eventType, callback);
+      return () => retryListeners.delete(eventType);
+    },
+  };
+  failing.hass = {
+    states: {},
+    connection: retryConnection,
+    callWS: async () => {
+      failingCalls++;
+      if (failingCalls > 1)
+        return [
+          {
+            entity_id: "water_heater.explicit",
+            unique_id: "midea_ac_lan.DEVICE_water_heater",
+            platform: "midea_ac_lan",
+            device_id: "device-1",
+            config_entry_id: "entry-1",
+          },
+          {
+            entity_id: "switch.memo",
+            unique_id: "midea_ac_lan.DEVICE_memory",
+            platform: "midea_ac_lan",
+            device_id: "device-1",
+            config_entry_id: "entry-1",
+          },
+        ];
+      throw new Error("registry unavailable");
+    },
+  };
+  await new Promise(setImmediate);
+  assert.equal(failing._featureEntity("memo_entity"), null);
+  retryListeners.get("entity_registry_updated")();
+  await new Promise(setImmediate);
+  assert.equal(failingCalls, 2);
+  assert.equal(failing._featureEntity("memo_entity"), "switch.memo");
+});
+
+test("boiler remaining time prefers its attribute and converts sensor units", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-boiler-card"))();
+  card._config = {
+    boiler_entity: "water_heater.tank",
+    boiler_hours: null,
+    boiler_minutes: null,
+  };
+  card._autoHeatingTimeSensor = "sensor.remaining";
+  card._hass = {
+    states: {
+      "sensor.remaining": {
+        state: "90",
+        attributes: { unit_of_measurement: "s" },
+      },
+    },
+  };
+  assert.equal(card._heatingMinutes({}), 1.5);
+  assert.equal(card._heatingMinutes({ heating_time_remaining: 12 }), 12);
+  assert.equal(card._formatHeatingTime(card._heatingMinutes({})), "2 хв");
+  card._hass.states["sensor.remaining"] = {
+    state: "1.5",
+    attributes: { unit_of_measurement: "h" },
+  };
+  assert.equal(card._heatingMinutes({}), 90);
+});
 test("EcoFlow online state supports sensor and binary_sensor entities", async () => {
   const { registry } = await loadCards();
   const RiverCard = registry.get("home-river-card");
@@ -167,7 +400,7 @@ test("standalone card markup and sizing match pre-refactor characterization", as
   const contracts = [
     [
       "home-boiler-card",
-      "e34180c056584b375c2253885b93a752ba2bbae6a301234d912420325b00e5d8",
+      "2c1a5554af9d78cfe4b9e249b8772fe71f2ca75e8ead43ee106b120c884e5dca",
       5,
       { columns: 6, rows: 5, min_columns: 3, min_rows: 2 },
     ],
@@ -237,7 +470,7 @@ test("standalone card markup and sizing match pre-refactor characterization", as
 test("configured live-card markup matches pre-refactor characterization", async () => {
   const { registry } = await loadCards();
   const contracts = [
-    ["home-boiler-card", "42ff7512528982cef742597bbac1e395db2e4461b007e0d7f8dc36dcf2df11b9"],
+    ["home-boiler-card", "2382d7793a7e0793725711ae31e086d9508dfd6fe49c4b7125c34dd7f93e380a"],
     ["home-air-card", "2fddd0611caac77f3aee08432b90daa4d25c58104de9b01f9041be3351a82315"],
     ["home-room-card", "b34b70a51dc259ddb5ca3ae0c8bf88e543fdc7b807dff504f99effcb4dff0f44"],
     ["home-socket-card", "ae9b16f9795e98d009e2fa75409ae256d26e14182f4babfc3bee5eb19200fade"],
@@ -251,7 +484,11 @@ test("configured live-card markup matches pre-refactor characterization", async 
     const card = new Card();
     const config = { ...Card.getStubConfig(), title: "Fixture" };
     const states = {};
-    for (const field of Card.getConfigForm().schema) {
+    const formFields = Card.getConfigForm().schema.flatMap((field) =>
+      field.type === "expandable" ? field.schema : [field],
+    );
+    for (const field of formFields) {
+      if (tag === "home-boiler-card" && ["boiler_hours", "boiler_minutes"].includes(field.name)) continue;
       const domain = field.selector?.entity?.domain?.[0];
       if (!domain) continue;
       const id = `${domain}.${field.name}`;

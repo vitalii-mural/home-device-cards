@@ -1,3 +1,8 @@
+## 1.0.5
+
+- Automatically resolve Midea Local Memo U, sterilization and heating-time entities from the selected water heater's entity-registry device identity.
+- Keep manual entity bindings in a collapsed Advanced section of the boiler editor.
+- Remove the standalone boiler's fixed desktop minimum height.
 # Changelog
 
 ## 1.0.4

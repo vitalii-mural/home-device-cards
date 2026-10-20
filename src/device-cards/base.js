@@ -25,6 +25,20 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       river: "river_status",
       energy: "power_entity",
     }[kind];
+    const fieldSchema = ([name, , type]) => ({
+      name,
+      required:
+        (kind === "boiler" && name === "boiler_entity") ||
+        (kind === "air" && name === "air_entity") ||
+        (kind === "socket" && name === "switch_entity"),
+      default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
+      selector:
+        type === "text"
+          ? { text: {} }
+          : { entity: { domain: type.split(",") } },
+    });
+    const primaryFields = kind === "boiler" ? field.slice(0, 1) : field;
+    const advancedFields = kind === "boiler" ? field.slice(1) : [];
     return {
       schema: [
         ...(kind === "battery"
@@ -36,18 +50,19 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
                 context: { entity: context },
               },
             ]),
-        ...field.map(([name, , type]) => ({
-          name,
-          required:
-            (kind === "boiler" && name === "boiler_entity") ||
-            (kind === "air" && name === "air_entity") ||
-            (kind === "socket" && name === "switch_entity"),
-          default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
-          selector:
-            type === "text"
-              ? { text: {} }
-              : { entity: { domain: type.split(",") } },
-        })),
+        ...primaryFields.map(fieldSchema),
+        ...(advancedFields.length
+          ? [
+              {
+                type: "expandable",
+                name: "advanced",
+                title: "Додаткові налаштування",
+                expanded: false,
+                flatten: true,
+                schema: advancedFields.map(fieldSchema),
+              },
+            ]
+          : []),
       ],
       computeLabel: (schema) =>
         schema.name === "title"

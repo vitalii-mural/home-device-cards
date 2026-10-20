@@ -109,6 +109,8 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['memo_entity', 'Memo U', 'switch'],
     ['mega_entity', 'Mega Water', 'switch'],
     ['sterilization_entity', 'Стерилізація', 'switch'],
+    ['boiler_hours', 'Години до завершення', 'sensor'],
+    ['boiler_minutes', 'Хвилини до завершення', 'sensor'],
   ],
   air: [
     ['air_entity', 'Кондиціонер', 'climate'],
