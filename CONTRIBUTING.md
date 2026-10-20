@@ -33,6 +33,7 @@ git diff --check
 ```
 
 Review the browser preview as well; unit tests cannot prove visual correctness.
+The commands and manual checklist are in [TESTING.md](TESTING.md).
 Commit the generated `dist/home-device-cards.js` alongside its sources.
 CI checks that the committed bundle matches the source.
 

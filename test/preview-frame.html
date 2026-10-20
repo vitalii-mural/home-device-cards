@@ -1,0 +1,312 @@
+<!doctype html><meta charset="utf-8" /><meta
+  name="viewport"
+  content="width=device-width,initial-scale=1"
+/><title>Перевірка карток 360+</title>
+<style>
+  body {
+    margin: 16px;
+    background: #f4f3ef;
+    font: 14px system-ui;
+  }
+  body.dark {
+    background: #171a1c;
+    color: #eee;
+  }
+  main {
+    display: grid;
+    gap: 12px;
+  }
+  nav {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  button {
+    padding: 8px;
+  }
+  #results {
+    white-space: pre-wrap;
+    font-size: 12px;
+    margin: 12px 0;
+  }
+</style>
+<nav>
+  <button id="offline">Офлайн</button><button id="online">Онлайн</button
+  ><button id="dark">Темна тема</button><button id="test">Перевірити</button>
+</nav>
+<div id="results">Тестові дані, реальні пристрої не перемикаються.</div>
+<main></main>
+<script src="../dist/home-device-cards.js"></script>
+<script>
+  (async () => {
+    const tags = [
+      "home-boiler-card",
+      "home-air-card",
+      "home-river-card",
+      "home-room-card",
+      "home-socket-card",
+    ];
+    await Promise.all(tags.map((x) => customElements.whenDefined(x)));
+    const defaults = {
+      boiler: {
+        boiler_entity: "water_heater.example_1",
+        boiler_hours: null,
+        boiler_minutes: null,
+        memo_entity: "switch.example_2",
+        mega_entity: null,
+        sterilization_entity: "switch.example_3",
+      },
+      air: {
+        air_entity: "climate.example_4",
+        air_x_fan_entity: "switch.example_5",
+        air_lights_entity: "switch.example_6",
+        air_health_entity: "switch.example_7",
+        air_power_save_entity: "switch.example_8",
+        air_8deg_heat_entity: "switch.example_9",
+        air_sleep_entity: "switch.example_10",
+        air_valve_entity: null,
+        air_anti_direct_blow_entity: null,
+        air_light_sensor_entity: null,
+        air_auto_x_fan_entity: null,
+        air_auto_light_entity: null,
+        air_beeper_entity: "switch.example_11",
+      },
+      room: {
+        room_temperature_entity: "sensor.example_12",
+        humidity_entity: "sensor.example_13",
+        battery_entity: "sensor.example_14",
+        room_temperature_label: "Температура",
+        humidity_label: "Вологість",
+      },
+      socket: {
+        switch_entity: "switch.example_15",
+        power_entity: "sensor.example_16",
+        voltage_entity: "sensor.example_17",
+        current_entity: "sensor.example_18",
+        energy_daily_entity: "sensor.example_19",
+        energy_label: "Енергія",
+      },
+      river: {
+        river_status: "sensor.example_20",
+        river_battery: "sensor.example_21",
+        river_input: "sensor.example_22",
+        river_output: "sensor.example_23",
+        river_runtime: "sensor.example_24",
+        river_ac_output: "sensor.example_25",
+        river_dc_output: "sensor.example_26",
+        river_usb_c_output: "sensor.example_27",
+        river_usb_1_output: "sensor.example_28",
+        river_usb_2_output: "sensor.example_29",
+        river_usb_3_output: "sensor.example_30",
+        main_level_entity: "sensor.example_31",
+        main_full_entity: "sensor.example_32",
+        main_remain_entity: "sensor.example_33",
+        main_volts_entity: "sensor.example_34",
+        main_temperature_entity: "sensor.example_35",
+        main_current_entity: "sensor.example_36",
+        main_min_cells_entity: "sensor.example_37",
+        main_max_cells_entity: "sensor.example_38",
+        main_cycles_entity: "sensor.example_39",
+        slave_level_entity: "sensor.example_40",
+        slave_full_entity: "sensor.example_41",
+        slave_remain_entity: "sensor.example_42",
+        slave_volts_entity: "sensor.example_43",
+        slave_temperature_entity: "sensor.example_44",
+        slave_current_entity: "sensor.example_45",
+        slave_min_cells_entity: "sensor.example_46",
+        slave_max_cells_entity: "sensor.example_47",
+        slave_cycles_entity: "sensor.example_48",
+      },
+    };
+    const states = {};
+    const cards = tags.map((tag) => {
+      const c = document.createElement(tag);
+      const cfg = {
+        ...c.constructor.getStubConfig(),
+        ...defaults[tag.replace("home-", "").replace("-card", "")],
+      };
+      c.setConfig(cfg);
+      return c;
+    });
+    for (const c of cards)
+      for (const id of Object.values(c._config))
+        if (
+          typeof id === "string" &&
+          /^(sensor|switch|climate|water_heater)\./.test(id)
+        )
+          states[id] = {
+            state: id.startsWith("switch.") ? "off" : "42",
+            attributes: {},
+          };
+    Object.assign(states, {
+      "water_heater.example_1": {
+        state: "heat",
+        attributes: {
+          current_temperature: 43,
+          temperature: 55,
+          min_temp: 30,
+          max_temp: 80,
+          heating: true,
+          heating_time_remaining: 28,
+        },
+      },
+      "climate.example_4": {
+        state: "heat",
+        attributes: {
+          current_temperature: 21,
+          temperature: 24,
+          min_temp: 16,
+          max_temp: 30,
+          hvac_modes: ["off", "cool", "heat", "fan_only", "dry", "auto"],
+          fan_mode: "auto",
+          fan_modes: [
+            "auto",
+            "quiet",
+            "low",
+            "medium_low",
+            "medium",
+            "medium_high",
+            "high",
+            "turbo",
+          ],
+          swing_mode: "fixedMiddle",
+          swing_modes: [
+            "off",
+            "full",
+            "fixedTop",
+            "fixedMiddleTop",
+            "fixedMiddle",
+            "fixedMiddleBottom",
+            "fixedBottom",
+          ],
+        },
+      },
+      "sensor.example_16": {
+        state: "1.374",
+        attributes: { unit_of_measurement: "kW" },
+      },
+      "sensor.example_17": {
+        state: "223900",
+        attributes: { unit_of_measurement: "mV" },
+      },
+      "sensor.example_18": {
+        state: "6180",
+        attributes: { unit_of_measurement: "mA" },
+      },
+      "sensor.example_19": {
+        state: "3390",
+        attributes: { unit_of_measurement: "Wh" },
+      },
+      "sensor.example_12": {
+        state: "21.4",
+        attributes: { unit_of_measurement: "°C" },
+      },
+      "sensor.example_13": {
+        state: "73",
+        attributes: { unit_of_measurement: "%" },
+      },
+      "sensor.example_14": { state: "69", attributes: {} },
+      "sensor.example_20": { state: "online", attributes: {} },
+      "sensor.example_21": { state: "98", attributes: {} },
+      "sensor.example_31": { state: "96", attributes: {} },
+      "sensor.example_40": { state: "100", attributes: {} },
+      "sensor.example_24": { state: "360", attributes: {} },
+      "switch.example_2": { state: "on", attributes: {} },
+      "switch.example_6": { state: "on", attributes: {} },
+      "switch.example_15": { state: "on", attributes: {} },
+    });
+    delete states["switch.example_8"];
+    states["switch.example_10"] = { state: "unavailable", attributes: {} };
+    const initial = structuredClone(states);
+    const hass = {
+      states,
+      themes: { darkMode: false },
+      language: "uk",
+      locale: { language: "uk" },
+      callService: async () => {
+        throw Error("Real commands are disabled in fixture");
+      },
+    };
+    const refresh = () =>
+      cards.forEach((c) => {
+        c.hass = { ...hass };
+      });
+    refresh();
+    cards.forEach((c) => document.querySelector("main").append(c));
+    document.querySelector("#offline").onclick = () => {
+      hass.states = Object.fromEntries(
+        Object.entries(initial).map(([k, v]) => [
+          k,
+          { ...v, state: "unavailable" },
+        ]),
+      );
+      refresh();
+    };
+    document.querySelector("#online").onclick = () => {
+      hass.states = structuredClone(initial);
+      refresh();
+    };
+    document.querySelector("#dark").onclick = () => {
+      hass.themes = { darkMode: !hass.themes.darkMode };
+      document.body.classList.toggle("dark", hass.themes.darkMode);
+      refresh();
+    };
+    document.querySelector("#test").onclick = () => {
+      const out = [];
+      const check = (name, condition) =>
+        out.push((condition ? "PASS " : "FAIL ") + name);
+      const socket = cards[4],
+        room = cards[3],
+        air = cards[1],
+        river = cards[2];
+      check(
+        "kW → W",
+        socket.shadowRoot
+          .querySelector('[data-live="socket-power"]')
+          .textContent.replace(/\s/g, "") === "1374",
+      );
+      check(
+        "mV → V",
+        socket.shadowRoot.querySelector('[data-live="socket-voltage"]')
+          .textContent === "223,9",
+      );
+      check(
+        "mA → A",
+        socket.shadowRoot.querySelector('[data-live="socket-current"]')
+          .textContent === "6,18",
+      );
+      check(
+        "Wh → kWh",
+        socket.shadowRoot.querySelector('[data-live="socket-energy"]')
+          .textContent === "3,39",
+      );
+      check(
+        "No room history",
+        !room.shadowRoot.querySelector('[data-action="room-history"]'),
+      );
+      const before = cards.map((c) => c.shadowRoot.querySelector("article"));
+      hass.states = {
+        ...hass.states,
+        "sensor.example_12": { ...initial["sensor.example_12"], state: "22.1" },
+      };
+      refresh();
+      check(
+        "DOM unchanged on sensor update",
+        cards.every(
+          (c, i) => c.shadowRoot.querySelector("article") === before[i],
+        ),
+      );
+      check(
+        "Room update",
+        room.shadowRoot.querySelector('[data-live="room-temperature"]')
+          .textContent === "22,1",
+      );
+      check(
+        "No horizontal overflow",
+        document.documentElement.scrollWidth <= innerWidth,
+      );
+      document.querySelector("#results").textContent = out.join("\n");
+    };
+  })();
+</script>

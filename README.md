@@ -65,6 +65,9 @@ HACS installs the bundle from `dist/` in that version.
 
 ## Validation
 
+See [TESTING.md](TESTING.md) for automated checks and a local browser preview
+with synthetic data at 360 px and desktop widths.
+
 ```sh
 node --check home-dashboard.js
 node --check home-device-cards.js

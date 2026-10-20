@@ -5,7 +5,8 @@
   "scripts": {
     "build": "node build.mjs",
     "check": "node --check home-dashboard.js && node --check home-device-cards.js && node --check dist/home-device-cards.js",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "preview": "npm run build && node test/preview-server.mjs"
   },
   "engines": {
     "node": ">=22"
