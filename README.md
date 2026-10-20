@@ -3,7 +3,22 @@
 Custom Home Assistant cards for a water heater, air conditioner, EcoFlow RIVER,
 smart socket, and room temperature/humidity.
 
-## Installation
+## HACS installation
+
+In HACS → Custom repositories, add:
+`https://github.com/vitalii-mural/home-device-cards`
+with type **Dashboard**. Download Home Device Cards and reload the browser.
+
+The single resource is:
+`/hacsfiles/home-device-cards/home-device-cards.js`
+
+HACS shows updates when a new release is published. Install the update from
+HACS and reload your dashboard. Existing card configurations are preserved.
+Remove the old `/local/home-dashboard.js` and `/local/home-device-cards.js`
+resource entries when migrating to HACS to avoid registering cards twice.
+Card-mod is not required.
+
+## Manual installation
 
 Copy `home-dashboard.js` and `home-device-cards.js` into `/config/www/`.
 Add both resources under Settings → Dashboards → Resources, with type
@@ -39,13 +54,22 @@ battery_entity: sensor.example_battery
 The current UI uses Ukrainian labels, Lucide icons, light/dark themes, and
 responsive layouts targeting widths of 360 px and above. The code uses Home
 Assistant frontend components and should be checked after frontend updates.
-This repository is a manual installation snapshot, not yet a HACS release.
+The HACS bundle includes both the base and standalone cards.
+
+## Publishing an update
+
+Run `node build.mjs`, validate the source and bundle, and commit all changes.
+Push the commit, then create a GitHub release with a new version tag.
+Attach `dist/home-device-cards.js` to the release. HACS installs the bundle
+from `dist/` in that version.
 
 ## Validation
 
 ```sh
 node --check home-dashboard.js
 node --check home-device-cards.js
+node build.mjs
+node --check dist/home-device-cards.js
 git diff --check
 ```
 
