@@ -15,7 +15,7 @@ jobs:
       - run: npm run build
       - run: npm run check
       - run: npm test
-      - run: git diff --exit-code -- dist/
+      - run: git diff --exit-code -- home-dashboard.js home-device-cards.js dist/
       - name: Verify version tag
         run: node -e "if ('v' + require('./package.json').version !== process.env.GITHUB_REF_NAME) process.exit(1)"
       - name: Publish release

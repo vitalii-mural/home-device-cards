@@ -1,4 +1,4 @@
-// Home Device Cards v1.0.1 — bundled base and standalone cards.
+// Home Device Cards v1.0.2 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -925,257 +925,1564 @@ const HOME_DEVICE_CARD_META = {
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],
 };
 
-const HOME_DEVICE_BASE = customElements.get('home-dashboard');
+const HOME_DEVICE_BASE = customElements.get("home-dashboard");
 
-if (!HOME_DEVICE_BASE) {
-  console.error('Завантажте home-dashboard-20261020.js перед home-device-cards-20261020.js.');
-} else {
-  const cardClasses = {};
-  for (const [kind, [tag]] of Object.entries(HOME_DEVICE_CARD_META)) {
-    const Card = class extends HOME_DEVICE_BASE {
-      constructor() {
-        super();
-        this._cardType = kind;
-        this._layout = 'mobile';
-        this._view = kind === 'battery' ? 'battery' : 'home';
-      }
+class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
+  constructor() {
+    super();
+    this._cardType = this.constructor.cardType;
+    this._layout = "mobile";
+    this._view = this._cardType === "battery" ? "battery" : "home";
+  }
 
-      static getStubConfig() { return { type: `custom:${tag}`, ...HOME_DEVICE_CARD_DEFAULTS[kind] }; }
-      static getConfigForm() {
-        return {
-          schema: [...(['battery'].includes(kind) ? [] : [{ name: 'title', selector: { entity_name: {} }, context: { entity: ({ boiler: 'boiler_entity', air: 'air_entity', room: 'room_temperature_entity', socket: 'switch_entity', river: 'river_status', energy: 'power_entity', energy_details: 'power_entity' })[kind] } }]), ...HOME_DEVICE_CARD_FIELDS[kind].map(([name, , type]) => ({
-            name,
-            required: (kind === 'boiler' && name === 'boiler_entity') || (kind === 'air' && name === 'air_entity') || (kind === 'socket' && name === 'switch_entity'),
-            default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
-            selector: type === 'text' ? { text: {} } : { entity: { domain: type.split(',') } },
-          }))],
-          computeLabel: schema => schema.name === 'title' ? 'Назва картки' : HOME_DEVICE_CARD_FIELDS[kind].find(field => field[0] === schema.name)?.[1] || schema.name,
+  static getStubConfig() {
+    const kind = this.cardType;
+    const [tag] = HOME_DEVICE_CARD_META[kind];
+    return { type: `custom:${tag}`, ...HOME_DEVICE_CARD_DEFAULTS[kind] };
+  }
+
+  static getConfigForm() {
+    const kind = this.cardType;
+    const field = HOME_DEVICE_CARD_FIELDS[kind];
+    const context = {
+      boiler: "boiler_entity",
+      air: "air_entity",
+      room: "room_temperature_entity",
+      socket: "switch_entity",
+      river: "river_status",
+      energy: "power_entity",
+      energy_details: "power_entity",
+    }[kind];
+    return {
+      schema: [
+        ...(kind === "battery"
+          ? []
+          : [
+              {
+                name: "title",
+                selector: { entity_name: {} },
+                context: { entity: context },
+              },
+            ]),
+        ...field.map(([name, , type]) => ({
+          name,
+          required:
+            (kind === "boiler" && name === "boiler_entity") ||
+            (kind === "air" && name === "air_entity") ||
+            (kind === "socket" && name === "switch_entity"),
+          default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
+          selector:
+            type === "text"
+              ? { text: {} }
+              : { entity: { domain: type.split(",") } },
+        })),
+      ],
+      computeLabel: (schema) =>
+        schema.name === "title"
+          ? "Назва картки"
+          : field.find((item) => item[0] === schema.name)?.[1] || schema.name,
+    };
+  }
+
+  setConfig(config) {
+    const kind = this._cardType;
+    const fields = HOME_DEVICE_CARD_FIELDS[kind];
+    const entityKeys = fields
+      .filter(([, , type]) => type !== "text")
+      .map(([name]) => name);
+    const stringKeys = [
+      "energy_path",
+      "battery_path",
+      ...fields.filter(([, , type]) => type === "text").map(([name]) => name),
+    ];
+    const normalized = this._validatedConfig(config, entityKeys, stringKeys);
+    if (
+      normalized.title !== null &&
+      normalized.title !== undefined &&
+      typeof normalized.title !== "string" &&
+      (typeof normalized.title !== "object" || Array.isArray(normalized.title))
+    ) {
+      throw new Error(
+        'Configuration option "title" must be text or an entity name selector.',
+      );
+    }
+    this._clearPendingTimers();
+    this._generation++;
+    this._config = { ...HOME_DEVICE_CARD_DEFAULTS[kind], ...normalized };
+    this._rendered = false;
+    this._entitySignatures.clear();
+    this._render();
+  }
+
+  connectedCallback() {
+    if (this._config && this._hass && !this._rendered) this._render();
+  }
+
+  _entityIds() {
+    return HOME_DEVICE_CARD_FIELDS[this._cardType]
+      .filter(([, , type]) => type !== "text")
+      .map(([name]) => this._config?.[name])
+      .filter(Boolean);
+  }
+
+  getCardSize() {
+    return this._cardType === "battery" || this._cardType === "energy" ? 8 : 5;
+  }
+  getGridOptions() {
+    const kind = this._cardType;
+    return kind === "energy" || kind === "river"
+      ? {
+          columns: 12,
+          rows: kind === "river" ? 8 : 5,
+          min_columns: 6,
+          min_rows: kind === "river" ? 5 : 4,
+        }
+      : {
+          columns: 6,
+          rows:
+            kind === "boiler" || kind === "air" || kind === "battery" ? 5 : 3,
+          min_columns: 3,
+          min_rows: 2,
         };
-      }
+  }
 
-      setConfig(config) {
-        const entityKeys = HOME_DEVICE_CARD_FIELDS[kind].filter(([, , type]) => type !== 'text').map(([name]) => name);
-        const stringKeys = ['energy_path', 'battery_path', ...HOME_DEVICE_CARD_FIELDS[kind].filter(([, , type]) => type === 'text').map(([name]) => name)];
-        const normalized = this._validatedConfig(config, entityKeys, stringKeys);
-        if (normalized.title !== null && normalized.title !== undefined && typeof normalized.title !== 'string' &&
-          (typeof normalized.title !== 'object' || Array.isArray(normalized.title))) {
-          throw new Error('Configuration option "title" must be text or an entity name selector.');
-        }
-        this._clearPendingTimers();
-        this._generation++;
-        this._config = { ...HOME_DEVICE_CARD_DEFAULTS[kind], ...normalized };
-        this._rendered = false;
-        this._entitySignatures.clear();
-        this._render();
-      }
+  _displayName(entityKey, name, fallback) {
+    if (name == null) return fallback;
+    if (typeof name === "string") return name || fallback;
+    const state = this._hass?.states?.[this._config[entityKey]];
+    return state && this._hass.formatEntityName
+      ? this._hass.formatEntityName(state, name) || fallback
+      : fallback;
+  }
 
-      connectedCallback() {
-        if (this._config && this._hass && !this._rendered) this._render();
-      }
+  _lucideIcon(name) {
+    const icons = {
+      snowflake:
+        '<path d="m10 20-1.25-2.5L6 18M10 4 8.75 6.5 6 6m8 14 1.25-2.5L18 18m-4-14 1.25 2.5L18 6m-1 15-3-6h-4m7-12-3 6 1.5 3M2 12h6.5L10 9m10 1-1.5 2 1.5 2m2-2h-6.5L14 15m-10-5 1.5 2L4 14m3 7 3-6-1.5-3m-2-9 3 6h4"/>',
+      sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2m8-10h2M2 12h2m14.07-7.07 1.41-1.41M4.93 19.07l1.41-1.41m12.73 1.41-1.41-1.41M4.93 4.93l1.41 1.41"/>',
+      fan: '<path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/>',
+      droplet:
+        '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+      "circle-a":
+        '<circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" stroke="none" fill="currentColor">A</text>',
+      gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
+      headphones:
+        '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',
+      zap: '<path d="M15.914 4a1.5 1.5 0 0 0-2.474-1.561l-9 9A1.5 1.5 0 0 0 5.5 14h4.002a.5.5 0 0 1 .471.666L8.086 20a1.5 1.5 0 0 0 2.475 1.56l9-9A1.5 1.5 0 0 0 18.5 10h-3.997a.5.5 0 0 1-.472-.667z"/>',
+      wind: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2M17.5 8a2.5 2.5 0 1 1 2 4H2M9.8 4.4A2 2 0 1 1 11 8H2"/>',
+      lightbulb:
+        '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/>',
+      trees:
+        '<path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0ZM7 16v6M13 19v3M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5"/>',
+      house:
+        '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+      leaf: '<path d="M11 20a10 10 0 0 0 10-10 25.9 25.9 0 0 0-1.04-7.281 1 1 0 0 0-1.755-.325C15.833 5.5 13 5.5 9.8 6.1A7 7 0 0 0 11 20ZM2 21a5 5 0 0 1 2.911-4.544C7.613 15.212 8.351 15.24 11 13"/>',
+      moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
+      "volume-2":
+        '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+      "air-vent":
+        '<path d="M18 17.5a2.5 2.5 0 1 1-4 2.03V12M6 12H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 8h12M6.6 15.572A2 2 0 1 0 10 17v-5"/>',
+      heater:
+        '<path d="M11 8c2-3-2-3 0-6M15.5 8c2-3-2-3 0-6M6 10h.01M6 14h.01M10 16v-4M14 16v-4M18 16v-4M20 6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3M5 20v2M19 20v2"/>',
+      minus: '<path d="M5 12h14"/>',
+      plus: '<path d="M5 12h14M12 5v14"/>',
+      power: '<path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/>',
+      "battery-charging":
+        '<path d="m11 7-3 5h4l-3 5"/><path d="M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935"/><path d="M22 14v-4"/><path d="M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936"/>',
+      battery:
+        '<path d="M22 14V10"/><rect x="2" y="6" width="16" height="12" rx="2"/>',
+      "battery-plus":
+        '<path d="M10 9v6"/><path d="M12.543 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.605"/><path d="M22 14v-4"/><path d="M7 12h6"/><path d="M7.606 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.606"/>',
+      wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/>',
+      "clock-3": '<circle cx="12" cy="12" r="10"/><path d="M12 6v6h4"/>',
+      "arrow-down-left": '<path d="M17 7 7 17M17 17H7V7"/>',
+      "arrow-up-right": '<path d="M7 7h10v10M7 17 17 7"/>',
+      plug: '<path d="M12 22v-5"/><path d="M15 8V2"/><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"/><path d="M9 8V2"/>',
+      cable:
+        '<path d="M17 19a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1z"/><path d="M17 21v-2"/><path d="M19 14V6.5a1 1 0 0 0-7 0v11a1 1 0 0 1-7 0V10"/><path d="M21 21v-2"/><path d="M3 5V3"/><path d="M4 10a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2z"/><path d="M7 5V3"/>',
+      usb: '<circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5"/><path d="m21 3-3 1 2 2Z"/><path d="M9.26 7.68 5 12l2 5"/><path d="m10 14 5 2 3.5-3.5"/><path d="m18 12 1-1 1 1-1 1Z"/>',
+      thermometer: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+      activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+      droplets:
+        '<path d="M7 16.3A4 4 0 0 1 11 12.3"/><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5"/><path d="M5.5 17.5a3.5 3.5 0 0 1 0-7c.5 0 .9.1 1.3.3"/>',
+      "battery-medium":
+        '<rect x="2" y="6" width="18" height="12" rx="2"/><path d="M22 10v4"/><path d="M10 10v4"/>',
+      "chart-no-axes-column":
+        '<path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>',
+      "shield-check":
+        '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+      "chevron-down": '<path d="m6 9 6 6 6-6"/>',
+    };
+    return `<svg class="air-inline-icon" viewBox="0 0 24 24" aria-hidden="true">${icons[name] || icons.fan}</svg>`;
+  }
 
-      _entityIds() {
-        return HOME_DEVICE_CARD_FIELDS[kind].filter(([, , type]) => type !== 'text').map(([name]) => this._config?.[name]).filter(Boolean);
-      }
+  _updateCardName() {
+    const [entityKey, fallback] = this.constructor.cardTitle || [];
+    if (!entityKey) return;
+    this._setText(
+      "h2",
+      this._displayName(entityKey, this._config.title, fallback),
+    );
+  }
 
-      getCardSize() { return kind === 'battery' || kind === 'energy' ? 8 : 5; }
-      getGridOptions() { return kind === 'energy' || kind === 'river' ? { columns: 12, rows: kind === 'river' ? 8 : 5, min_columns: 6, min_rows: kind === 'river' ? 5 : 4 } : { columns: 6, rows: kind === 'boiler' || kind === 'air' || kind === 'battery' ? 5 : 3, min_columns: 3, min_rows: 2 }; }
+  _updateDynamic(
+    changedIds = null,
+    themeChanged = false,
+    serviceEntity = null,
+  ) {
+    if (!this._hass || !this._config) return;
+    this._updateCardName();
+    const all = changedIds === null,
+      changed = new Set(changedIds || []),
+      has = (id) => !!id && (all || changed.has(id));
+    if (all || themeChanged)
+      this.toggleAttribute("dark", !!this._hass.themes?.darkMode);
+    this._setText('[data-live="error"]', this._error);
+    this._setHidden('[data-live="error"]', !this._error);
+    const result = this._updateCardDynamic({ all, has, serviceEntity });
+    if (result?.temperatureFeedback) this._updateTemperatureFeedback();
+    for (const [key, card] of this._graphCards) {
+      if (
+        card.isConnected &&
+        (all || themeChanged || (this._graphSources.get(key) || []).some(has))
+      )
+        card.hass = this._hass;
+    }
+  }
 
-      _content() {
-        if (kind === 'boiler') return `<div class="desktop-board"><div class="desktop-water">${this._boiler()}</div></div>`;
-        if (kind === 'air') return `<div class="desktop-board"><div class="desktop-air">${this._air()}</div></div>`;
-        if (kind === 'room') return this._room();
-        if (kind === 'socket') return this._socket();
-        if (kind === 'river') return this._river();
-        if (kind === 'energy') return `<div class="desktop-board">${this._energyOverview()}</div>`;
-        if (kind === 'energy_details') return this._energy();
-        return this._batteryDetails();
-      }
-
-      _socketReading(key, digits = 1, conversion = null) {
-        const id = this._config[key], state = this._state(id);
-        let value = this._available(id) ? this._number(state.state) : null;
-        const unit = String(state?.attributes?.unit_of_measurement || '').trim().toLowerCase();
-        if (value !== null && conversion === 'power' && ['kw', 'kilowatt', 'kilowatts'].includes(unit)) value *= 1000;
-        if (value !== null && conversion === 'voltage' && ['mv', 'millivolt', 'millivolts'].includes(unit)) value /= 1000;
-        if (value !== null && conversion === 'current' && ['ma', 'milliamp', 'milliamps'].includes(unit)) value /= 1000;
-        if (value !== null && conversion === 'energy' && ['wh', 'watt-hour', 'watt hours'].includes(unit)) value /= 1000;
-        return value === null ? '—' : this._format(value, digits);
-      }
-
-      _displayName(entityKey, name, fallback) {
-        if (name == null) return fallback;
-        if (typeof name === 'string') return name || fallback;
-        const state = this._hass?.states?.[this._config[entityKey]];
-        return state && this._hass.formatEntityName ? this._hass.formatEntityName(state, name) || fallback : fallback;
-      }
-
-      _updateCardName() {
-        const entityKey = ({ boiler: 'boiler_entity', air: 'air_entity', room: 'room_temperature_entity', socket: 'switch_entity', river: 'river_status', energy: 'power_entity', energy_details: 'power_entity' })[kind];
-        if (!entityKey) return;
-        const fallback = ({ boiler: 'Гаряча вода', air: 'Кондиціонер', room: 'Спальня', socket: 'Розетка', river: 'EcoFlow RIVER Max', energy: 'Споживання', energy_details: 'Споживання' })[kind];
-        this._setText('h2', this._displayName(entityKey, this._config.title, fallback));
-      }
-
-      _socket() {
-        const c = this._config, state = this._state(c.switch_entity);
-        const available = this._available(c.switch_entity), on = available && state.state === 'on';
-        const pending = !!this._socketPending, icon = name => this._lucideIcon(name);
-        return '<article class="socket-card" data-live-panel="socket" aria-label="Розетка">' +
-          '<header class="socket-header"><span class="socket-icon">' + icon('plug') + '</span><div class="socket-heading"><h2>' + this._escape(c.title || 'Розетка') + '</h2><span class="secondary" data-live="socket-status">' +
-          (pending ? 'Очікує підтвердження' : on ? 'Увімкнено' : available ? 'Вимкнено' : 'Недоступна') +
-          '</span></div><button class="socket-power-button" data-action="socket-toggle" data-pending="' + pending + '" aria-label="' + (on ? 'Вимкнути' : 'Увімкнути') +
-          ' розетку" aria-pressed="' + on + '" aria-busy="' + pending + '" ' + this._disabled(!available || pending, c.switch_entity) + '><span class="socket-spinner" aria-hidden="true"></span>' + icon('power') + '</button></header>' +
-          '<div class="socket-reading"><div class="metric-value"><span data-live="socket-power">' + this._socketReading('power_entity', 0, 'power') + '</span><small data-live="socket-power-unit">Вт</small></div><span class="secondary">Поточне споживання</span></div>' +
-          '<div class="socket-metrics"><div><span class="secondary">' + icon('zap') + 'Напруга</span><strong><span data-live="socket-voltage">' + this._socketReading('voltage_entity', 1, 'voltage') + '</span><small data-live="socket-voltage-unit">В</small></strong></div>' +
-          '<div><span class="secondary">' + icon('activity') + 'Струм</span><strong><span data-live="socket-current">' + this._socketReading('current_entity', 2, 'current') + '</span><small>А</small></strong></div>' +
-          '<div><span class="secondary">' + icon('chart-no-axes-column') + this._escape(c.energy_label || 'Енергія') + '</span><strong><span data-live="socket-energy">' + this._socketReading('energy_daily_entity', 2, 'energy') + '</span><small>кВт·год</small></strong></div></div></article>';
-      }
-
-      _roomValue(entityKey, digits) {
-        const id = this._config[entityKey];
-        return this._available(id) ? this._format(this._value(id), digits) : '—';
-      }
-
-      _room() {
-        const c = this._config, batteryId = c.battery_entity, battery = this._state(batteryId);
-        const batteryAvailable = this._available(batteryId);
-        const batteryValue = batteryAvailable ? this._number(battery.state) : null;
-        const icon = name => this._lucideIcon(name);
-        const batteryHtml = batteryId ? '<span class="room-battery" data-live="room-battery" ' + (batteryAvailable ? '' : 'hidden') + '>' +
-          icon('battery-medium') + '<span>' + (batteryValue === null ? '—' : this._format(batteryValue, 0) + '%') + '</span></span>' : '';
-        return '<article class="room-sensor-card" data-live-panel="room" aria-label="Температура та вологість">' +
-          '<header class="room-header"><span class="room-icon">' + icon('thermometer') + '</span><div class="room-heading"><h2>' + this._escape(c.title || 'Спальня') +
-          '</h2><span class="secondary">Температура та вологість</span></div>' + batteryHtml + '</header>' +
-          '<div class="room-readings"><div class="room-reading"><span class="secondary">' + icon('thermometer') + this._escape(c.room_temperature_label || 'Температура') +
-          '</span><div class="metric-value"><span data-live="room-temperature">' + this._roomValue('room_temperature_entity', 1) + '</span><small>°C</small></div></div>' +
-          '<div class="room-reading"><span class="secondary">' + icon('droplets') + this._escape(c.humidity_label || 'Вологість') +
-          '</span><div class="metric-value"><span data-live="room-humidity">' + this._roomValue('humidity_entity', 0) + '</span><small>%</small></div></div></div>' +
-          '</article>';
-      }
-
-      _updateRoom() {
-        for (const key of ["room-temperature", "room-humidity"]) {
-          const value = this._roomValue(key === "room-temperature" ? "room_temperature_entity" : "humidity_entity", 1);
-          this.shadowRoot.querySelector(`[data-live="${key}"]`)?.parentElement?.classList.toggle("room-missing", value === "—");
-        }
-        this._setText('[data-live="room-temperature"]', this._roomValue('room_temperature_entity', 1));
-        this._setText('[data-live="room-humidity"]', this._roomValue('humidity_entity', 0));
-        const batteryId = this._config.battery_entity, battery = this._state(batteryId);
-        const available = this._available(batteryId), value = available ? this._number(battery.state) : null;
-        this._setHidden('[data-live="room-battery"]', !batteryId || !available);
-        this._setText('[data-live="room-battery"] span', value === null ? '—' : this._format(value, 0) + '%');
-      }
-
-      _updateSocket() {
-        const entity = this._config.switch_entity, state = this._state(entity);
-        const available = this._available(entity), on = available && state.state === 'on';
-        if (this._socketPending && this._socketPending.entity === entity && available && on === this._socketPending.on) {
-          clearTimeout(this._socketPending.timer);
-          this._socketPending = null;
-        }
-        const pending = !!this._socketPending;
-        const button = this.shadowRoot.querySelector('[data-action="socket-toggle"]');
-        this._setText('[data-live="socket-status"]', pending ? 'Очікує підтвердження' : on ? 'Увімкнено' : available ? 'Вимкнено' : 'Недоступна');
-        if (button) {
-          button.disabled = !available || pending || this._busy(entity);
-          button.setAttribute('aria-pressed', String(on));
-          button.setAttribute('aria-busy', String(pending));
-          button.setAttribute('aria-label', (on ? 'Вимкнути' : 'Увімкнути') + ' розетку');
-          button.dataset.pending = String(pending);
-        }
-        const values = [
-          ['[data-live="socket-power"]', this._socketReading('power_entity', 0, 'power'), '.socket-reading .metric-value'],
-          ['[data-live="socket-voltage"]', this._socketReading('voltage_entity', 1, 'voltage'), '.socket-metrics>div:nth-child(1) strong'],
-          ['[data-live="socket-current"]', this._socketReading('current_entity', 2, 'current'), '.socket-metrics>div:nth-child(2) strong'],
-          ['[data-live="socket-energy"]', this._socketReading('energy_daily_entity', 2, 'energy'), '.socket-metrics>div:nth-child(3) strong'],
-        ];
-        for (const [selector, value, parent] of values) {
-          this._setText(selector, value);
-          const reading = this.shadowRoot.querySelector(parent);
-          reading?.classList.toggle('socket-missing', value === '—');
-          reading?.querySelector('small')?.toggleAttribute('hidden', value === '—');
+  _updateCardDynamic() {}
+  _click(event) {
+    const button = event.target.closest("button[data-action]");
+    if (
+      button?.dataset.action === "view-energy" ||
+      button?.dataset.action === "view-battery"
+    ) {
+      const path =
+        button.dataset.action === "view-energy"
+          ? this._config.energy_path
+          : this._config.battery_path;
+      if (path) {
+        if (typeof this._hass?.navigate === "function") this._hass.navigate(path);
+        else {
+          window.history.pushState(null, "", path);
+          window.dispatchEvent(new Event("location-changed"));
         }
       }
+      return;
+    }
+    super._click(event);
+  }
+  _graphDefinitions() {
+    return {};
+  }
+  _graphCardHeight() {
+    return "";
+  }
 
-      async _toggleSocket() {
-        const entity = this._config.switch_entity;
-        if (!this._available(entity) || this._busy(entity) || this._socketPending) return;
-        const generation = this._generation;
-        const on = this._state(entity).state !== 'on';
-        this._error = '';
-        this._setHidden('[data-live="error"]', true);
-        const pending = { entity, on, timer: null };
-        this._socketPending = pending;
-        this._updateSocket();
-        pending.timer = setTimeout(() => {
-          if (this._socketPending !== pending) return;
-          this._socketPending = null;
-          this._error = (this._state(entity)?.attributes?.friendly_name || entity) + ' не підтвердив зміну стану за 15 секунд.';
-          this._updateSocket();
-          this._setText('[data-live="error"]', this._error);
-          this._setHidden('[data-live="error"]', false);
-        }, 15000);
-        try {
-          await this._hass.callService('switch', on ? 'turn_on' : 'turn_off', { entity_id: entity });
-          if (generation === this._generation) this._updateSocket();
-        } catch (error) {
-          if (generation !== this._generation) return;
-          if (this._socketPending === pending) {
-            clearTimeout(pending.timer);
-            this._socketPending = null;
+  async _mountGraphs(generation) {
+    const slots = Array.from(this.shadowRoot.querySelectorAll("[data-graph]"));
+    if (!slots.length) return;
+    try {
+      if (!window.loadCardHelpers) throw new Error("History cards unavailable");
+      const helpers = await window.loadCardHelpers();
+      if (generation !== this._generation) return;
+      const definitions = this._graphDefinitions();
+      for (const slot of slots) {
+        const definition = definitions[slot.dataset.graph];
+        if (!definition) continue;
+        definition.entities = definition.entities.filter((item) =>
+          typeof item === "string" ? !!item : !!item.entity,
+        );
+        if (!definition.entities.length) {
+          slot.innerHTML =
+            '<span class="secondary">Виберіть сутність для графіка в налаштуваннях картки.</span>';
+          continue;
+        }
+        const key = JSON.stringify(definition);
+        let card = this._graphCards.get(key);
+        if (!card) {
+          card = helpers.createCardElement({
+            type: "history-graph",
+            hours_to_show: 24,
+            ...definition,
+          });
+          this._graphCards.set(key, card);
+        }
+        this._graphSources.set(
+          key,
+          definition.entities.map((item) =>
+            typeof item === "string" ? item : item.entity,
+          ),
+        );
+        card.style.height = this._graphCardHeight();
+        card.hass = this._hass;
+        slot.replaceChildren(card);
+      }
+    } catch {
+      if (generation !== this._generation) return;
+      for (const slot of slots)
+        slot.innerHTML =
+          '<span class="secondary">Історію можна відкрити через подробиці відповідної сутності.</span>';
+    }
+  }
+
+  _render() {
+    if (!this._config || !this._hass) return;
+    this.toggleAttribute("dark", !!this._hass.themes?.darkMode);
+    const content = this._content();
+    this.shadowRoot.innerHTML = `<style>${HOME_DEVICE_CARD_STYLE}.pending-hint{min-height:17px;visibility:hidden}.pending-hint[data-pending="true"]{visibility:visible}.live-error{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.18)}.single-card{width:100%}.single-card .desktop-board{display:block}[hidden]{display:none!important}@media(max-width:380px){.single-card .panel{padding:14px}}@media(min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}</style><ha-card><div class="single-card"><div class="error live-error" role="alert" data-live="error" ${this._error ? "" : "hidden"}>${this._escape(this._error)}</div>${content}</div></ha-card>`;
+    const feedbackStyle = document.createElement("style");
+    feedbackStyle.textContent = HOME_DEVICE_FEEDBACK_STYLE;
+    this.shadowRoot.append(feedbackStyle);
+    for (const hint of this.shadowRoot.querySelectorAll(".pending-hint"))
+      hint.remove();
+    for (const button of this.shadowRoot.querySelectorAll(
+      ".round[data-action]",
+    )) {
+      const spinner = document.createElement("span");
+      spinner.className = "pending-spinner";
+      spinner.setAttribute("aria-hidden", "true");
+      button.append(spinner);
+    }
+    this._updateCardName();
+    this._rendered = true;
+    this._updateDynamic();
+    const generation = ++this._generation;
+    this._mountGraphs(generation);
+  }
+}
+class HomeBoilerCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "boiler";
+  }
+  static get cardTitle() {
+    return ["boiler_entity", "Гаряча вода"];
+  }
+  _content() {
+    return `<div class="desktop-board"><div class="desktop-water">${this._boiler()}</div></div>`;
+  }
+  _temperature(entity, delta) {
+    if (this._busy(entity) || !this._available(entity)) return;
+    this._temperatureAction = `boiler-${delta > 0 ? "plus" : "minus"}`;
+    super._temperature(entity, delta);
+  }
+
+  _boiler() {
+    let html = super._boiler();
+    html = html.replace(
+      '<div class="water-large">',
+      '<div class="water-large"><span class="secondary boiler-current-label">Температура води</span>',
+    );
+    html = html.replace(this._icon("water-boiler"), this._lucideIcon("heater"));
+    for (const [action, icon] of [
+      ["boiler-minus", "minus"],
+      ["boiler-plus", "plus"],
+      ["boiler-power", "power"],
+    ]) {
+      const pattern = new RegExp(
+        `(<button[^>]*data-action="${action}"[^>]*>)[\\s\\S]*?(<\\/button>)`,
+      );
+      html = html.replace(
+        pattern,
+        (_, open, close) => `${open}${this._lucideIcon(icon)}${close}`,
+      );
+    }
+    html = html.replace(
+      '<small class="degree">°C</small>',
+      '<small class="degree" data-live="boiler-current-unit">°C</small>',
+    );
+    html = html.replace(
+      /(<span data-live="boiler-target">[^<]*<\/span>)°/,
+      '$1<small data-live="boiler-target-unit">°C</small>',
+    );
+    html = html.replace(/<div class="features"[^>]*>[\s\S]*?<\/div>/, () =>
+      this._boilerFeatures(),
+    );
+    return html;
+  }
+
+  _boilerFeatures() {
+    const definitions = [
+      ["memo_entity", "Memo U", "house"],
+      ["mega_entity", "Mega Water", "droplets"],
+      ["sterilization_entity", "Стерилізація", "shield-check"],
+    ];
+    const buttons = definitions
+      .map(([key, label, icon]) => {
+        const entity = this._config[key],
+          feature = this._state(entity);
+        if (!entity) return "";
+        const unavailable = feature && !this._available(entity);
+        const title = unavailable ? `${label}: тимчасово недоступно` : label;
+        return `<button class="feature" data-action="feature" data-entity="${this._escape(entity)}" title="${this._escape(title)}" aria-label="${this._escape(title)}" aria-pressed="${feature?.state === "on"}" ${feature ? this._disabled(!this._available(entity), entity) : "hidden disabled"}><span class="boiler-feature-icon">${this._lucideIcon(icon)}</span><span>${label}</span></button>`;
+      })
+      .join("");
+    return `<div class="features" role="group" aria-label="Режими бойлера">${buttons}</div>`;
+  }
+
+  _updateBoiler() {
+    super._updateBoiler();
+    const panel = this.shadowRoot.querySelector('[data-live-panel="boiler"]');
+    if (!panel) return;
+    if (!this._available(this._config.boiler_entity))
+      this._setText('[data-live="boiler-target"]', "—", panel);
+    this._setHidden(
+      '[data-live="boiler-progress"]',
+      !this._available(this._config.boiler_entity) ||
+        this._number(
+          this._state(this._config.boiler_entity)?.attributes
+            ?.current_temperature,
+        ) === null,
+      panel,
+    );
+    for (const [key, unit] of [
+      ["boiler-current", "boiler-current-unit"],
+      ["boiler-target", "boiler-target-unit"],
+    ]) {
+      const value = panel.querySelector(`[data-live="${key}"]`),
+        missing =
+          !value || this._number(value.textContent.replace(/,/g, ".")) === null;
+      value?.parentElement?.classList.toggle("temperature-missing", missing);
+      this._setHidden(`[data-live="${unit}"]`, missing, panel);
+    }
+    for (const [key, label] of [
+      ["memo_entity", "Memo U"],
+      ["mega_entity", "Mega Water"],
+      ["sterilization_entity", "Стерилізація"],
+    ]) {
+      const entity = this._config[key];
+      const button =
+        entity &&
+        panel.querySelector(
+          `[data-action="feature"][data-entity="${this._escape(entity)}"]`,
+        );
+      if (!button) continue;
+      const feature = this._state(entity),
+        exists = !!feature,
+        available = this._available(entity);
+      button.hidden = !exists;
+      button.disabled = !available || this._busy(entity);
+      button.setAttribute("aria-pressed", String(feature?.state === "on"));
+      button.title =
+        exists && !available ? `${label}: тимчасово недоступно` : label;
+      button.setAttribute("aria-label", button.title);
+    }
+  }
+
+  _updateTemperatureFeedback() {
+    const entity = this._config.boiler_entity;
+    const pending = this._pendingTargets.has(entity);
+    for (const button of this.shadowRoot.querySelectorAll(
+      ".round[data-action]",
+    )) {
+      const active =
+        pending && button.dataset.action === this._temperatureAction;
+      if (button.dataset.pending !== String(active))
+        button.dataset.pending = String(active);
+      if (button.getAttribute("aria-busy") !== String(active))
+        button.setAttribute("aria-busy", String(active));
+    }
+  }
+  _updateCardDynamic({ all, has, serviceEntity }) {
+    const sources = [
+      this._config.boiler_entity,
+      this._config.boiler_hours,
+      this._config.boiler_minutes,
+      this._config.memo_entity,
+      this._config.mega_entity,
+      this._config.sterilization_entity,
+    ];
+    if (all || sources.some(has) || sources.includes(serviceEntity))
+      this._updateBoiler();
+    return { temperatureFeedback: true };
+  }
+  _graphDefinitions() {
+    return {
+      boiler: {
+        title: "Потужність бойлера · 24 години",
+        entities: [this._config.power_entity],
+      },
+    };
+  }
+}
+if (!customElements.get("home-boiler-card"))
+  customElements.define("home-boiler-card", HomeBoilerCard);
+class HomeAirCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "air";
+  }
+  static get cardTitle() {
+    return ["air_entity", "Кондиціонер"];
+  }
+  _content() {
+    return `<div class="desktop-board"><div class="desktop-air">${this._air()}</div></div>`;
+  }
+  _temperature(entity, delta) {
+    if (this._busy(entity) || !this._available(entity)) return;
+    this._temperatureAction = `air-${delta > 0 ? "plus" : "minus"}`;
+    super._temperature(entity, delta);
+  }
+
+  _air() {
+    let html = super._air();
+    html = html.replace(
+      this._icon("air-conditioner"),
+      this._lucideIcon("air-vent"),
+    );
+    const id = this._airId(),
+      state = this._state(id),
+      a = state?.attributes || {},
+      available = this._available(id);
+    html = html.replace(/<span data-live="air-room">[\s\S]*?<\/span>/, "");
+    const room = this._number(a.current_temperature);
+    html = html.replace(
+      '<span class="secondary">Задана температура</span>',
+      `<span class="secondary" data-live="air-room-caption">У кімнаті ${available ? this._format(room) : "—"} °C</span>`,
+    );
+    html = html.replace(
+      /<div class="modes"[^>]*>[\s\S]*?<\/div>/,
+      `<div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(a.hvac_modes, state?.state, available, this._busy(id))}</div>`,
+    );
+    html = html.replace(
+      /(<button class="round" data-action="air-minus"[^>]*>)[\s\S]*?(<\/button>)/,
+      (_, open, close) => `${open}${this._lucideIcon("minus")}${close}`,
+    );
+    html = html.replace(
+      /(<button class="round" data-action="air-plus"[^>]*>)[\s\S]*?(<\/button>)/,
+      (_, open, close) => `${open}${this._lucideIcon("plus")}${close}`,
+    );
+    html = html.replace(
+      /(<button class="icon-button[^>]*data-action="air-power"[^>]*>)[\s\S]*?(<\/button>)/,
+      (_, open, close) => `${open}${this._lucideIcon("power")}${close}`,
+    );
+    html = html.replace(
+      /<div class="fan">[\s\S]*?<\/div>/,
+      `<div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || "—")}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, this._busy(id))}</div></div>`,
+    );
+    const fullMode = this._swingOption(a.swing_modes, "swing_full"),
+      defaultMode = this._swingOption(a.swing_modes, "default");
+    const moving = String(a.swing_mode || "")
+      .toLowerCase()
+      .startsWith("swing");
+    const fixed = String(a.swing_mode || "")
+      .toLowerCase()
+      .startsWith("fixed");
+    const fixedPosition = fixed ? this._fixedSwingPosition(a.swing_mode) : 2;
+    const fixedModes = this._fixedSwingModes(a.swing_modes);
+    const swing = `<div class="air-swing-main" role="group" aria-label="Вертикальні жалюзі"><button class="air-swing-main-button" data-action="air-swing-toggle" title="Вгору-вниз" aria-label="Вгору-вниз" aria-pressed="${moving}" ${this._disabled(!available || !fullMode || !defaultMode, id)}><span class="air-swing-main-icon">${this._swingMainIcon("up-down")}</span><span>Вгору-вниз</span></button><button class="air-swing-main-button" data-action="air-swing-palette" title="Фіксований кут" aria-label="Фіксований кут" aria-pressed="${fixed || !!this._airFixedPaletteOpen}" aria-expanded="${!!this._airFixedPaletteOpen}" aria-controls="air-fixed-palette" ${this._disabled(!available || !fixedModes.length, id)}><span class="air-swing-main-icon" data-position="${fixedPosition}">${this._fixedAngleIcon(fixedPosition)}</span><span>Фіксований кут</span></button></div><div class="air-fixed-palette" id="air-fixed-palette" data-air-fixed-palette ${this._airFixedPaletteOpen ? "" : "hidden"}>${this._fixedSwingButtons(fixedModes, a.swing_mode, available, this._busy(id))}</div>`;
+    const firstKeys = [
+      "air_lights_entity",
+      "air_x_fan_entity",
+      "air_sleep_entity",
+    ];
+    const first = this._airSwitches(firstKeys);
+    const second = this._airSwitches([
+      "air_health_entity",
+      "air_8deg_heat_entity",
+      "air_power_save_entity",
+      "air_beeper_entity",
+    ]);
+    const swingButtons = swing
+      .slice(swing.indexOf(">") + 1, swing.indexOf("</div>"))
+      .replace("<span>Вгору-вниз</span>", "<span>Рух</span>")
+      .replace("<span>Фіксований кут</span>", "<span>Кут</span>");
+    const palette = swing.slice(
+      swing.indexOf('<div class="air-fixed-palette"'),
+    );
+    const controls = `<div class="air-unified"><div class="air-unified-first">${swingButtons}${first}</div><div class="air-unified-second" ${this._airFixedPaletteOpen ? "hidden" : ""}>${second}</div>${palette}</div>`;
+    return html.replace("</article>", `${controls}</article>`);
+  }
+
+  _airModeButtons(modes, current, available, busy) {
+    const definitions = [
+      ["cool", "snowflake", "Охолодження"],
+      ["heat", "sun", "Обігрів"],
+      ["fan_only", "fan", "Вентиляція"],
+      ["dry", "droplet", "Осушення"],
+      ["auto", "circle-a", "Автоматичний режим"],
+    ];
+    return definitions
+      .filter(([mode]) => (modes || []).includes(mode))
+      .map(
+        ([mode, icon, label]) =>
+          `<button class="mode" data-action="air-mode" data-mode="${mode}" title="${label}" aria-label="${label}" aria-pressed="${current === mode}" ${this._disabled(!available || busy, this._airId())}>${this._lucideIcon(icon)}</button>`,
+      )
+      .join("");
+  }
+
+  /*
+   * Lucide ISC License
+   * Copyright (c) 2026 Lucide Icons and Contributors
+   * Permission to use, copy, modify, and/or distribute this software for any
+   * purpose with or without fee is hereby granted, provided that the above
+   * copyright notice and this permission notice appear in all copies.
+   * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+   * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+   * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+   * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+   * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+   * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+   * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+   *
+   * Feather-derived Lucide icons (circle, headphones, moon, minus, plus):
+   * MIT License, Copyright (c) 2013-present Cole Bemis
+   * Permission is hereby granted, free of charge, to any person obtaining a copy
+   * of this software and associated documentation files (the "Software"), to deal
+   * in the Software without restriction, including without limitation the rights
+   * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   * copies of the Software, and to permit persons to whom the Software is
+   * furnished to do so, subject to the following conditions:
+   * The above copyright notice and this permission notice shall be included in all
+   * copies or substantial portions of the Software.
+   * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   * SOFTWARE.
+   */
+
+  _airFanButtons(modes, current, available, busy) {
+    const order = [
+      "auto",
+      "quiet",
+      "low",
+      "medium_low",
+      "medium",
+      "medium_high",
+      "high",
+      "turbo",
+    ];
+    const names = {
+      auto: "Авто",
+      quiet: "Тихий",
+      low: "Низька",
+      medium_low: "Нижче середньої",
+      medium: "Середня",
+      medium_high: "Вище середньої",
+      high: "Висока",
+      turbo: "Турбо",
+    };
+    const blades = {
+      low: 2,
+      medium_low: 3,
+      medium: 4,
+      medium_high: 5,
+      high: 6,
+    };
+    return order
+      .filter((mode) => (modes || []).includes(mode))
+      .map((mode) => {
+        const icon =
+          mode === "auto"
+            ? this._lucideIcon("gauge")
+            : mode === "quiet"
+              ? this._lucideIcon("headphones")
+              : mode === "turbo"
+                ? this._lucideIcon("zap")
+                : this._fanBladeIcon(blades[mode]);
+        return `<button data-action="air-fan-mode" data-mode="${mode}" aria-label="${names[mode]}" title="${names[mode]}" aria-pressed="${current === mode}" ${this._disabled(!available || busy, this._airId())}>${icon}</button>`;
+      })
+      .join("");
+  }
+
+  _fanBladeIcon(bladeCount) {
+    const blades = Array.from(
+      { length: bladeCount },
+      (_, index) =>
+        `<path d="M21 16C23 10 29 5 31 10c3 6-4 9-8 9" transform="rotate(${(index * 360) / bladeCount} 20 20)"/>`,
+    ).join("");
+    return `<svg class="air-fan-blades" viewBox="0 0 40 40" aria-hidden="true">${blades}<circle cx="20" cy="20" r="2"/></svg>`;
+  }
+
+  _airSwitches(keys) {
+    const definitions = [
+      ["air_x_fan_entity", "X-Fan · просушування", "X-Fan", "x-fan"],
+      ["air_lights_entity", "Підсвічування", "Світло", "light"],
+      ["air_health_entity", "Іонізація · Health", "Health", "health"],
+      ["air_power_save_entity", "Енергоощадження", "Економія", "save"],
+      ["air_8deg_heat_entity", "Підтримання +8 °C", "+8 °C", "eight"],
+      ["air_sleep_entity", "Сон", "Сон", "sleep"],
+      ["air_valve_entity", "Клапан повітря", "Клапан", "valve"],
+      [
+        "air_anti_direct_blow_entity",
+        "Захист від прямого потоку",
+        "Захист потоку",
+        "airflow",
+      ],
+      [
+        "air_light_sensor_entity",
+        "Датчик освітлення",
+        "Датчик світла",
+        "sensor",
+      ],
+      ["air_auto_x_fan_entity", "Автоматичний X-Fan", "Авто X-Fan", "x-fan"],
+      [
+        "air_auto_light_entity",
+        "Автоматичне підсвічування",
+        "Авто світло",
+        "light",
+      ],
+      ["air_beeper_entity", "Звуковий сигнал", "Звук", "beeper"],
+    ];
+    return keys
+      .map((key) => definitions.find((definition) => definition[0] === key))
+      .filter(Boolean)
+      .map(([key, label, short, icon]) => {
+        const entity = this._config[key],
+          feature = this._state(entity);
+        if (!entity) return "";
+        const unavailable = feature && !this._available(entity),
+          title = unavailable ? `${label}: тимчасово недоступно` : label;
+        return `<button class="air-switch" data-action="feature" data-entity="${this._escape(entity)}" title="${this._escape(title)}" aria-label="${this._escape(title)}" aria-pressed="${feature?.state === "on"}" ${feature ? this._disabled(!this._available(entity), entity) : "hidden disabled"}><span class="air-control-icon">${this._airOptionIcon(icon)}</span><span>${this._escape(short)}</span></button>`;
+      })
+      .join("");
+  }
+
+  _airOptionIcon(icon) {
+    const icons = {
+      "x-fan": "wind",
+      light: "lightbulb",
+      health: "trees",
+      save: "leaf",
+      eight: "house",
+      sleep: "moon",
+      valve: "air-vent",
+      airflow: "wind",
+      sensor: "sun",
+      beeper: "volume-2",
+    };
+    return this._lucideIcon(icons[icon] || "wind");
+  }
+
+  _swingLabel(mode) {
+    const key = String(mode)
+      .toLowerCase()
+      .replace(/[\s_-]/g, "");
+    return (
+      {
+        default: "Стандартне",
+        swingfull: "Повне хитання",
+        fixedupmost: "Верхнє положення",
+        fixedmiddleup: "Вище середини",
+        fixedmiddle: "Середнє положення",
+        fixedmiddlelow: "Нижче середини",
+        fixedlowest: "Нижнє положення",
+        swingdownmost: "Нижній діапазон",
+        swingmiddlelow: "Середньо-нижній діапазон",
+        swingmiddle: "Середній діапазон",
+        swingmiddleup: "Середньо-верхній діапазон",
+        swingupmost: "Верхній діапазон",
+      }[key] || mode
+    );
+  }
+
+  _swingOption(options, value) {
+    const key = String(value)
+      .toLowerCase()
+      .replace(/[\s_-]/g, "");
+    return (
+      (options || []).find(
+        (option) =>
+          String(option)
+            .toLowerCase()
+            .replace(/[\s_-]/g, "") === key,
+      ) || null
+    );
+  }
+
+  _fixedSwingModes(modes) {
+    return [
+      "fixed_upmost",
+      "fixed_middle_up",
+      "fixed_middle",
+      "fixed_middle_low",
+      "fixed_lowest",
+    ]
+      .map((mode) => this._swingOption(modes, mode))
+      .filter(Boolean);
+  }
+
+  _fixedSwingPosition(mode) {
+    return [
+      "fixed_upmost",
+      "fixed_middle_up",
+      "fixed_middle",
+      "fixed_middle_low",
+      "fixed_lowest",
+    ].findIndex((value) => this._swingOption([mode], value));
+  }
+
+  _swingMainIcon(kind) {
+    return kind === "fixed"
+      ? HOME_AIR_SWING_ASSETS[2]
+      : HOME_AIR_SWING_ASSETS[5];
+  }
+
+  _fixedAngleIcon(position = -1) {
+    return (
+      HOME_AIR_SWING_ASSETS[position < 0 ? 2 : position] ||
+      HOME_AIR_SWING_ASSETS[2]
+    );
+  }
+
+  _fixedSwingButtons(modes, current, available, busy) {
+    return modes
+      .map((mode) => {
+        const position = this._fixedSwingPosition(mode);
+        const label = this._swingLabel(mode),
+          caption = `Положення ${position + 1}: ${label}`;
+        return `<button class="air-fixed-position" data-action="air-fixed-position" data-mode="${this._escape(mode)}" title="${this._escape(caption)}" aria-label="${this._escape(caption)}" aria-pressed="${current === mode}" ${this._disabled(!available || busy, this._airId())}><span class="air-fixed-position-icon">${this._fixedAngleIcon(position)}</span><span>${position + 1}</span></button>`;
+      })
+      .join("");
+  }
+
+  _fanLabel(mode) {
+    return (
+      {
+        auto: "Авто",
+        low: "Низька",
+        medium_low: "Нижче середньої",
+        medium: "Середня",
+        medium_high: "Вище середньої",
+        high: "Висока",
+        turbo: "Турбо",
+        quiet: "Тихий",
+      }[mode] || mode
+    );
+  }
+
+  _updateAir() {
+    super._updateAir();
+    const panel = this.shadowRoot.querySelector('[data-live-panel="air"]');
+    if (!panel) return;
+    const id = this._airId(),
+      state = this._state(id),
+      a = state?.attributes || {},
+      available = this._available(id);
+    const roomTemperature = available
+      ? this._number(a.current_temperature)
+      : null;
+    this._setText(
+      '[data-live="air-room-caption"]',
+      roomTemperature === null
+        ? "Температура в кімнаті недоступна"
+        : `У кімнаті ${this._format(roomTemperature)} °C`,
+      panel,
+    );
+    const targetValue = available ? this._number(a.temperature) : null,
+      targetNode = panel.querySelector(".air-value");
+    if (!available) this._setText('[data-live="air-target"]', "—", panel);
+    targetNode?.classList.toggle("temperature-missing", targetValue === null);
+    this._setHidden(".air-degree", targetValue === null, panel);
+    const modeGroup = panel.querySelector(".modes"),
+      supportedModes = ["cool", "heat", "fan_only", "dry", "auto"].filter(
+        (mode) => (a.hvac_modes || []).includes(mode),
+      );
+    if (modeGroup) {
+      const currentModes = Array.from(
+        modeGroup.querySelectorAll('[data-action="air-mode"]'),
+      ).map((button) => button.dataset.mode);
+      if (supportedModes.join("|") !== currentModes.join("|"))
+        modeGroup.innerHTML = this._airModeButtons(
+          supportedModes,
+          state?.state,
+          available,
+          this._busy(id),
+        );
+      modeGroup.hidden = supportedModes.length === 0;
+      for (const button of modeGroup.querySelectorAll(
+        '[data-action="air-mode"]',
+      )) {
+        button.disabled = !available || this._busy(id);
+        button.title = available
+          ? button.getAttribute("aria-label")
+          : "Режим тимчасово недоступний";
+        button.setAttribute(
+          "aria-pressed",
+          String(state?.state === button.dataset.mode),
+        );
+      }
+    }
+    const fanGroup = panel.querySelector("[data-air-fan-speeds]"),
+      fanModes = a.fan_modes || [];
+    if (fanGroup) {
+      const currentModes = Array.from(
+        fanGroup.querySelectorAll('[data-action="air-fan-mode"]'),
+      ).map((button) => button.dataset.mode);
+      const orderedModes = [
+        "auto",
+        "quiet",
+        "low",
+        "medium_low",
+        "medium",
+        "medium_high",
+        "high",
+        "turbo",
+      ].filter((mode) => fanModes.includes(mode));
+      if (orderedModes.join("|") !== currentModes.join("|"))
+        fanGroup.innerHTML = this._airFanButtons(
+          fanModes,
+          a.fan_mode,
+          available,
+          this._busy(id),
+        );
+      fanGroup.hidden = orderedModes.length === 0;
+      for (const button of fanGroup.querySelectorAll(
+        '[data-action="air-fan-mode"]',
+      )) {
+        button.disabled = !available || this._busy(id);
+        button.title = available
+          ? button.getAttribute("aria-label")
+          : "Вентилятор тимчасово недоступний";
+        button.setAttribute(
+          "aria-pressed",
+          String(button.dataset.mode === a.fan_mode),
+        );
+      }
+    }
+    this._setText(
+      '[data-live="air-fan-speed"]',
+      this._fanLabel(a.fan_mode) || "—",
+      panel,
+    );
+    this._updateAirSwing(panel, a, available);
+    for (const [key] of HOME_DEVICE_CARD_FIELDS.air) {
+      if (key === "air_entity") continue;
+      const entity = this._config[key];
+      const button =
+        entity &&
+        panel.querySelector(
+          `[data-action="feature"][data-entity="${this._escape(entity)}"]`,
+        );
+      if (!button) continue;
+      const feature = this._state(entity);
+      const label =
+        HOME_DEVICE_CARD_FIELDS.air.find((field) => field[0] === key)?.[1] ||
+        key;
+      button.hidden = !feature;
+      button.disabled = !this._available(entity) || this._busy(entity);
+      button.title =
+        feature && !this._available(entity)
+          ? `${label}: тимчасово недоступно`
+          : label;
+      button.setAttribute("aria-pressed", String(feature?.state === "on"));
+      button.setAttribute("aria-label", button.title);
+    }
+  }
+
+  _updateAirSwing(panel, attributes, available) {
+    const modes = attributes.swing_modes || [],
+      fixedModes = this._fixedSwingModes(modes),
+      current = attributes.swing_mode;
+    const fullMode = this._swingOption(modes, "swing_full"),
+      defaultMode = this._swingOption(modes, "default");
+    const toggle = panel.querySelector('[data-action="air-swing-toggle"]'),
+      paletteButton = panel.querySelector('[data-action="air-swing-palette"]');
+    const palette = panel.querySelector("[data-air-fixed-palette]"),
+      busy = this._busy(this._airId());
+    if (toggle) {
+      toggle.hidden = !fullMode || !defaultMode;
+      toggle.disabled = !available || !fullMode || !defaultMode || busy;
+      toggle.title = available ? "Рух жалюзі" : "Жалюзі тимчасово недоступні";
+      toggle.setAttribute(
+        "aria-pressed",
+        String(
+          String(current || "")
+            .toLowerCase()
+            .startsWith("swing"),
+        ),
+      );
+    }
+    if (paletteButton) {
+      paletteButton.hidden = !fixedModes.length;
+      paletteButton.disabled = !available || !fixedModes.length || busy;
+      paletteButton.title = available
+        ? "Фіксований кут жалюзі"
+        : "Жалюзі тимчасово недоступні";
+      paletteButton.setAttribute(
+        "aria-pressed",
+        String(
+          String(current || "")
+            .toLowerCase()
+            .startsWith("fixed") || this._airFixedPaletteOpen,
+        ),
+      );
+      paletteButton.setAttribute(
+        "aria-expanded",
+        String(!!this._airFixedPaletteOpen),
+      );
+      const position = String(current || "")
+        .toLowerCase()
+        .startsWith("fixed")
+        ? this._fixedSwingPosition(current)
+        : 2;
+      const icon = paletteButton.querySelector(".air-swing-main-icon");
+      if (icon && icon.dataset.position !== String(position)) {
+        icon.dataset.position = String(position);
+        icon.innerHTML = this._fixedAngleIcon(position);
+      }
+    }
+    if (!palette) return;
+    const currentModes = Array.from(
+      palette.querySelectorAll('[data-action="air-fixed-position"]'),
+    ).map((button) => button.dataset.mode);
+    if (fixedModes.join("|") !== currentModes.join("|"))
+      palette.innerHTML = this._fixedSwingButtons(
+        fixedModes,
+        current,
+        available,
+        busy,
+      );
+    palette.hidden = !this._airFixedPaletteOpen || !fixedModes.length;
+    const secondRow = panel.querySelector(".air-unified-second");
+    if (secondRow) secondRow.hidden = !palette.hidden;
+    const swingGroup = panel.querySelector(".air-swing-main");
+    if (swingGroup)
+      swingGroup.hidden =
+        (!toggle || toggle.hidden) && (!paletteButton || paletteButton.hidden);
+    for (const button of palette.querySelectorAll(
+      '[data-action="air-fixed-position"]',
+    )) {
+      button.disabled = !available || busy;
+      if (!available) button.title = "Положення жалюзі тимчасово недоступне";
+      button.setAttribute(
+        "aria-pressed",
+        String(button.dataset.mode === current),
+      );
+    }
+  }
+
+  _updateTemperatureFeedback() {
+    const entity = this._airId();
+    const pending = this._pendingTargets.has(entity);
+    for (const button of this.shadowRoot.querySelectorAll(
+      ".round[data-action]",
+    )) {
+      const active =
+        pending && button.dataset.action === this._temperatureAction;
+      if (button.dataset.pending !== String(active))
+        button.dataset.pending = String(active);
+      if (button.getAttribute("aria-busy") !== String(active))
+        button.setAttribute("aria-busy", String(active));
+    }
+  }
+  _updateCardDynamic({ all, has, serviceEntity }) {
+    const sources = [
+      this._airId(),
+      ...HOME_DEVICE_CARD_FIELDS.air
+        .filter((field) => field[0] !== "air_entity")
+        .map(([name]) => this._config[name]),
+    ];
+    if (
+      all ||
+      sources.some(has) ||
+      (serviceEntity && sources.includes(serviceEntity))
+    )
+      this._updateAir();
+    return { temperatureFeedback: true };
+  }
+  _handleCardClick(button) {
+    if (button?.dataset.action === "air-fan-mode") {
+      const entity = this._airId(),
+        state = this._state(entity),
+        mode = button.dataset.mode;
+      if (
+        !button.disabled &&
+        this._available(entity) &&
+        (state?.attributes?.fan_modes || []).includes(mode) &&
+        !this._busy(entity)
+      )
+        this._service("climate", "set_fan_mode", {
+          entity_id: entity,
+          fan_mode: mode,
+        });
+      return true;
+    }
+    if (button?.dataset.action === "air-swing-palette") {
+      this._airFixedPaletteOpen = !this._airFixedPaletteOpen;
+      const state = this._state(this._airId());
+      this._updateAirSwing(
+        this.shadowRoot.querySelector('[data-live-panel="air"]'),
+        state?.attributes || {},
+        this._available(this._airId()),
+      );
+      return true;
+    }
+    if (
+      ["air-swing-toggle", "air-fixed-position"].includes(
+        button?.dataset.action,
+      )
+    ) {
+      const entity = this._airId(),
+        state = this._state(entity),
+        modes = state?.attributes?.swing_modes || [];
+      if (!button.disabled && this._available(entity) && !this._busy(entity)) {
+        const mode =
+          button.dataset.action === "air-swing-toggle"
+            ? this._swingOption(
+                modes,
+                String(state?.attributes?.swing_mode || "")
+                  .toLowerCase()
+                  .startsWith("swing")
+                  ? "default"
+                  : "swing_full",
+              )
+            : this._swingOption(modes, button.dataset.mode);
+        if (mode) {
+          if (button.dataset.action === "air-fixed-position") {
+            this._airFixedPaletteOpen = false;
+            this._updateAirSwing(
+              this.shadowRoot.querySelector('[data-live-panel="air"]'),
+              state?.attributes || {},
+              true,
+            );
           }
-          this._error = error?.message || 'Не вдалося змінити стан розетки.';
-          this._updateSocket();
-          this._setText('[data-live="error"]', this._error);
-          this._setHidden('[data-live="error"]', false);
+          this._service("climate", "set_swing_mode", {
+            entity_id: entity,
+            swing_mode: mode,
+          });
         }
       }
+      return true;
+    }
+    return false;
+  }
+  _click(event) {
+    if (this._handleCardClick(event.target.closest("button[data-action]")))
+      return;
+    super._click(event);
+  }
+}
+if (!customElements.get("home-air-card"))
+  customElements.define("home-air-card", HomeAirCard);
+class HomeRoomCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "room";
+  }
+  static get cardTitle() {
+    return ["room_temperature_entity", "Спальня"];
+  }
+  _content() {
+    return this._room();
+  }
+  _roomValue(entityKey, digits) {
+    const id = this._config[entityKey];
+    return this._available(id) ? this._format(this._value(id), digits) : "—";
+  }
 
-      _energyOverview() {
-        const c = this._config;
-        return `<article class="panel desktop-energy" aria-label="Енергія бойлера"><div class="energy-heading"><div><h2>Споживання бойлера</h2><span class="secondary">Потужність та історія</span></div><span class="power-now"><span data-live="power">${this._format(this._value(c.power_entity), 0)}</span> <small>Вт зараз</small></span></div><div class="energy-stats"><div><span class="secondary">Сьогодні</span><strong><span data-live="energy-daily">${this._format(this._value(c.energy_daily), 2)}</span> <small>кВт·год</small></strong></div><div><span class="secondary">Цього місяця</span><strong><span data-live="energy-monthly">${this._format(this._value(c.energy_monthly), 2)}</span> <small>кВт·год</small></strong></div></div><div class="graph-slot" data-graph="boiler"><span class="secondary">Завантаження історії…</span></div><button class="text-button" data-action="view-energy">Детальні показники${this._icon('arrow-top-right')}</button></article>`;
+  _room() {
+    const c = this._config,
+      batteryId = c.battery_entity,
+      battery = this._state(batteryId);
+    const batteryAvailable = this._available(batteryId);
+    const batteryValue = batteryAvailable ? this._number(battery.state) : null;
+    const icon = (name) => this._lucideIcon(name);
+    const batteryHtml = batteryId
+      ? '<span class="room-battery" data-live="room-battery" ' +
+        (batteryAvailable ? "" : "hidden") +
+        ">" +
+        icon("battery-medium") +
+        "<span>" +
+        (batteryValue === null ? "—" : this._format(batteryValue, 0) + "%") +
+        "</span></span>"
+      : "";
+    return (
+      '<article class="room-sensor-card" data-live-panel="room" aria-label="Температура та вологість">' +
+      '<header class="room-header"><span class="room-icon">' +
+      icon("thermometer") +
+      '</span><div class="room-heading"><h2>' +
+      this._escape(c.title || "Спальня") +
+      '</h2><span class="secondary">Температура та вологість</span></div>' +
+      batteryHtml +
+      "</header>" +
+      '<div class="room-readings"><div class="room-reading"><span class="secondary">' +
+      icon("thermometer") +
+      this._escape(c.room_temperature_label || "Температура") +
+      '</span><div class="metric-value"><span data-live="room-temperature">' +
+      this._roomValue("room_temperature_entity", 1) +
+      "</span><small>°C</small></div></div>" +
+      '<div class="room-reading"><span class="secondary">' +
+      icon("droplets") +
+      this._escape(c.humidity_label || "Вологість") +
+      '</span><div class="metric-value"><span data-live="room-humidity">' +
+      this._roomValue("humidity_entity", 0) +
+      "</span><small>%</small></div></div></div>" +
+      "</article>"
+    );
+  }
+
+  _updateRoom() {
+    for (const key of ["room-temperature", "room-humidity"]) {
+      const value = this._roomValue(
+        key === "room-temperature"
+          ? "room_temperature_entity"
+          : "humidity_entity",
+        1,
+      );
+      this.shadowRoot
+        .querySelector(`[data-live="${key}"]`)
+        ?.parentElement?.classList.toggle("room-missing", value === "—");
+    }
+    this._setText(
+      '[data-live="room-temperature"]',
+      this._roomValue("room_temperature_entity", 1),
+    );
+    this._setText(
+      '[data-live="room-humidity"]',
+      this._roomValue("humidity_entity", 0),
+    );
+    const batteryId = this._config.battery_entity,
+      battery = this._state(batteryId);
+    const available = this._available(batteryId),
+      value = available ? this._number(battery.state) : null;
+    this._setHidden('[data-live="room-battery"]', !batteryId || !available);
+    this._setText(
+      '[data-live="room-battery"] span',
+      value === null ? "—" : this._format(value, 0) + "%",
+    );
+  }
+  _updateCardDynamic({ all, has }) {
+    const sources = [
+      this._config.room_temperature_entity,
+      this._config.humidity_entity,
+      this._config.battery_entity,
+    ];
+    if (all || sources.some(has)) this._updateRoom();
+  }
+}
+if (!customElements.get("home-room-card"))
+  customElements.define("home-room-card", HomeRoomCard);
+class HomeSocketCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "socket";
+  }
+  static get cardTitle() {
+    return ["switch_entity", "Розетка"];
+  }
+  _content() {
+    return this._socket();
+  }
+  _socketReading(key, digits = 1, conversion = null) {
+    const id = this._config[key],
+      state = this._state(id);
+    let value = this._available(id) ? this._number(state.state) : null;
+    const unit = String(state?.attributes?.unit_of_measurement || "")
+      .trim()
+      .toLowerCase();
+    if (
+      value !== null &&
+      conversion === "power" &&
+      ["kw", "kilowatt", "kilowatts"].includes(unit)
+    )
+      value *= 1000;
+    if (
+      value !== null &&
+      conversion === "voltage" &&
+      ["mv", "millivolt", "millivolts"].includes(unit)
+    )
+      value /= 1000;
+    if (
+      value !== null &&
+      conversion === "current" &&
+      ["ma", "milliamp", "milliamps"].includes(unit)
+    )
+      value /= 1000;
+    if (
+      value !== null &&
+      conversion === "energy" &&
+      ["wh", "watt-hour", "watt hours"].includes(unit)
+    )
+      value /= 1000;
+    return value === null ? "—" : this._format(value, digits);
+  }
+
+  _socket() {
+    const c = this._config,
+      state = this._state(c.switch_entity);
+    const available = this._available(c.switch_entity),
+      on = available && state.state === "on";
+    const pending = !!this._socketPending,
+      icon = (name) => this._lucideIcon(name);
+    return (
+      '<article class="socket-card" data-live-panel="socket" aria-label="Розетка">' +
+      '<header class="socket-header"><span class="socket-icon">' +
+      icon("plug") +
+      '</span><div class="socket-heading"><h2>' +
+      this._escape(c.title || "Розетка") +
+      '</h2><span class="secondary" data-live="socket-status">' +
+      (pending
+        ? "Очікує підтвердження"
+        : on
+          ? "Увімкнено"
+          : available
+            ? "Вимкнено"
+            : "Недоступна") +
+      '</span></div><button class="socket-power-button" data-action="socket-toggle" data-pending="' +
+      pending +
+      '" aria-label="' +
+      (on ? "Вимкнути" : "Увімкнути") +
+      ' розетку" aria-pressed="' +
+      on +
+      '" aria-busy="' +
+      pending +
+      '" ' +
+      this._disabled(!available || pending, c.switch_entity) +
+      '><span class="socket-spinner" aria-hidden="true"></span>' +
+      icon("power") +
+      "</button></header>" +
+      '<div class="socket-reading"><div class="metric-value"><span data-live="socket-power">' +
+      this._socketReading("power_entity", 0, "power") +
+      '</span><small data-live="socket-power-unit">Вт</small></div><span class="secondary">Поточне споживання</span></div>' +
+      '<div class="socket-metrics"><div><span class="secondary">' +
+      icon("zap") +
+      'Напруга</span><strong><span data-live="socket-voltage">' +
+      this._socketReading("voltage_entity", 1, "voltage") +
+      '</span><small data-live="socket-voltage-unit">В</small></strong></div>' +
+      '<div><span class="secondary">' +
+      icon("activity") +
+      'Струм</span><strong><span data-live="socket-current">' +
+      this._socketReading("current_entity", 2, "current") +
+      "</span><small>А</small></strong></div>" +
+      '<div><span class="secondary">' +
+      icon("chart-no-axes-column") +
+      this._escape(c.energy_label || "Енергія") +
+      '</span><strong><span data-live="socket-energy">' +
+      this._socketReading("energy_daily_entity", 2, "energy") +
+      "</span><small>кВт·год</small></strong></div></div></article>"
+    );
+  }
+
+  _updateSocket() {
+    const entity = this._config.switch_entity,
+      state = this._state(entity);
+    const available = this._available(entity),
+      on = available && state.state === "on";
+    if (
+      this._socketPending &&
+      this._socketPending.entity === entity &&
+      available &&
+      on === this._socketPending.on
+    ) {
+      clearTimeout(this._socketPending.timer);
+      this._socketPending = null;
+    }
+    const pending = !!this._socketPending;
+    const button = this.shadowRoot.querySelector(
+      '[data-action="socket-toggle"]',
+    );
+    this._setText(
+      '[data-live="socket-status"]',
+      pending
+        ? "Очікує підтвердження"
+        : on
+          ? "Увімкнено"
+          : available
+            ? "Вимкнено"
+            : "Недоступна",
+    );
+    if (button) {
+      button.disabled = !available || pending || this._busy(entity);
+      button.setAttribute("aria-pressed", String(on));
+      button.setAttribute("aria-busy", String(pending));
+      button.setAttribute(
+        "aria-label",
+        (on ? "Вимкнути" : "Увімкнути") + " розетку",
+      );
+      button.dataset.pending = String(pending);
+    }
+    const values = [
+      [
+        '[data-live="socket-power"]',
+        this._socketReading("power_entity", 0, "power"),
+        ".socket-reading .metric-value",
+      ],
+      [
+        '[data-live="socket-voltage"]',
+        this._socketReading("voltage_entity", 1, "voltage"),
+        ".socket-metrics>div:nth-child(1) strong",
+      ],
+      [
+        '[data-live="socket-current"]',
+        this._socketReading("current_entity", 2, "current"),
+        ".socket-metrics>div:nth-child(2) strong",
+      ],
+      [
+        '[data-live="socket-energy"]',
+        this._socketReading("energy_daily_entity", 2, "energy"),
+        ".socket-metrics>div:nth-child(3) strong",
+      ],
+    ];
+    for (const [selector, value, parent] of values) {
+      this._setText(selector, value);
+      const reading = this.shadowRoot.querySelector(parent);
+      reading?.classList.toggle("socket-missing", value === "—");
+      reading?.querySelector("small")?.toggleAttribute("hidden", value === "—");
+    }
+  }
+
+  async _toggleSocket() {
+    const entity = this._config.switch_entity;
+    if (!this._available(entity) || this._busy(entity) || this._socketPending)
+      return;
+    const generation = this._generation;
+    const on = this._state(entity).state !== "on";
+    this._error = "";
+    this._setHidden('[data-live="error"]', true);
+    const pending = { entity, on, timer: null };
+    this._socketPending = pending;
+    this._updateSocket();
+    pending.timer = setTimeout(() => {
+      if (this._socketPending !== pending) return;
+      this._socketPending = null;
+      this._error =
+        (this._state(entity)?.attributes?.friendly_name || entity) +
+        " не підтвердив зміну стану за 15 секунд.";
+      this._updateSocket();
+      this._setText('[data-live="error"]', this._error);
+      this._setHidden('[data-live="error"]', false);
+    }, 15000);
+    try {
+      await this._hass.callService("switch", on ? "turn_on" : "turn_off", {
+        entity_id: entity,
+      });
+      if (generation === this._generation) this._updateSocket();
+    } catch (error) {
+      if (generation !== this._generation) return;
+      if (this._socketPending === pending) {
+        clearTimeout(pending.timer);
+        this._socketPending = null;
       }
+      this._error = error?.message || "Не вдалося змінити стан розетки.";
+      this._updateSocket();
+      this._setText('[data-live="error"]', this._error);
+      this._setHidden('[data-live="error"]', false);
+    }
+  }
+  _updateCardDynamic({ all, has }) {
+    const sources = HOME_DEVICE_CARD_FIELDS.socket.map(
+      ([name]) => this._config[name],
+    );
+    if (all || sources.some(has)) this._updateSocket();
+  }
+  _handleCardClick(button) {
+    if (button?.dataset.action !== "socket-toggle") return false;
+    this._toggleSocket();
+    return true;
+  }
+  _click(event) {
+    if (this._handleCardClick(event.target.closest("button[data-action]")))
+      return;
+    super._click(event);
+  }
+}
+if (!customElements.get("home-socket-card"))
+  customElements.define("home-socket-card", HomeSocketCard);
+class HomeRiverCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "river";
+  }
+  static get cardTitle() {
+    return ["river_status", "EcoFlow RIVER Max"];
+  }
+  _content() {
+    return this._river();
+  }
+  _riverRead(configKey, unit, digits = 1) {
+    if (this._state(this._config.river_status)?.state !== "online") return "—";
+    const state = this._state(this._config[configKey]);
+    let value = this._number(state?.state);
+    if (value === null) return "—";
+    const sensorUnit = String(state?.attributes?.unit_of_measurement || "")
+      .trim()
+      .toLowerCase();
+    if (
+      unit === "A" &&
+      (!sensorUnit ||
+        sensorUnit === "ma" ||
+        sensorUnit === "milliamp" ||
+        sensorUnit === "milliamps")
+    )
+      value /= 1000;
+    if (
+      ["V", "В"].includes(unit) &&
+      (sensorUnit === "mv" ||
+        sensorUnit === "millivolt" ||
+        sensorUnit === "millivolts")
+    )
+      value /= 1000;
+    return unit
+      ? `${this._format(value, digits)} ${unit}`
+      : this._format(value, digits);
+  }
 
-      _riverRead(configKey, unit, digits = 1) {
-        if (this._state(this._config.river_status)?.state !== 'online') return '—';
-        const state = this._state(this._config[configKey]);
-        let value = this._number(state?.state);
-        if (value === null) return '—';
-        const sensorUnit = String(state?.attributes?.unit_of_measurement || '').trim().toLowerCase();
-        if (unit === 'A' && (!sensorUnit || sensorUnit === 'ma' || sensorUnit === 'milliamp' || sensorUnit === 'milliamps')) value /= 1000;
-        if (['V', 'В'].includes(unit) && (sensorUnit === 'mv' || sensorUnit === 'millivolt' || sensorUnit === 'millivolts')) value /= 1000;
-        return unit ? `${this._format(value, digits)} ${unit}` : this._format(value, digits);
-      }
+  _riverRuntime() {
+    if (this._state(this._config.river_status)?.state !== "online") return "—";
+    const state = this._state(this._config.river_runtime);
+    const value = this._number(state?.state);
+    if (value === null || value <= 0) return "—";
+    const unit = String(state?.attributes?.unit_of_measurement || "min")
+      .trim()
+      .toLowerCase();
+    const minutes =
+      unit === "s" || unit.startsWith("sec")
+        ? value / 60
+        : unit === "h" || unit.startsWith("hour")
+          ? value * 60
+          : value;
+    const total = Math.round(minutes),
+      hours = Math.floor(total / 60),
+      remainingMinutes = total % 60;
+    return hours
+      ? `${hours} год ${remainingMinutes} хв`
+      : `${remainingMinutes} хв`;
+  }
 
-      _riverRuntime() {
-        if (this._state(this._config.river_status)?.state !== 'online') return '—';
-        const state = this._state(this._config.river_runtime);
-        const value = this._number(state?.state);
-        if (value === null || value <= 0) return '—';
-        const unit = String(state?.attributes?.unit_of_measurement || 'min').trim().toLowerCase();
-        const minutes = unit === 's' || unit.startsWith('sec') ? value / 60 : unit === 'h' || unit.startsWith('hour') ? value * 60 : value;
-        const total = Math.round(minutes), hours = Math.floor(total / 60), remainingMinutes = total % 60;
-        return hours ? `${hours} год ${remainingMinutes} хв` : `${remainingMinutes} хв`;
-      }
-
-      _river() {
-        const c = this._config, online = this._state(c.river_status)?.state === 'online';
-        const percent = online ? this._number(this._state(c.river_battery)?.state) : null;
-        const fill = percent === null ? 0 : Math.max(0, Math.min(100, percent));
-        const icon = name => this._lucideIcon(name);
-        const output = (configKey, label, iconName) => `<div><span>${icon(iconName)}${label}</span><strong><span data-live="river-output-${configKey.replace(/^river_/, '').replace(/_output$/, '')}">${this._riverRead(configKey, '', 0)}</span><small>Вт</small></strong></div>`;
-        const battery = (title, prefix, iconName) => {
-          const level = online ? this._number(this._state(c[`${prefix}_level_entity`])?.state) : null;
-          const levelFill = level === null ? 0 : Math.max(0, Math.min(100, level));
-          return `<div class="river-battery"><div class="river-battery-title">${icon(iconName)}<span>${title}</span></div><div class="river-percent"><span data-live="river-${prefix}-level">${level === null ? '—' : this._format(level, 0)}</span><small>%</small></div><div class="river-track"><span data-live="river-${prefix}-fill" style="width:${levelFill}%"></span></div><div class="river-readings"><div class="river-reading">${icon('thermometer')}<span data-live="river-${prefix}-temperature">${this._riverRead(`${prefix}_temperature_entity`, '°C', 0)}</span></div><div class="river-reading">${icon('zap')}<span data-live="river-${prefix}-volts">${this._riverRead(`${prefix}_volts_entity`, 'В', 1)}</span></div></div></div>`;
-        };
-        const detailRows = [
-          ['Струм', this._riverRead('main_current_entity', 'A', 1), this._riverRead('slave_current_entity', 'A', 1), 'current'],
-          ['Цикли', this._riverRead('main_cycles_entity', '', 0), this._riverRead('slave_cycles_entity', '', 0), 'cycles'],
-          ['Мін. комірка', this._riverRead('main_min_cells_entity', 'В', 2), this._riverRead('slave_min_cells_entity', 'В', 2), 'min-cell'],
-          ['Макс. комірка', this._riverRead('main_max_cells_entity', 'В', 2), this._riverRead('slave_max_cells_entity', 'В', 2), 'max-cell'],
-        ];
-        return `<style>
+  _river() {
+    const c = this._config,
+      online = this._state(c.river_status)?.state === "online";
+    const percent = online
+      ? this._number(this._state(c.river_battery)?.state)
+      : null;
+    const fill = percent === null ? 0 : Math.max(0, Math.min(100, percent));
+    const icon = (name) => this._lucideIcon(name);
+    const output = (configKey, label, iconName) =>
+      `<div><span>${icon(iconName)}${label}</span><strong><span data-live="river-output-${configKey.replace(/^river_/, "").replace(/_output$/, "")}">${this._riverRead(configKey, "", 0)}</span><small>Вт</small></strong></div>`;
+    const battery = (title, prefix, iconName) => {
+      const level = online
+        ? this._number(this._state(c[`${prefix}_level_entity`])?.state)
+        : null;
+      const levelFill = level === null ? 0 : Math.max(0, Math.min(100, level));
+      return `<div class="river-battery"><div class="river-battery-title">${icon(iconName)}<span>${title}</span></div><div class="river-percent"><span data-live="river-${prefix}-level">${level === null ? "—" : this._format(level, 0)}</span><small>%</small></div><div class="river-track"><span data-live="river-${prefix}-fill" style="width:${levelFill}%"></span></div><div class="river-readings"><div class="river-reading">${icon("thermometer")}<span data-live="river-${prefix}-temperature">${this._riverRead(`${prefix}_temperature_entity`, "°C", 0)}</span></div><div class="river-reading">${icon("zap")}<span data-live="river-${prefix}-volts">${this._riverRead(`${prefix}_volts_entity`, "В", 1)}</span></div></div></div>`;
+    };
+    const detailRows = [
+      [
+        "Струм",
+        this._riverRead("main_current_entity", "A", 1),
+        this._riverRead("slave_current_entity", "A", 1),
+        "current",
+      ],
+      [
+        "Цикли",
+        this._riverRead("main_cycles_entity", "", 0),
+        this._riverRead("slave_cycles_entity", "", 0),
+        "cycles",
+      ],
+      [
+        "Мін. комірка",
+        this._riverRead("main_min_cells_entity", "В", 2),
+        this._riverRead("slave_min_cells_entity", "В", 2),
+        "min-cell",
+      ],
+      [
+        "Макс. комірка",
+        this._riverRead("main_max_cells_entity", "В", 2),
+        this._riverRead("slave_max_cells_entity", "В", 2),
+        "max-cell",
+      ],
+    ];
+    return `<style>
 .river-card{--river-line:var(--k-line);--river-soft:var(--k-soft);--river-accent:var(--k-accent);width:100%;max-width:none;margin:0;padding:20px;border-radius:23px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
 .river-card *{box-sizing:border-box}.river-card svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}.river-card .secondary{display:flex;align-items:center;gap:5px;margin-top:0;color:var(--k-muted);font-size:12px;line-height:1.4}.river-header{display:flex;align-items:center;gap:10px;padding:0}.river-device{display:grid;place-items:center;width:39px;height:39px;border-radius:14px;background:var(--k-accent-bg);color:var(--k-accent)}.river-device svg{width:21px;height:21px}.river-heading{flex:1;min-width:0}.river-heading h2{font-size:14px;font-weight:500;line-height:1.4;letter-spacing:normal;margin:0}.river-heading .secondary{margin:1px 0 0}.river-connection{display:flex;align-items:center;color:var(--k-accent)}.river-connection.offline{color:var(--k-muted)}
 .river-charge{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:16px 0 12px}.river-large{font-size:46px;line-height:1;letter-spacing:-2px;font-variant-numeric:tabular-nums;margin-bottom:6px}.river-large small{font-size:18px;letter-spacing:0;vertical-align:top;margin-left:4px}.river-runtime{text-align:right}.river-runtime .secondary{justify-content:flex-end}.river-runtime strong{display:block;font-size:18px;font-weight:400;margin-top:6px;font-variant-numeric:tabular-nums}.river-track{height:5px;border-radius:5px;background:var(--river-soft);overflow:hidden}.river-track>span{display:block;height:100%;border-radius:inherit;background:var(--river-accent);transition:width .2s ease}
@@ -1184,630 +2491,390 @@ if (!HOME_DEVICE_BASE) {
 .river-batteries{display:grid;grid-template-columns:1fr 1fr;background:var(--river-soft);border-radius:14px;padding:12px 0}.river-battery{padding:0 14px;min-width:0}.river-battery+.river-battery{border-left:1px solid var(--river-line)}.river-battery-title{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--k-muted)}.river-percent{font-size:28px;line-height:1.2;letter-spacing:-.6px;margin:8px 0 7px;font-variant-numeric:tabular-nums}.river-percent small{font-size:12px;margin-left:3px;color:var(--k-muted)}.river-battery .river-track{height:4px;margin-bottom:8px;background:var(--k-card)}.river-readings{display:flex;justify-content:space-between;align-items:center;gap:5px}.river-reading{display:flex;align-items:center;gap:3px;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}.river-reading svg{width:14px;height:14px;color:var(--k-muted)}
 .river-details{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;padding:12px 0 0;background:transparent;color:var(--k-muted);font-size:12px}.river-details svg{transition:transform .15s ease}.river-details[aria-expanded=true] svg{transform:rotate(180deg)}.river-detail-row{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:6px;padding:10px 0;border-bottom:1px solid var(--river-line);font-size:11px}.river-detail-row>span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}.river-detail-head{color:var(--k-muted)}
 @media(max-width:380px){.river-card{padding:16px}.river-battery{padding:0 10px}.river-outputs{gap:3px}.river-outputs>div>div>span{gap:2px;font-size:10px}.river-outputs svg{width:12px;height:12px}.river-outputs strong{font-size:12px}}
-</style><article class="river-card" aria-label="EcoFlow RIVER Max" data-live-panel="river" data-offline="${!online}"><header class="river-header"><span class="river-device">${icon('battery-charging')}</span><div class="river-heading"><h2>${this._escape(this._config.title || 'EcoFlow RIVER Max')}</h2><span class="secondary" data-live="river-status">${online ? 'Онлайн' : 'Станція офлайн'}</span></div><span class="river-connection ${online ? '' : 'offline'}" data-live="river-connection" aria-label="${online ? 'Онлайн' : 'Офлайн'}">${icon('wifi')}</span></header><p class="river-offline-note" data-live="river-offline-note" ${online ? "hidden" : ""}>Станція офлайн. Поточні дані знову будуть після підключення.</p><div class="river-charge"><div><div class="river-large"><span data-live="river-battery">${percent === null ? '—' : this._format(percent, 0)}</span><small>%</small></div><span class="secondary">Загальний заряд</span></div><div class="river-runtime"><span class="secondary">${icon('clock-3')}Залишилось</span><strong data-live="river-runtime">${this._riverRuntime()}</strong></div></div><div class="river-track" role="meter" aria-label="Загальний заряд" aria-valuemin="0" aria-valuemax="100" ${percent === null ? '' : `aria-valuenow="${fill}"`}><span data-live="river-charge-fill" style="width:${fill}%"></span></div><div class="river-power"><div><span class="secondary">${icon('arrow-down-left')}Вхід</span><strong><span data-live="river-input">${this._riverRead('river_input', '', 0)}</span><small>Вт</small></strong></div><div><span class="secondary">${icon('arrow-up-right')}Загальний вихід</span><strong><span data-live="river-output">${this._riverRead('river_output', '', 0)}</span><small>Вт</small></strong></div></div><section class="river-outputs" aria-label="Потужність виходів"><div class="river-output-column">${output('river_ac_output', 'AC', 'plug')}${output('river_dc_output', 'DC', 'cable')}${output('river_usb_c_output', 'USB-C', 'usb')}</div><div class="river-output-column">${output('river_usb_1_output', 'USB 1', 'usb')}${output('river_usb_2_output', 'USB 2', 'usb')}${output('river_usb_3_output', 'USB 3', 'usb')}</div></section><section class="river-batteries" aria-label="Дві батареї">${battery('Основна', 'main', 'battery')}${battery('Додаткова', 'slave', 'battery-plus')}</section><button class="river-details" data-action="river-details" aria-expanded="false" aria-controls="river-extra"><span>Деталі батарей</span>${icon('chevron-down')}</button><div id="river-extra" hidden><div class="river-detail-row river-detail-head"><span></span><span>Основна</span><span>Додаткова</span></div>${detailRows.map(([label, main, slave, key]) => `<div class="river-detail-row"><span>${label}</span><span data-live="river-main-${key}">${main}</span><span data-live="river-slave-${key}">${slave}</span></div>`).join('')}</div></article>`;
-      }
-
-      _batteryDetails() {
-        const online = this._state(this._config.river_status)?.state === 'online';
-        const read = (entity, unit, digits = 1, positive = false) => {
-          const value = this._value(this._config[entity]);
-          return online && value !== null && (!positive || value > 0) ? this._format(value, digits) + (unit ? ` ${unit}` : '') : '—';
-        };
-        const sections = [
-          ['Основна батарея', 'main', [['Заряд', 'level_entity', '%', 1], ['Повна ємність', 'full_entity', 'мА·год', 0, true], ['Залишкова ємність', 'remain_entity', 'мА·год', 0], ['Напруга батареї', 'volts_entity', 'В', 3, true], ['Струм батареї', 'current_entity', 'мА', 0], ['Комірки · мін. / макс.', ['min_cells_entity', 'max_cells_entity'], 'В', 3, true], ['Температури · мін. / макс.', ['min_temperature_entity', 'max_temperature_entity'], '°C', 1], ['Цикли', 'cycles_entity', '', 0]]],
-          ['Додаткова батарея', 'slave', [['Заряд', 'level_entity', '%', 1], ['Повна ємність', 'full_entity', 'мА·год', 0, true], ['Залишкова ємність', 'remain_entity', 'мА·год', 0], ['Напруга батареї', 'volts_entity', 'В', 3, true], ['Струм батареї', 'current_entity', 'мА', 0], ['Комірки · мін. / макс.', ['min_cells_entity', 'max_cells_entity'], 'В', 3, true], ['Температури · мін. / макс.', ['min_temperature_entity', 'max_temperature_entity'], '°C', 1], ['Цикли', 'cycles_entity', '', 0]]],
-        ];
-        const rows = sections.map(([title, prefix, fields]) => `<article class="panel"><h2>${title}</h2>${fields.map(([label, field, unit, digits, positive]) => {
-          const entity = (name) => `${prefix}_${name}`;
-          const value = Array.isArray(field) ? field.map(name => read(entity(name), unit, digits, positive)).join(' / ') : read(entity(field), unit, digits, positive);
-          const key = `battery-${prefix}-${label === 'Заряд' ? 'level' : label === 'Повна ємність' ? 'full' : label === 'Залишкова ємність' ? 'remain' : label === 'Напруга батареї' ? 'volts' : label === 'Струм батареї' ? 'current' : label.startsWith('Комірки') ? 'cells' : label.startsWith('Температури') ? 'temps' : 'cycles'}`;
-          return this._row(label, value, key);
-        }).join('')}</article>`).join('');
-        return `<article class="panel" data-live="river-offline-note" ${online ? 'hidden' : ''}><p class="notice">Станція офлайн. Поточні вимірювання приховані; попередні записи доступні на графіках.</p></article>${rows}<div class="graph-slot" data-graph="river-current"></div><div class="graph-slot" data-graph="river-cells"></div>`;
-      }
-
-      _temperature(entity, delta) {
-        if (this._busy(entity) || !this._available(entity)) return;
-        this._temperatureAction = `${kind === 'boiler' ? 'boiler' : 'air'}-${delta > 0 ? 'plus' : 'minus'}`;
-        super._temperature(entity, delta);
-      }
-
-      _boiler() {
-        let html = super._boiler();
-        html = html.replace('<div class="water-large">', '<div class="water-large"><span class="secondary boiler-current-label">Температура води</span>');
-        html = html.replace(this._icon('water-boiler'), this._lucideIcon('heater'));
-        for (const [action, icon] of [['boiler-minus', 'minus'], ['boiler-plus', 'plus'], ['boiler-power', 'power']]) {
-          const pattern = new RegExp(`(<button[^>]*data-action="${action}"[^>]*>)[\\s\\S]*?(<\\/button>)`);
-          html = html.replace(pattern, (_, open, close) => `${open}${this._lucideIcon(icon)}${close}`);
-        }
-        html = html.replace('<small class="degree">°C</small>', '<small class="degree" data-live="boiler-current-unit">°C</small>');
-        html = html.replace(/(<span data-live="boiler-target">[^<]*<\/span>)°/, '$1<small data-live="boiler-target-unit">°C</small>');
-        html = html.replace(/<div class="features"[^>]*>[\s\S]*?<\/div>/, () => this._boilerFeatures());
-        return html;
-      }
-
-      _boilerFeatures() {
-        const definitions = [
-          ['memo_entity', 'Memo U', 'house'],
-          ['mega_entity', 'Mega Water', 'droplets'],
-          ['sterilization_entity', 'Стерилізація', 'shield-check'],
-        ];
-        const buttons = definitions.map(([key, label, icon]) => {
-          const entity = this._config[key], feature = this._state(entity);
-          if (!entity) return '';
-          const unavailable = feature && !this._available(entity);
-          const title = unavailable ? `${label}: тимчасово недоступно` : label;
-          return `<button class="feature" data-action="feature" data-entity="${this._escape(entity)}" title="${this._escape(title)}" aria-label="${this._escape(title)}" aria-pressed="${feature?.state === 'on'}" ${feature ? this._disabled(!this._available(entity), entity) : 'hidden disabled'}><span class="boiler-feature-icon">${this._lucideIcon(icon)}</span><span>${label}</span></button>`;
-        }).join('');
-        return `<div class="features" role="group" aria-label="Режими бойлера">${buttons}</div>`;
-      }
-
-      _updateBoiler() {
-        super._updateBoiler();
-        const panel = this.shadowRoot.querySelector('[data-live-panel="boiler"]');
-        if (!panel) return;
-        if (!this._available(this._config.boiler_entity)) this._setText('[data-live="boiler-target"]', '—', panel);
-        this._setHidden('[data-live="boiler-progress"]', !this._available(this._config.boiler_entity) || this._number(this._state(this._config.boiler_entity)?.attributes?.current_temperature) === null, panel);
-        for (const [key, unit] of [['boiler-current', 'boiler-current-unit'], ['boiler-target', 'boiler-target-unit']]) {
-          const value = panel.querySelector(`[data-live="${key}"]`), missing = !value || this._number(value.textContent.replace(/,/g, '.')) === null;
-          value?.parentElement?.classList.toggle('temperature-missing', missing);
-          this._setHidden(`[data-live="${unit}"]`, missing, panel);
-        }
-        for (const [key, label] of [['memo_entity', 'Memo U'], ['mega_entity', 'Mega Water'], ['sterilization_entity', 'Стерилізація']]) {
-          const entity = this._config[key];
-          const button = entity && panel.querySelector(`[data-action="feature"][data-entity="${this._escape(entity)}"]`);
-          if (!button) continue;
-          const feature = this._state(entity), exists = !!feature, available = this._available(entity);
-          button.hidden = !exists;
-          button.disabled = !available || this._busy(entity);
-          button.setAttribute('aria-pressed', String(feature?.state === 'on'));
-          button.title = exists && !available ? `${label}: тимчасово недоступно` : label;
-          button.setAttribute('aria-label', button.title);
-        }
-      }
-
-      _air() {
-        let html = super._air();
-        html = html.replace(this._icon('air-conditioner'), this._lucideIcon('air-vent'));
-        const id = this._airId(), state = this._state(id), a = state?.attributes || {}, available = this._available(id);
-        html = html.replace(/<span data-live="air-room">[\s\S]*?<\/span>/, '');
-        const room = this._number(a.current_temperature);
-        html = html.replace('<span class="secondary">Задана температура</span>', `<span class="secondary" data-live="air-room-caption">У кімнаті ${available ? this._format(room) : '—'} °C</span>`);
-        html = html.replace(/<div class="modes"[^>]*>[\s\S]*?<\/div>/, `<div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(a.hvac_modes, state?.state, available, this._busy(id))}</div>`);
-        html = html.replace(/(<button class="round" data-action="air-minus"[^>]*>)[\s\S]*?(<\/button>)/, (_, open, close) => `${open}${this._lucideIcon('minus')}${close}`);
-        html = html.replace(/(<button class="round" data-action="air-plus"[^>]*>)[\s\S]*?(<\/button>)/, (_, open, close) => `${open}${this._lucideIcon('plus')}${close}`);
-        html = html.replace(/(<button class="icon-button[^>]*data-action="air-power"[^>]*>)[\s\S]*?(<\/button>)/, (_, open, close) => `${open}${this._lucideIcon('power')}${close}`);
-        html = html.replace(/<div class="fan">[\s\S]*?<\/div>/, `<div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || '—')}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, this._busy(id))}</div></div>`);
-        const fullMode = this._swingOption(a.swing_modes, 'swing_full'), defaultMode = this._swingOption(a.swing_modes, 'default');
-        const moving = String(a.swing_mode || '').toLowerCase().startsWith('swing');
-        const fixed = String(a.swing_mode || '').toLowerCase().startsWith('fixed');
-        const fixedPosition = fixed ? this._fixedSwingPosition(a.swing_mode) : 2;
-        const fixedModes = this._fixedSwingModes(a.swing_modes);
-        const swing = `<div class="air-swing-main" role="group" aria-label="Вертикальні жалюзі"><button class="air-swing-main-button" data-action="air-swing-toggle" title="Вгору-вниз" aria-label="Вгору-вниз" aria-pressed="${moving}" ${this._disabled(!available || !fullMode || !defaultMode, id)}><span class="air-swing-main-icon">${this._swingMainIcon('up-down')}</span><span>Вгору-вниз</span></button><button class="air-swing-main-button" data-action="air-swing-palette" title="Фіксований кут" aria-label="Фіксований кут" aria-pressed="${fixed || !!this._airFixedPaletteOpen}" aria-expanded="${!!this._airFixedPaletteOpen}" aria-controls="air-fixed-palette" ${this._disabled(!available || !fixedModes.length, id)}><span class="air-swing-main-icon" data-position="${fixedPosition}">${this._fixedAngleIcon(fixedPosition)}</span><span>Фіксований кут</span></button></div><div class="air-fixed-palette" id="air-fixed-palette" data-air-fixed-palette ${this._airFixedPaletteOpen ? '' : 'hidden'}>${this._fixedSwingButtons(fixedModes, a.swing_mode, available, this._busy(id))}</div>`;
-        const firstKeys = ['air_lights_entity', 'air_x_fan_entity', 'air_sleep_entity'];
-        const first = this._airSwitches(firstKeys);
-        const second = this._airSwitches(['air_health_entity', 'air_8deg_heat_entity', 'air_power_save_entity', 'air_beeper_entity']);
-        const swingButtons = swing.slice(swing.indexOf('>') + 1, swing.indexOf('</div>')).replace('<span>Вгору-вниз</span>', '<span>Рух</span>').replace('<span>Фіксований кут</span>', '<span>Кут</span>');
-        const palette = swing.slice(swing.indexOf('<div class="air-fixed-palette"'));
-        const controls = `<div class="air-unified"><div class="air-unified-first">${swingButtons}${first}</div><div class="air-unified-second" ${this._airFixedPaletteOpen ? 'hidden' : ''}>${second}</div>${palette}</div>`;
-        return html.replace('</article>', `${controls}</article>`);
-      }
-
-      _airModeButtons(modes, current, available, busy) {
-        const definitions = [
-          ['cool', 'snowflake', 'Охолодження'], ['heat', 'sun', 'Обігрів'],
-          ['fan_only', 'fan', 'Вентиляція'], ['dry', 'droplet', 'Осушення'], ['auto', 'circle-a', 'Автоматичний режим'],
-        ];
-        return definitions.filter(([mode]) => (modes || []).includes(mode)).map(([mode, icon, label]) =>
-          `<button class="mode" data-action="air-mode" data-mode="${mode}" title="${label}" aria-label="${label}" aria-pressed="${current === mode}" ${this._disabled(!available || busy, this._airId())}>${this._lucideIcon(icon)}</button>`).join('');
-      }
-
-      /*
-       * Lucide ISC License
-       * Copyright (c) 2026 Lucide Icons and Contributors
-       * Permission to use, copy, modify, and/or distribute this software for any
-       * purpose with or without fee is hereby granted, provided that the above
-       * copyright notice and this permission notice appear in all copies.
-       * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-       * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-       * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-       * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-       * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-       * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-       * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-       *
-       * Feather-derived Lucide icons (circle, headphones, moon, minus, plus):
-       * MIT License, Copyright (c) 2013-present Cole Bemis
-       * Permission is hereby granted, free of charge, to any person obtaining a copy
-       * of this software and associated documentation files (the "Software"), to deal
-       * in the Software without restriction, including without limitation the rights
-       * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-       * copies of the Software, and to permit persons to whom the Software is
-       * furnished to do so, subject to the following conditions:
-       * The above copyright notice and this permission notice shall be included in all
-       * copies or substantial portions of the Software.
-       * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-       * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-       * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-       * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-       * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-       * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-       * SOFTWARE.
-       */
-      _lucideIcon(name) {
-        const icons = {
-          snowflake: '<path d="m10 20-1.25-2.5L6 18M10 4 8.75 6.5 6 6m8 14 1.25-2.5L18 18m-4-14 1.25 2.5L18 6m-1 15-3-6h-4m7-12-3 6 1.5 3M2 12h6.5L10 9m10 1-1.5 2 1.5 2m2-2h-6.5L14 15m-10-5 1.5 2L4 14m3 7 3-6-1.5-3m-2-9 3 6h4"/>',
-          sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2m8-10h2M2 12h2m14.07-7.07 1.41-1.41M4.93 19.07l1.41-1.41m12.73 1.41-1.41-1.41M4.93 4.93l1.41 1.41"/>',
-          fan: '<path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/>',
-          droplet: '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
-          'circle-a': '<circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="11" stroke="none" fill="currentColor">A</text>',
-          gauge: '<path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/>',
-          headphones: '<path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/>',
-          zap: '<path d="M15.914 4a1.5 1.5 0 0 0-2.474-1.561l-9 9A1.5 1.5 0 0 0 5.5 14h4.002a.5.5 0 0 1 .471.666L8.086 20a1.5 1.5 0 0 0 2.475 1.56l9-9A1.5 1.5 0 0 0 18.5 10h-3.997a.5.5 0 0 1-.472-.667z"/>',
-          wind: '<path d="M12.8 19.6A2 2 0 1 0 14 16H2M17.5 8a2.5 2.5 0 1 1 2 4H2M9.8 4.4A2 2 0 1 1 11 8H2"/>',
-          lightbulb: '<path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/>',
-          trees: '<path d="M10 10v.2A3 3 0 0 1 8.9 16H5a3 3 0 0 1-1-5.8V10a3 3 0 0 1 6 0ZM7 16v6M13 19v3M12 19h8.3a1 1 0 0 0 .7-1.7L18 14h.3a1 1 0 0 0 .7-1.7L16 9h.2a1 1 0 0 0 .8-1.7L13 3l-1.4 1.5"/>',
-          house: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
-          leaf: '<path d="M11 20a10 10 0 0 0 10-10 25.9 25.9 0 0 0-1.04-7.281 1 1 0 0 0-1.755-.325C15.833 5.5 13 5.5 9.8 6.1A7 7 0 0 0 11 20ZM2 21a5 5 0 0 1 2.911-4.544C7.613 15.212 8.351 15.24 11 13"/>',
-          moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
-          'volume-2': '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6M19.364 18.364a9 9 0 0 0 0-12.728"/>',
-          'air-vent': '<path d="M18 17.5a2.5 2.5 0 1 1-4 2.03V12M6 12H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 8h12M6.6 15.572A2 2 0 1 0 10 17v-5"/>',
-          heater: '<path d="M11 8c2-3-2-3 0-6M15.5 8c2-3-2-3 0-6M6 10h.01M6 14h.01M10 16v-4M14 16v-4M18 16v-4M20 6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3M5 20v2M19 20v2"/>',
-          minus: '<path d="M5 12h14"/>',
-          plus: '<path d="M5 12h14M12 5v14"/>',
-          power: '<path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/>',
-          'battery-charging': '<path d="m11 7-3 5h4l-3 5"/><path d="M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935"/><path d="M22 14v-4"/><path d="M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936"/>',
-          battery: '<path d="M22 14V10"/><rect x="2" y="6" width="16" height="12" rx="2"/>',
-          'battery-plus': '<path d="M10 9v6"/><path d="M12.543 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-3.605"/><path d="M22 14v-4"/><path d="M7 12h6"/><path d="M7.606 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3.606"/>',
-          wifi: '<path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.859a10 10 0 0 1 14 0"/><path d="M8.5 16.429a5 5 0 0 1 7 0"/>',
-          'clock-3': '<circle cx="12" cy="12" r="10"/><path d="M12 6v6h4"/>',
-          'arrow-down-left': '<path d="M17 7 7 17M17 17H7V7"/>',
-          'arrow-up-right': '<path d="M7 7h10v10M7 17 17 7"/>',
-          plug: '<path d="M12 22v-5"/><path d="M15 8V2"/><path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z"/><path d="M9 8V2"/>',
-          cable: '<path d="M17 19a1 1 0 0 1-1-1v-2a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2a1 1 0 0 1-1 1z"/><path d="M17 21v-2"/><path d="M19 14V6.5a1 1 0 0 0-7 0v11a1 1 0 0 1-7 0V10"/><path d="M21 21v-2"/><path d="M3 5V3"/><path d="M4 10a2 2 0 0 1-2-2V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2a2 2 0 0 1-2 2z"/><path d="M7 5V3"/>',
-          usb: '<circle cx="10" cy="7" r="1"/><circle cx="4" cy="20" r="1"/><path d="M4.7 19.3 19 5"/><path d="m21 3-3 1 2 2Z"/><path d="M9.26 7.68 5 12l2 5"/><path d="m10 14 5 2 3.5-3.5"/><path d="m18 12 1-1 1 1-1 1Z"/>',
-          thermometer: '<path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
-          activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
-          droplets: '<path d="M7 16.3A4 4 0 0 1 11 12.3"/><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5"/><path d="M5.5 17.5a3.5 3.5 0 0 1 0-7c.5 0 .9.1 1.3.3"/>',
-          'battery-medium': '<rect x="2" y="6" width="18" height="12" rx="2"/><path d="M22 10v4"/><path d="M10 10v4"/>',
-          'chart-no-axes-column': '<path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/>',
-          'shield-check': '<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.5 3.8 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
-          'chevron-down': '<path d="m6 9 6 6 6-6"/>',
-        };
-        return `<svg class="air-inline-icon" viewBox="0 0 24 24" aria-hidden="true">${icons[name] || icons.fan}</svg>`;
-      }
-
-      _airFanButtons(modes, current, available, busy) {
-        const order = ['auto', 'quiet', 'low', 'medium_low', 'medium', 'medium_high', 'high', 'turbo'];
-        const names = { auto: 'Авто', quiet: 'Тихий', low: 'Низька', medium_low: 'Нижче середньої', medium: 'Середня', medium_high: 'Вище середньої', high: 'Висока', turbo: 'Турбо' };
-        const blades = { low: 2, medium_low: 3, medium: 4, medium_high: 5, high: 6 };
-        return order.filter(mode => (modes || []).includes(mode)).map(mode => {
-          const icon = mode === 'auto' ? this._lucideIcon('gauge') : mode === 'quiet' ? this._lucideIcon('headphones') : mode === 'turbo' ? this._lucideIcon('zap') : this._fanBladeIcon(blades[mode]);
-          return `<button data-action="air-fan-mode" data-mode="${mode}" aria-label="${names[mode]}" title="${names[mode]}" aria-pressed="${current === mode}" ${this._disabled(!available || busy, this._airId())}>${icon}</button>`;
-        }).join('');
-      }
-
-      _fanBladeIcon(bladeCount) {
-        const blades = Array.from({ length: bladeCount }, (_, index) => `<path d="M21 16C23 10 29 5 31 10c3 6-4 9-8 9" transform="rotate(${index * 360 / bladeCount} 20 20)"/>`).join('');
-        return `<svg class="air-fan-blades" viewBox="0 0 40 40" aria-hidden="true">${blades}<circle cx="20" cy="20" r="2"/></svg>`;
-      }
-
-      _airSwitches(keys) {
-        const definitions = [
-          ['air_x_fan_entity', 'X-Fan · просушування', 'X-Fan', 'x-fan'],
-          ['air_lights_entity', 'Підсвічування', 'Світло', 'light'],
-          ['air_health_entity', 'Іонізація · Health', 'Health', 'health'],
-          ['air_power_save_entity', 'Енергоощадження', 'Економія', 'save'],
-          ['air_8deg_heat_entity', 'Підтримання +8 °C', '+8 °C', 'eight'],
-          ['air_sleep_entity', 'Сон', 'Сон', 'sleep'],
-          ['air_valve_entity', 'Клапан повітря', 'Клапан', 'valve'],
-          ['air_anti_direct_blow_entity', 'Захист від прямого потоку', 'Захист потоку', 'airflow'],
-          ['air_light_sensor_entity', 'Датчик освітлення', 'Датчик світла', 'sensor'],
-          ['air_auto_x_fan_entity', 'Автоматичний X-Fan', 'Авто X-Fan', 'x-fan'],
-          ['air_auto_light_entity', 'Автоматичне підсвічування', 'Авто світло', 'light'],
-          ['air_beeper_entity', 'Звуковий сигнал', 'Звук', 'beeper'],
-        ];
-        return keys.map(key => definitions.find(definition => definition[0] === key)).filter(Boolean).map(([key, label, short, icon]) => {
-          const entity = this._config[key], feature = this._state(entity);
-          if (!entity) return '';
-          const unavailable = feature && !this._available(entity), title = unavailable ? `${label}: тимчасово недоступно` : label;
-          return `<button class="air-switch" data-action="feature" data-entity="${this._escape(entity)}" title="${this._escape(title)}" aria-label="${this._escape(title)}" aria-pressed="${feature?.state === 'on'}" ${feature ? this._disabled(!this._available(entity), entity) : 'hidden disabled'}><span class="air-control-icon">${this._airOptionIcon(icon)}</span><span>${this._escape(short)}</span></button>`;
-        }).join('');
-      }
-
-      _airOptionIcon(icon) {
-        const icons = {
-          'x-fan': 'wind', light: 'lightbulb', health: 'trees', save: 'leaf', eight: 'house', sleep: 'moon',
-          valve: 'air-vent', airflow: 'wind', sensor: 'sun', beeper: 'volume-2',
-        };
-        return this._lucideIcon(icons[icon] || 'wind');
-      }
-
-      _swingLabel(mode) {
-        const key = String(mode).toLowerCase().replace(/[\s_-]/g, '');
-        return ({
-          default: 'Стандартне', swingfull: 'Повне хитання', fixedupmost: 'Верхнє положення',
-          fixedmiddleup: 'Вище середини', fixedmiddle: 'Середнє положення', fixedmiddlelow: 'Нижче середини',
-          fixedlowest: 'Нижнє положення', swingdownmost: 'Нижній діапазон', swingmiddlelow: 'Середньо-нижній діапазон',
-          swingmiddle: 'Середній діапазон', swingmiddleup: 'Середньо-верхній діапазон', swingupmost: 'Верхній діапазон',
-        })[key] || mode;
-      }
-
-      _swingOption(options, value) {
-        const key = String(value).toLowerCase().replace(/[\s_-]/g, '');
-        return (options || []).find(option => String(option).toLowerCase().replace(/[\s_-]/g, '') === key) || null;
-      }
-
-      _fixedSwingModes(modes) {
-        return ['fixed_upmost', 'fixed_middle_up', 'fixed_middle', 'fixed_middle_low', 'fixed_lowest']
-          .map(mode => this._swingOption(modes, mode)).filter(Boolean);
-      }
-
-      _fixedSwingPosition(mode) {
-        return ['fixed_upmost', 'fixed_middle_up', 'fixed_middle', 'fixed_middle_low', 'fixed_lowest']
-          .findIndex(value => this._swingOption([mode], value));
-      }
-
-      _swingMainIcon(kind) {
-        return kind === 'fixed' ? HOME_AIR_SWING_ASSETS[2] : HOME_AIR_SWING_ASSETS[5];
-      }
-
-      _fixedAngleIcon(position = -1) {
-        return HOME_AIR_SWING_ASSETS[position < 0 ? 2 : position] || HOME_AIR_SWING_ASSETS[2];
-      }
-
-      _fixedSwingButtons(modes, current, available, busy) {
-        return modes.map(mode => {
-          const position = this._fixedSwingPosition(mode);
-          const label = this._swingLabel(mode), caption = `Положення ${position + 1}: ${label}`;
-          return `<button class="air-fixed-position" data-action="air-fixed-position" data-mode="${this._escape(mode)}" title="${this._escape(caption)}" aria-label="${this._escape(caption)}" aria-pressed="${current === mode}" ${this._disabled(!available || busy, this._airId())}><span class="air-fixed-position-icon">${this._fixedAngleIcon(position)}</span><span>${position + 1}</span></button>`;
-        }).join('');
-      }
-
-      _fanLabel(mode) {
-        return ({ auto: 'Авто', low: 'Низька', medium_low: 'Нижче середньої', medium: 'Середня', medium_high: 'Вище середньої', high: 'Висока', turbo: 'Турбо', quiet: 'Тихий' })[mode] || mode;
-      }
-
-      _updateAir() {
-        super._updateAir();
-        const panel = this.shadowRoot.querySelector('[data-live-panel="air"]');
-        if (!panel) return;
-        const id = this._airId(), state = this._state(id), a = state?.attributes || {}, available = this._available(id);
-        const roomTemperature = available ? this._number(a.current_temperature) : null;
-        this._setText('[data-live="air-room-caption"]', roomTemperature === null ? 'Температура в кімнаті недоступна' : `У кімнаті ${this._format(roomTemperature)} °C`, panel);
-        const targetValue = available ? this._number(a.temperature) : null, targetNode = panel.querySelector('.air-value');
-        if (!available) this._setText('[data-live="air-target"]', '—', panel);
-        targetNode?.classList.toggle('temperature-missing', targetValue === null);
-        this._setHidden('.air-degree', targetValue === null, panel);
-        const modeGroup = panel.querySelector('.modes'), supportedModes = ['cool', 'heat', 'fan_only', 'dry', 'auto'].filter(mode => (a.hvac_modes || []).includes(mode));
-        if (modeGroup) {
-          const currentModes = Array.from(modeGroup.querySelectorAll('[data-action="air-mode"]')).map(button => button.dataset.mode);
-          if (supportedModes.join('|') !== currentModes.join('|')) modeGroup.innerHTML = this._airModeButtons(supportedModes, state?.state, available, this._busy(id));
-          modeGroup.hidden = supportedModes.length === 0;
-          for (const button of modeGroup.querySelectorAll('[data-action="air-mode"]')) {
-            button.disabled = !available || this._busy(id);
-            button.title = available ? button.getAttribute('aria-label') : 'Режим тимчасово недоступний';
-            button.setAttribute('aria-pressed', String(state?.state === button.dataset.mode));
-          }
-        }
-        const fanGroup = panel.querySelector('[data-air-fan-speeds]'), fanModes = a.fan_modes || [];
-        if (fanGroup) {
-          const currentModes = Array.from(fanGroup.querySelectorAll('[data-action="air-fan-mode"]')).map(button => button.dataset.mode);
-          const orderedModes = ['auto', 'quiet', 'low', 'medium_low', 'medium', 'medium_high', 'high', 'turbo'].filter(mode => fanModes.includes(mode));
-          if (orderedModes.join('|') !== currentModes.join('|')) fanGroup.innerHTML = this._airFanButtons(fanModes, a.fan_mode, available, this._busy(id));
-          fanGroup.hidden = orderedModes.length === 0;
-          for (const button of fanGroup.querySelectorAll('[data-action="air-fan-mode"]')) {
-            button.disabled = !available || this._busy(id);
-            button.title = available ? button.getAttribute('aria-label') : 'Вентилятор тимчасово недоступний';
-            button.setAttribute('aria-pressed', String(button.dataset.mode === a.fan_mode));
-          }
-        }
-        this._setText('[data-live="air-fan-speed"]', this._fanLabel(a.fan_mode) || '—', panel);
-        this._updateAirSwing(panel, a, available);
-        for (const [key] of HOME_DEVICE_CARD_FIELDS.air) {
-          if (key === 'air_entity') continue;
-          const entity = this._config[key];
-          const button = entity && panel.querySelector(`[data-action="feature"][data-entity="${this._escape(entity)}"]`);
-          if (!button) continue;
-          const feature = this._state(entity);
-          const label = HOME_DEVICE_CARD_FIELDS.air.find(field => field[0] === key)?.[1] || key;
-          button.hidden = !feature;
-          button.disabled = !this._available(entity) || this._busy(entity);
-          button.title = feature && !this._available(entity) ? `${label}: тимчасово недоступно` : label;
-          button.setAttribute('aria-pressed', String(feature?.state === 'on'));
-          button.setAttribute('aria-label', button.title);
-        }
-      }
-
-      _updateAirSwing(panel, attributes, available) {
-        const modes = attributes.swing_modes || [], fixedModes = this._fixedSwingModes(modes), current = attributes.swing_mode;
-        const fullMode = this._swingOption(modes, 'swing_full'), defaultMode = this._swingOption(modes, 'default');
-        const toggle = panel.querySelector('[data-action="air-swing-toggle"]'), paletteButton = panel.querySelector('[data-action="air-swing-palette"]');
-        const palette = panel.querySelector('[data-air-fixed-palette]'), busy = this._busy(this._airId());
-        if (toggle) {
-          toggle.hidden = !fullMode || !defaultMode;
-          toggle.disabled = !available || !fullMode || !defaultMode || busy;
-          toggle.title = available ? 'Рух жалюзі' : 'Жалюзі тимчасово недоступні';
-          toggle.setAttribute('aria-pressed', String(String(current || '').toLowerCase().startsWith('swing')));
-        }
-        if (paletteButton) {
-          paletteButton.hidden = !fixedModes.length;
-          paletteButton.disabled = !available || !fixedModes.length || busy;
-          paletteButton.title = available ? 'Фіксований кут жалюзі' : 'Жалюзі тимчасово недоступні';
-          paletteButton.setAttribute('aria-pressed', String(String(current || '').toLowerCase().startsWith('fixed') || this._airFixedPaletteOpen));
-          paletteButton.setAttribute('aria-expanded', String(!!this._airFixedPaletteOpen));
-          const position = String(current || '').toLowerCase().startsWith('fixed') ? this._fixedSwingPosition(current) : 2;
-          const icon = paletteButton.querySelector('.air-swing-main-icon');
-          if (icon && icon.dataset.position !== String(position)) {
-            icon.dataset.position = String(position);
-            icon.innerHTML = this._fixedAngleIcon(position);
-          }
-        }
-        if (!palette) return;
-        const currentModes = Array.from(palette.querySelectorAll('[data-action="air-fixed-position"]')).map(button => button.dataset.mode);
-        if (fixedModes.join('|') !== currentModes.join('|')) palette.innerHTML = this._fixedSwingButtons(fixedModes, current, available, busy);
-        palette.hidden = !this._airFixedPaletteOpen || !fixedModes.length;
-        const secondRow = panel.querySelector('.air-unified-second');
-        if (secondRow) secondRow.hidden = !palette.hidden;
-        const swingGroup = panel.querySelector('.air-swing-main');
-        if (swingGroup) swingGroup.hidden = (!toggle || toggle.hidden) && (!paletteButton || paletteButton.hidden);
-        for (const button of palette.querySelectorAll('[data-action="air-fixed-position"]')) {
-          button.disabled = !available || busy;
-          if (!available) button.title = 'Положення жалюзі тимчасово недоступне';
-          button.setAttribute('aria-pressed', String(button.dataset.mode === current));
-        }
-      }
-
-      _updateTemperatureFeedback() {
-        const entity = kind === 'boiler' ? this._config.boiler_entity : this._airId();
-        const pending = this._pendingTargets.has(entity);
-        for (const button of this.shadowRoot.querySelectorAll('.round[data-action]')) {
-          const active = pending && button.dataset.action === this._temperatureAction;
-          if (button.dataset.pending !== String(active)) button.dataset.pending = String(active);
-          if (button.getAttribute('aria-busy') !== String(active)) button.setAttribute('aria-busy', String(active));
-        }
-      }
-
-      _updateDynamic(changedIds = null, themeChanged = false, serviceEntity = null) {
-        if (!this._hass || !this._config) return;
-        this._updateCardName();
-        const all = changedIds === null, changed = new Set(changedIds || []), has = id => !!id && (all || changed.has(id));
-        if (all || themeChanged) this.toggleAttribute('dark', !!this._hass.themes?.darkMode);
-        this._setText('[data-live="error"]', this._error);
-        this._setHidden('[data-live="error"]', !this._error);
-        let sources = [];
-        if (kind === 'boiler') {
-          sources = [this._config.boiler_entity, this._config.boiler_hours, this._config.boiler_minutes, this._config.memo_entity, this._config.mega_entity, this._config.sterilization_entity];
-          if (all || sources.some(has) || sources.includes(serviceEntity)) this._updateBoiler();
-        } else if (kind === 'air') {
-          sources = [this._airId(), ...HOME_DEVICE_CARD_FIELDS.air.filter(field => field[0] !== 'air_entity').map(([name]) => this._config[name])];
-          if (all || sources.some(has) || (serviceEntity && sources.includes(serviceEntity))) this._updateAir();
-        } else if (kind === 'room') {
-          sources = [this._config.room_temperature_entity, this._config.humidity_entity, this._config.battery_entity];
-          if (all || sources.some(has)) this._updateRoom();
-        } else if (kind === 'socket') {
-          sources = HOME_DEVICE_CARD_FIELDS.socket.map(([name]) => this._config[name]);
-          if (all || sources.some(has)) this._updateSocket();
-        } else if (kind === 'river') {
-          sources = HOME_DEVICE_CARD_FIELDS.river.map(([name]) => this._config[name]);
-          if (all || sources.some(has)) this._updateRiver();
-        } else if (kind === 'energy' || kind === 'energy_details') {
-          sources = [this._config.power_entity, this._config.voltage_entity, this._config.current_entity, this._config.energy_total, this._config.energy_daily, this._config.energy_monthly];
-          if (all || sources.some(has)) this._updateEnergy();
-        } else {
-          sources = [this._config.river_status, ...HOME_DEVICE_CARD_FIELDS.battery.filter(field => field[2] === 'sensor').map(([id]) => this._config[id])];
-          if (all || sources.some(has)) this._updateBattery();
-        }
-        if (kind === 'boiler' || kind === 'air') this._updateTemperatureFeedback();
-        for (const [key, card] of this._graphCards) {
-          if (card.isConnected && (all || themeChanged || (this._graphSources.get(key) || []).some(has))) card.hass = this._hass;
-        }
-      }
-
-      _updateBattery() {
-        const online = this._state(this._config.river_status)?.state === 'online';
-        const read = (entity, unit, digits = 1, positive = false) => {
-          const value = this._value(this._config[entity]);
-          return online && value !== null && (!positive || value > 0) ? this._format(value, digits) + (unit ? ` ${unit}` : '') : '—';
-        };
-        const values = {};
-        for (const prefix of ['main', 'slave']) {
-          values[`battery-${prefix}-level`] = read(`${prefix}_level_entity`, '%');
-          values[`battery-${prefix}-full`] = read(`${prefix}_full_entity`, 'мА·год', 0, true);
-          values[`battery-${prefix}-remain`] = read(`${prefix}_remain_entity`, 'мА·год', 0);
-          values[`battery-${prefix}-volts`] = read(`${prefix}_volts_entity`, 'В', 3, true);
-          values[`battery-${prefix}-current`] = read(`${prefix}_current_entity`, 'мА', 0);
-          values[`battery-${prefix}-cells`] = `${read(`${prefix}_min_cells_entity`, 'В', 3, true)} / ${read(`${prefix}_max_cells_entity`, 'В', 3, true)}`;
-          values[`battery-${prefix}-temps`] = `${read(`${prefix}_min_temperature_entity`, '°C')} / ${read(`${prefix}_max_temperature_entity`, '°C')}`;
-          values[`battery-${prefix}-cycles`] = read(`${prefix}_cycles_entity`, '', 0);
-        }
-        for (const [key, value] of Object.entries(values)) this._setText(`[data-live="${key}"]`, value);
-        this._setHidden('[data-live="river-offline-note"]', online);
-      }
-
-      _updateRiver() {
-        const online = this._state(this._config.river_status)?.state === 'online';
-        const riverCard = this.shadowRoot.querySelector('.river-card');
-        if (riverCard) riverCard.dataset.offline = String(!online);
-        this._setHidden('[data-live="river-offline-note"]', online);
-        const status = online ? 'Онлайн' : 'Станція офлайн';
-        this._setText('[data-live="river-status"]', status);
-        const connection = this.shadowRoot.querySelector('[data-live="river-connection"]');
-        if (connection) {
-          connection.classList.toggle('offline', !online);
-          connection.setAttribute('aria-label', online ? 'Онлайн' : 'Офлайн');
-        }
-        const percent = online ? this._number(this._state(this._config.river_battery)?.state) : null;
-        const fill = percent === null ? 0 : Math.max(0, Math.min(100, percent));
-        this._setText('[data-live="river-battery"]', percent === null ? '—' : this._format(percent, 0));
-        this.shadowRoot.querySelector('.river-large')?.classList.toggle('river-missing', percent === null);
-        const runtime = this._riverRuntime();
-        this._setText('[data-live="river-runtime"]', runtime);
-        this.shadowRoot.querySelector('[data-live="river-runtime"]')?.classList.toggle('river-missing', runtime === '—');
-        const input = this._riverRead('river_input', '', 0), output = this._riverRead('river_output', '', 0);
-        this._setText('[data-live="river-input"]', input);
-        this._setText('[data-live="river-output"]', output);
-        this.shadowRoot.querySelector('[data-live="river-input"]')?.parentElement?.classList.toggle('river-missing', input === '—');
-        this.shadowRoot.querySelector('[data-live="river-output"]')?.parentElement?.classList.toggle('river-missing', output === '—');
-        let activePorts = 0;
-        for (const key of ['river_ac_output', 'river_dc_output', 'river_usb_c_output', 'river_usb_1_output', 'river_usb_2_output', 'river_usb_3_output']) {
-          const port = this.shadowRoot.querySelector(`[data-live="river-output-${key.replace(/^river_/, "").replace(/_output$/, "")}"]`)?.parentElement?.parentElement;
-          const active = online && (this._number(this._state(this._config[key])?.state) ?? 0) > 0;
-          if (port) port.hidden = !active;
-          if (active) activePorts++;
-          this._setText(`[data-live="river-output-${key.replace(/^river_/, '').replace(/_output$/, '')}"]`, this._riverRead(key, '', 0));
-        }
-        const outputs = this.shadowRoot.querySelector(".river-outputs");
-        if (outputs) outputs.hidden = activePorts === 0;
-        const chargeFill = this.shadowRoot.querySelector('[data-live="river-charge-fill"]');
-        if (chargeFill) chargeFill.style.width = `${fill}%`;
-        const meter = this.shadowRoot.querySelector('.river-card [role="meter"]');
-        if (meter) {
-          if (percent === null) meter.removeAttribute('aria-valuenow');
-          else meter.setAttribute('aria-valuenow', String(fill));
-        }
-        for (const prefix of ['main', 'slave']) {
-          const level = online ? this._number(this._state(this._config[`${prefix}_level_entity`])?.state) : null;
-          const levelFill = level === null ? 0 : Math.max(0, Math.min(100, level));
-          this._setText(`[data-live="river-${prefix}-level"]`, level === null ? '—' : this._format(level, 0));
-          this.shadowRoot.querySelector(`[data-live="river-${prefix}-level"]`)?.parentElement?.classList.toggle('river-missing', level === null);
-          const fillEl = this.shadowRoot.querySelector(`[data-live="river-${prefix}-fill"]`);
-          if (fillEl) fillEl.style.width = `${levelFill}%`;
-          this._setText(`[data-live="river-${prefix}-temperature"]`, this._riverRead(`${prefix}_temperature_entity`, '°C', 0));
-          this._setText(`[data-live="river-${prefix}-volts"]`, this._riverRead(`${prefix}_volts_entity`, 'В', 1));
-          this._setText(`[data-live="river-${prefix}-current"]`, this._riverRead(`${prefix}_current_entity`, 'A', 1));
-          this._setText(`[data-live="river-${prefix}-cycles"]`, this._riverRead(`${prefix}_cycles_entity`, '', 0));
-          this._setText(`[data-live="river-${prefix}-min-cell"]`, this._riverRead(`${prefix}_min_cells_entity`, 'В', 2));
-          this._setText(`[data-live="river-${prefix}-max-cell"]`, this._riverRead(`${prefix}_max_cells_entity`, 'В', 2));
-        }
-      }
-
-      _click(event) {
-        const button = event.target.closest('button[data-action]');
-        if (kind === 'socket' && button?.dataset.action === 'socket-toggle') {
-          this._toggleSocket();
-          return;
-        }
-        if (kind === 'river' && button?.dataset.action === 'river-details') {
-          const details = this.shadowRoot.querySelector('#river-extra');
-          if (details) {
-            details.hidden = !details.hidden;
-            button.setAttribute('aria-expanded', String(!details.hidden));
-          }
-          return;
-        }
-        if (kind === 'air' && button?.dataset.action === 'air-fan-mode') {
-          const entity = this._airId(), state = this._state(entity), mode = button.dataset.mode;
-          if (!button.disabled && this._available(entity) && (state?.attributes?.fan_modes || []).includes(mode) && !this._busy(entity)) {
-            this._service('climate', 'set_fan_mode', { entity_id: entity, fan_mode: mode });
-          }
-          return;
-        }
-        if (kind === 'air' && button?.dataset.action === 'air-swing-palette') {
-          this._airFixedPaletteOpen = !this._airFixedPaletteOpen;
-          const state = this._state(this._airId());
-          this._updateAirSwing(this.shadowRoot.querySelector('[data-live-panel="air"]'), state?.attributes || {}, this._available(this._airId()));
-          return;
-        }
-        if (kind === 'air' && ['air-swing-toggle', 'air-fixed-position'].includes(button?.dataset.action)) {
-          const entity = this._airId(), state = this._state(entity), modes = state?.attributes?.swing_modes || [];
-          if (!button.disabled && this._available(entity) && !this._busy(entity)) {
-            const mode = button.dataset.action === 'air-swing-toggle'
-              ? this._swingOption(modes, String(state?.attributes?.swing_mode || '').toLowerCase().startsWith('swing') ? 'default' : 'swing_full')
-              : this._swingOption(modes, button.dataset.mode);
-            if (mode) {
-              if (button.dataset.action === 'air-fixed-position') {
-                this._airFixedPaletteOpen = false;
-                this._updateAirSwing(this.shadowRoot.querySelector('[data-live-panel="air"]'), state?.attributes || {}, true);
-              }
-              this._service('climate', 'set_swing_mode', { entity_id: entity, swing_mode: mode });
-            }
-          }
-          return;
-        }
-        if (button?.dataset.action === 'view-energy' || button?.dataset.action === 'view-battery') {
-          const path = button.dataset.action === 'view-energy' ? this._config.energy_path : this._config.battery_path;
-          if (path) {
-            if (typeof this._hass?.navigate === 'function') this._hass.navigate(path);
-            else {
-              window.history.pushState(null, '', path);
-              window.dispatchEvent(new Event('location-changed'));
-            }
-          }
-          return;
-        }
-        super._click(event);
-      }
-
-      async _mountGraphs(generation) {
-        const slots = Array.from(this.shadowRoot.querySelectorAll('[data-graph]'));
-        if (!slots.length) return;
-        try {
-          if (!window.loadCardHelpers) throw new Error('History cards unavailable');
-          const helpers = await window.loadCardHelpers();
-          if (generation !== this._generation) return;
-          const c = this._config;
-          const definitions = {
-            boiler: kind === 'energy' ? { entities: [c.power_entity], show_names: false, grid_options: { rows: 4 } } : { title: 'Потужність бойлера · 24 години', entities: [c.power_entity] },
-            'river-current': { title: 'Струм батарей · 24 години', entities: [{ entity: c.main_current_entity, name: 'Основна' }, { entity: c.slave_current_entity, name: 'Додаткова' }] },
-            'river-cells': { title: 'Напруги комірок · 24 години', entities: [
-              { entity: c.main_min_cells_entity, name: 'Осн. мін.' }, { entity: c.main_max_cells_entity, name: 'Осн. макс.' },
-              { entity: c.slave_min_cells_entity, name: 'Дод. мін.' }, { entity: c.slave_max_cells_entity, name: 'Дод. макс.' },
-            ] },
-          };
-          for (const slot of slots) {
-            const definition = definitions[slot.dataset.graph];
-            definition.entities = definition.entities.filter(item => typeof item === 'string' ? !!item : !!item.entity);
-            if (!definition.entities.length) {
-              slot.innerHTML = '<span class="secondary">Виберіть сутність для графіка в налаштуваннях картки.</span>';
-              continue;
-            }
-            const key = JSON.stringify(definition);
-            let card = this._graphCards.get(key);
-            if (!card) {
-              card = helpers.createCardElement({ type: 'history-graph', hours_to_show: 24, ...definition });
-              this._graphCards.set(key, card);
-            }
-            this._graphSources.set(key, definition.entities.map(item => typeof item === 'string' ? item : item.entity));
-            card.style.height = kind === 'energy' ? '200px' : '';
-            card.hass = this._hass;
-            slot.replaceChildren(card);
-          }
-        } catch {
-          if (generation !== this._generation) return;
-          for (const slot of slots) slot.innerHTML = '<span class="secondary">Історію можна відкрити через подробиці відповідної сутності.</span>';
-        }
-      }
-
-      _render() {
-        if (!this._config || !this._hass) return;
-        this.toggleAttribute('dark', !!this._hass.themes?.darkMode);
-        const content = this._content();
-        this.shadowRoot.innerHTML = `<style>${HOME_DEVICE_CARD_STYLE}.pending-hint{min-height:17px;visibility:hidden}.pending-hint[data-pending="true"]{visibility:visible}.live-error{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.18)}.single-card{width:100%}.single-card .desktop-board{display:block}[hidden]{display:none!important}@media(max-width:380px){.single-card .panel{padding:14px}}@media(min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}</style><ha-card><div class="single-card"><div class="error live-error" role="alert" data-live="error" ${this._error ? '' : 'hidden'}>${this._escape(this._error)}</div>${content}</div></ha-card>`;
-        const feedbackStyle = document.createElement('style');
-        feedbackStyle.textContent = HOME_DEVICE_FEEDBACK_STYLE;
-        this.shadowRoot.append(feedbackStyle);
-        for (const hint of this.shadowRoot.querySelectorAll('.pending-hint')) hint.remove();
-        for (const button of this.shadowRoot.querySelectorAll('.round[data-action]')) {
-          const spinner = document.createElement('span');
-          spinner.className = 'pending-spinner';
-          spinner.setAttribute('aria-hidden', 'true');
-          button.append(spinner);
-        }
-        this._updateCardName();
-        this._rendered = true;
-        this._updateDynamic();
-        const generation = ++this._generation;
-        this._mountGraphs(generation);
-      }
-    };
-    cardClasses[kind] = Card;
-    if (!customElements.get(tag)) customElements.define(tag, Card);
+</style><article class="river-card" aria-label="EcoFlow RIVER Max" data-live-panel="river" data-offline="${!online}"><header class="river-header"><span class="river-device">${icon("battery-charging")}</span><div class="river-heading"><h2>${this._escape(this._config.title || "EcoFlow RIVER Max")}</h2><span class="secondary" data-live="river-status">${online ? "Онлайн" : "Станція офлайн"}</span></div><span class="river-connection ${online ? "" : "offline"}" data-live="river-connection" aria-label="${online ? "Онлайн" : "Офлайн"}">${icon("wifi")}</span></header><p class="river-offline-note" data-live="river-offline-note" ${online ? "hidden" : ""}>Станція офлайн. Поточні дані знову будуть після підключення.</p><div class="river-charge"><div><div class="river-large"><span data-live="river-battery">${percent === null ? "—" : this._format(percent, 0)}</span><small>%</small></div><span class="secondary">Загальний заряд</span></div><div class="river-runtime"><span class="secondary">${icon("clock-3")}Залишилось</span><strong data-live="river-runtime">${this._riverRuntime()}</strong></div></div><div class="river-track" role="meter" aria-label="Загальний заряд" aria-valuemin="0" aria-valuemax="100" ${percent === null ? "" : `aria-valuenow="${fill}"`}><span data-live="river-charge-fill" style="width:${fill}%"></span></div><div class="river-power"><div><span class="secondary">${icon("arrow-down-left")}Вхід</span><strong><span data-live="river-input">${this._riverRead("river_input", "", 0)}</span><small>Вт</small></strong></div><div><span class="secondary">${icon("arrow-up-right")}Загальний вихід</span><strong><span data-live="river-output">${this._riverRead("river_output", "", 0)}</span><small>Вт</small></strong></div></div><section class="river-outputs" aria-label="Потужність виходів"><div class="river-output-column">${output("river_ac_output", "AC", "plug")}${output("river_dc_output", "DC", "cable")}${output("river_usb_c_output", "USB-C", "usb")}</div><div class="river-output-column">${output("river_usb_1_output", "USB 1", "usb")}${output("river_usb_2_output", "USB 2", "usb")}${output("river_usb_3_output", "USB 3", "usb")}</div></section><section class="river-batteries" aria-label="Дві батареї">${battery("Основна", "main", "battery")}${battery("Додаткова", "slave", "battery-plus")}</section><button class="river-details" data-action="river-details" aria-expanded="false" aria-controls="river-extra"><span>Деталі батарей</span>${icon("chevron-down")}</button><div id="river-extra" hidden><div class="river-detail-row river-detail-head"><span></span><span>Основна</span><span>Додаткова</span></div>${detailRows.map(([label, main, slave, key]) => `<div class="river-detail-row"><span>${label}</span><span data-live="river-main-${key}">${main}</span><span data-live="river-slave-${key}">${slave}</span></div>`).join("")}</div></article>`;
   }
 
-  window.customCards = window.customCards || [];
-  for (const [kind, [type, name, description]] of Object.entries(HOME_DEVICE_CARD_META)) {
-    if (!window.customCards.some(card => card.type === type)) window.customCards.push({ type, name, description });
+  _updateRiver() {
+    const online = this._state(this._config.river_status)?.state === "online";
+    const riverCard = this.shadowRoot.querySelector(".river-card");
+    if (riverCard) riverCard.dataset.offline = String(!online);
+    this._setHidden('[data-live="river-offline-note"]', online);
+    const status = online ? "Онлайн" : "Станція офлайн";
+    this._setText('[data-live="river-status"]', status);
+    const connection = this.shadowRoot.querySelector(
+      '[data-live="river-connection"]',
+    );
+    if (connection) {
+      connection.classList.toggle("offline", !online);
+      connection.setAttribute("aria-label", online ? "Онлайн" : "Офлайн");
+    }
+    const percent = online
+      ? this._number(this._state(this._config.river_battery)?.state)
+      : null;
+    const fill = percent === null ? 0 : Math.max(0, Math.min(100, percent));
+    this._setText(
+      '[data-live="river-battery"]',
+      percent === null ? "—" : this._format(percent, 0),
+    );
+    this.shadowRoot
+      .querySelector(".river-large")
+      ?.classList.toggle("river-missing", percent === null);
+    const runtime = this._riverRuntime();
+    this._setText('[data-live="river-runtime"]', runtime);
+    this.shadowRoot
+      .querySelector('[data-live="river-runtime"]')
+      ?.classList.toggle("river-missing", runtime === "—");
+    const input = this._riverRead("river_input", "", 0),
+      output = this._riverRead("river_output", "", 0);
+    this._setText('[data-live="river-input"]', input);
+    this._setText('[data-live="river-output"]', output);
+    this.shadowRoot
+      .querySelector('[data-live="river-input"]')
+      ?.parentElement?.classList.toggle("river-missing", input === "—");
+    this.shadowRoot
+      .querySelector('[data-live="river-output"]')
+      ?.parentElement?.classList.toggle("river-missing", output === "—");
+    let activePorts = 0;
+    for (const key of [
+      "river_ac_output",
+      "river_dc_output",
+      "river_usb_c_output",
+      "river_usb_1_output",
+      "river_usb_2_output",
+      "river_usb_3_output",
+    ]) {
+      const port = this.shadowRoot.querySelector(
+        `[data-live="river-output-${key.replace(/^river_/, "").replace(/_output$/, "")}"]`,
+      )?.parentElement?.parentElement;
+      const active =
+        online &&
+        (this._number(this._state(this._config[key])?.state) ?? 0) > 0;
+      if (port) port.hidden = !active;
+      if (active) activePorts++;
+      this._setText(
+        `[data-live="river-output-${key.replace(/^river_/, "").replace(/_output$/, "")}"]`,
+        this._riverRead(key, "", 0),
+      );
+    }
+    const outputs = this.shadowRoot.querySelector(".river-outputs");
+    if (outputs) outputs.hidden = activePorts === 0;
+    const chargeFill = this.shadowRoot.querySelector(
+      '[data-live="river-charge-fill"]',
+    );
+    if (chargeFill) chargeFill.style.width = `${fill}%`;
+    const meter = this.shadowRoot.querySelector('.river-card [role="meter"]');
+    if (meter) {
+      if (percent === null) meter.removeAttribute("aria-valuenow");
+      else meter.setAttribute("aria-valuenow", String(fill));
+    }
+    for (const prefix of ["main", "slave"]) {
+      const level = online
+        ? this._number(
+            this._state(this._config[`${prefix}_level_entity`])?.state,
+          )
+        : null;
+      const levelFill = level === null ? 0 : Math.max(0, Math.min(100, level));
+      this._setText(
+        `[data-live="river-${prefix}-level"]`,
+        level === null ? "—" : this._format(level, 0),
+      );
+      this.shadowRoot
+        .querySelector(`[data-live="river-${prefix}-level"]`)
+        ?.parentElement?.classList.toggle("river-missing", level === null);
+      const fillEl = this.shadowRoot.querySelector(
+        `[data-live="river-${prefix}-fill"]`,
+      );
+      if (fillEl) fillEl.style.width = `${levelFill}%`;
+      this._setText(
+        `[data-live="river-${prefix}-temperature"]`,
+        this._riverRead(`${prefix}_temperature_entity`, "°C", 0),
+      );
+      this._setText(
+        `[data-live="river-${prefix}-volts"]`,
+        this._riverRead(`${prefix}_volts_entity`, "В", 1),
+      );
+      this._setText(
+        `[data-live="river-${prefix}-current"]`,
+        this._riverRead(`${prefix}_current_entity`, "A", 1),
+      );
+      this._setText(
+        `[data-live="river-${prefix}-cycles"]`,
+        this._riverRead(`${prefix}_cycles_entity`, "", 0),
+      );
+      this._setText(
+        `[data-live="river-${prefix}-min-cell"]`,
+        this._riverRead(`${prefix}_min_cells_entity`, "В", 2),
+      );
+      this._setText(
+        `[data-live="river-${prefix}-max-cell"]`,
+        this._riverRead(`${prefix}_max_cells_entity`, "В", 2),
+      );
+    }
+  }
+  _updateCardDynamic({ all, has }) {
+    const sources = HOME_DEVICE_CARD_FIELDS.river.map(
+      ([name]) => this._config[name],
+    );
+    if (all || sources.some(has)) this._updateRiver();
+  }
+  _handleCardClick(button) {
+    if (button?.dataset.action !== "river-details") return false;
+    const details = this.shadowRoot.querySelector("#river-extra");
+    if (details) {
+      details.hidden = !details.hidden;
+      button.setAttribute("aria-expanded", String(!details.hidden));
+    }
+    return true;
+  }
+  _click(event) {
+    if (this._handleCardClick(event.target.closest("button[data-action]")))
+      return;
+    super._click(event);
+  }
+  _graphDefinitions() {
+    return {
+      "river-current": {
+        title: "Струм батарей · 24 години",
+        entities: [
+          { entity: this._config.main_current_entity, name: "Основна" },
+          { entity: this._config.slave_current_entity, name: "Додаткова" },
+        ],
+      },
+      "river-cells": {
+        title: "Напруги комірок · 24 години",
+        entities: [
+          { entity: this._config.main_min_cells_entity, name: "Осн. мін." },
+          { entity: this._config.main_max_cells_entity, name: "Осн. макс." },
+          { entity: this._config.slave_min_cells_entity, name: "Дод. мін." },
+          { entity: this._config.slave_max_cells_entity, name: "Дод. макс." },
+        ],
+      },
+    };
   }
 }
+if (!customElements.get("home-river-card"))
+  customElements.define("home-river-card", HomeRiverCard);
+class HomeEnergyCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "energy";
+  }
+  static get cardTitle() {
+    return ["power_entity", "Споживання"];
+  }
+  _content() {
+    return `<div class="desktop-board">${this._energyOverview()}</div>`;
+  }
+  _energyOverview() {
+    const c = this._config;
+    return `<article class="panel desktop-energy" aria-label="Енергія бойлера"><div class="energy-heading"><div><h2>Споживання бойлера</h2><span class="secondary">Потужність та історія</span></div><span class="power-now"><span data-live="power">${this._format(this._value(c.power_entity), 0)}</span> <small>Вт зараз</small></span></div><div class="energy-stats"><div><span class="secondary">Сьогодні</span><strong><span data-live="energy-daily">${this._format(this._value(c.energy_daily), 2)}</span> <small>кВт·год</small></strong></div><div><span class="secondary">Цього місяця</span><strong><span data-live="energy-monthly">${this._format(this._value(c.energy_monthly), 2)}</span> <small>кВт·год</small></strong></div></div><div class="graph-slot" data-graph="boiler"><span class="secondary">Завантаження історії…</span></div><button class="text-button" data-action="view-energy">Детальні показники${this._icon("arrow-top-right")}</button></article>`;
+  }
+  _updateCardDynamic({ all, has }) {
+    const sources = [
+      this._config.power_entity,
+      this._config.voltage_entity,
+      this._config.current_entity,
+      this._config.energy_total,
+      this._config.energy_daily,
+      this._config.energy_monthly,
+    ];
+    if (all || sources.some(has)) this._updateEnergy();
+  }
+  _graphDefinitions() {
+    return {
+      boiler: {
+        entities: [this._config.power_entity],
+        show_names: false,
+        grid_options: { rows: 4 },
+      },
+    };
+  }
+  _graphCardHeight() {
+    return "200px";
+  }
+}
+if (!customElements.get("home-energy-card"))
+  customElements.define("home-energy-card", HomeEnergyCard);
+class HomeEnergyDetailsCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "energy_details";
+  }
+  static get cardTitle() {
+    return ["power_entity", "Споживання"];
+  }
+  _content() {
+    return this._energy();
+  }
+  _updateCardDynamic({ all, has }) {
+    const sources = [
+      this._config.power_entity,
+      this._config.voltage_entity,
+      this._config.current_entity,
+      this._config.energy_total,
+      this._config.energy_daily,
+      this._config.energy_monthly,
+    ];
+    if (all || sources.some(has)) this._updateEnergy();
+  }
+  _graphDefinitions() {
+    return {
+      boiler: {
+        title: "Потужність бойлера · 24 години",
+        entities: [this._config.power_entity],
+      },
+    };
+  }
+}
+if (!customElements.get("home-energy-details-card"))
+  customElements.define("home-energy-details-card", HomeEnergyDetailsCard);
+class HomeBatteryCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "battery";
+  }
+  _content() {
+    return this._batteryDetails();
+  }
+  _batteryDetails() {
+    const online = this._state(this._config.river_status)?.state === "online";
+    const read = (entity, unit, digits = 1, positive = false) => {
+      const value = this._value(this._config[entity]);
+      return online && value !== null && (!positive || value > 0)
+        ? this._format(value, digits) + (unit ? ` ${unit}` : "")
+        : "—";
+    };
+    const sections = [
+      [
+        "Основна батарея",
+        "main",
+        [
+          ["Заряд", "level_entity", "%", 1],
+          ["Повна ємність", "full_entity", "мА·год", 0, true],
+          ["Залишкова ємність", "remain_entity", "мА·год", 0],
+          ["Напруга батареї", "volts_entity", "В", 3, true],
+          ["Струм батареї", "current_entity", "мА", 0],
+          [
+            "Комірки · мін. / макс.",
+            ["min_cells_entity", "max_cells_entity"],
+            "В",
+            3,
+            true,
+          ],
+          [
+            "Температури · мін. / макс.",
+            ["min_temperature_entity", "max_temperature_entity"],
+            "°C",
+            1,
+          ],
+          ["Цикли", "cycles_entity", "", 0],
+        ],
+      ],
+      [
+        "Додаткова батарея",
+        "slave",
+        [
+          ["Заряд", "level_entity", "%", 1],
+          ["Повна ємність", "full_entity", "мА·год", 0, true],
+          ["Залишкова ємність", "remain_entity", "мА·год", 0],
+          ["Напруга батареї", "volts_entity", "В", 3, true],
+          ["Струм батареї", "current_entity", "мА", 0],
+          [
+            "Комірки · мін. / макс.",
+            ["min_cells_entity", "max_cells_entity"],
+            "В",
+            3,
+            true,
+          ],
+          [
+            "Температури · мін. / макс.",
+            ["min_temperature_entity", "max_temperature_entity"],
+            "°C",
+            1,
+          ],
+          ["Цикли", "cycles_entity", "", 0],
+        ],
+      ],
+    ];
+    const rows = sections
+      .map(
+        ([title, prefix, fields]) =>
+          `<article class="panel"><h2>${title}</h2>${fields
+            .map(([label, field, unit, digits, positive]) => {
+              const entity = (name) => `${prefix}_${name}`;
+              const value = Array.isArray(field)
+                ? field
+                    .map((name) => read(entity(name), unit, digits, positive))
+                    .join(" / ")
+                : read(entity(field), unit, digits, positive);
+              const key = `battery-${prefix}-${label === "Заряд" ? "level" : label === "Повна ємність" ? "full" : label === "Залишкова ємність" ? "remain" : label === "Напруга батареї" ? "volts" : label === "Струм батареї" ? "current" : label.startsWith("Комірки") ? "cells" : label.startsWith("Температури") ? "temps" : "cycles"}`;
+              return this._row(label, value, key);
+            })
+            .join("")}</article>`,
+      )
+      .join("");
+    return `<article class="panel" data-live="river-offline-note" ${online ? "hidden" : ""}><p class="notice">Станція офлайн. Поточні вимірювання приховані; попередні записи доступні на графіках.</p></article>${rows}<div class="graph-slot" data-graph="river-current"></div><div class="graph-slot" data-graph="river-cells"></div>`;
+  }
+
+  _updateBattery() {
+    const online = this._state(this._config.river_status)?.state === "online";
+    const read = (entity, unit, digits = 1, positive = false) => {
+      const value = this._value(this._config[entity]);
+      return online && value !== null && (!positive || value > 0)
+        ? this._format(value, digits) + (unit ? ` ${unit}` : "")
+        : "—";
+    };
+    const values = {};
+    for (const prefix of ["main", "slave"]) {
+      values[`battery-${prefix}-level`] = read(`${prefix}_level_entity`, "%");
+      values[`battery-${prefix}-full`] = read(
+        `${prefix}_full_entity`,
+        "мА·год",
+        0,
+        true,
+      );
+      values[`battery-${prefix}-remain`] = read(
+        `${prefix}_remain_entity`,
+        "мА·год",
+        0,
+      );
+      values[`battery-${prefix}-volts`] = read(
+        `${prefix}_volts_entity`,
+        "В",
+        3,
+        true,
+      );
+      values[`battery-${prefix}-current`] = read(
+        `${prefix}_current_entity`,
+        "мА",
+        0,
+      );
+      values[`battery-${prefix}-cells`] =
+        `${read(`${prefix}_min_cells_entity`, "В", 3, true)} / ${read(`${prefix}_max_cells_entity`, "В", 3, true)}`;
+      values[`battery-${prefix}-temps`] =
+        `${read(`${prefix}_min_temperature_entity`, "°C")} / ${read(`${prefix}_max_temperature_entity`, "°C")}`;
+      values[`battery-${prefix}-cycles`] = read(
+        `${prefix}_cycles_entity`,
+        "",
+        0,
+      );
+    }
+    for (const [key, value] of Object.entries(values))
+      this._setText(`[data-live="${key}"]`, value);
+    this._setHidden('[data-live="river-offline-note"]', online);
+  }
+  _updateCardDynamic({ all, has }) {
+    const sources = [
+      this._config.river_status,
+      ...HOME_DEVICE_CARD_FIELDS.battery
+        .filter((field) => field[2] === "sensor")
+        .map(([id]) => this._config[id]),
+    ];
+    if (all || sources.some(has)) this._updateBattery();
+  }
+}
+if (!customElements.get("home-battery-card"))
+  customElements.define("home-battery-card", HomeBatteryCard);
+window.customCards = window.customCards || [];
+for (const [type, name, description] of Object.values(HOME_DEVICE_CARD_META)) {
+  if (!window.customCards.some(card => card.type === type)) window.customCards.push({ type, name, description });
+}
+
 });

@@ -16,5 +16,5 @@ jobs:
       - run: npm run build
       - run: npm run check
       - run: npm test
-      - run: git diff --exit-code -- dist/
+      - run: git diff --exit-code -- home-dashboard.js home-device-cards.js dist/
       - run: git diff --check

@@ -1,0 +1,22 @@
+const HOME_DASHBOARD_DEFAULTS = {
+  boiler_entity: null,
+  boiler_hours: null,
+  boiler_minutes: null,
+  memo_entity: null,
+  mega_entity: null,
+  sterilization_entity: null,
+  air_entity: null,
+  room_temperature_entity: null,
+  humidity_entity: null,
+  energy_daily: null,
+  energy_monthly: null,
+  energy_total: null,
+  power_entity: null,
+  voltage_entity: null,
+  current_entity: null,
+  river_status: null,
+  river_battery: null,
+  river_input: null,
+  river_output: null,
+};
+

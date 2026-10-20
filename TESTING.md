@@ -12,6 +12,7 @@ npm test
 git diff --check
 ```
 
+The build tests verify generated artifacts and deterministic source assembly.
 The Node tests cover registration, invalid and empty configuration, explicit
 entity selection, disconnect/reconnect cleanup, and stale service responses.
 They use a small fake DOM; they do not replace browser testing.

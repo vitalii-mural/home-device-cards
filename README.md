@@ -58,6 +58,10 @@ The HACS bundle includes both the base and standalone cards.
 
 ## Publishing an update
 
+Edit the maintained sources under `src/`. The two root JavaScript files and
+the HACS bundle are generated distribution files; rebuild them before committing.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for the source map and compatibility rules.
+
 Run the checks in [CONTRIBUTING.md](CONTRIBUTING.md), update the version, and
 commit the sources and generated bundle. Push the commit and a `vX.Y.Z` tag.
 GitHub Actions validates the code and publishes the release with the bundle.

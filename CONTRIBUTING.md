@@ -43,8 +43,12 @@ Do not modify a published tag to ship a fix: release a new version.
 
 ## Follow-up work
 
-The initial snapshot still contains duplicated legacy dashboard styles and
-rendering helpers. Refactor them incrementally behind regression tests.
+The sources are separated by responsibility under `src/`; the root scripts
+remain generated compatibility entry points for manual installations.
+Keep the build order explicit and do not edit generated files directly.
+
+The source still contains duplicated legacy dashboard styles and rendering
+helpers. Refactor them incrementally behind regression tests.
 Extract Ukrainian labels into a localization layer before adding languages.
 Add real-browser automated layout and interaction tests before claiming full
 frontend compatibility. Avoid a whole-codebase rewrite just to change framework.
