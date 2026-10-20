@@ -253,15 +253,6 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     energy_total: null,
     energy_path: '/home-cards/energy',
   },
-  energy_details: {
-    power_entity: null,
-    voltage_entity: null,
-    current_entity: null,
-    energy_daily: null,
-    energy_monthly: null,
-    energy_total: null,
-    energy_path: '/home-cards/energy',
-  },
   battery: {
     river_status: null,
     battery_path: '/home-cards/battery',
@@ -359,15 +350,6 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_total', 'Енергія від початку обліку', 'sensor'],
     ['energy_path', 'Шлях до деталей енергії', 'text'],
   ],
-  energy_details: [
-    ['power_entity', 'Потужність', 'sensor'],
-    ['voltage_entity', 'Напруга', 'sensor'],
-    ['current_entity', 'Струм', 'sensor'],
-    ['energy_daily', 'Енергія сьогодні', 'sensor'],
-    ['energy_monthly', 'Енергія за місяць', 'sensor'],
-    ['energy_total', 'Енергія від початку обліку', 'sensor'],
-    ['energy_path', 'Шлях до деталей енергії', 'text'],
-  ],
   battery: [
     ['river_status', 'Статус станції', 'sensor'],
     ...[
@@ -393,7 +375,6 @@ const HOME_DEVICE_CARD_META = {
   socket: ['home-socket-card', 'Розетка', 'Керування та електричні показники розетки.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
   energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],
-  energy_details: ['home-energy-details-card', 'Енергія · докладно', 'Показники розетки та графік потужності.'],
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],
 };
 
@@ -423,7 +404,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       socket: "switch_entity",
       river: "river_status",
       energy: "power_entity",
-      energy_details: "power_entity",
     }[kind];
     return {
       schema: [
@@ -2166,38 +2146,6 @@ class HomeEnergyCard extends HomeDeviceStandaloneCard {
 }
 if (!customElements.get("home-energy-card"))
   customElements.define("home-energy-card", HomeEnergyCard);
-class HomeEnergyDetailsCard extends HomeDeviceStandaloneCard {
-  static get cardType() {
-    return "energy_details";
-  }
-  static get cardTitle() {
-    return ["power_entity", "Споживання"];
-  }
-  _content() {
-    return this._energy();
-  }
-  _updateCardDynamic({ all, has }) {
-    const sources = [
-      this._config.power_entity,
-      this._config.voltage_entity,
-      this._config.current_entity,
-      this._config.energy_total,
-      this._config.energy_daily,
-      this._config.energy_monthly,
-    ];
-    if (all || sources.some(has)) this._updateEnergy();
-  }
-  _graphDefinitions() {
-    return {
-      boiler: {
-        title: "Потужність бойлера · 24 години",
-        entities: [this._config.power_entity],
-      },
-    };
-  }
-}
-if (!customElements.get("home-energy-details-card"))
-  customElements.define("home-energy-details-card", HomeEnergyDetailsCard);
 class HomeBatteryCard extends HomeDeviceStandaloneCard {
   static get cardType() {
     return "battery";

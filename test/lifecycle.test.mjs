@@ -128,7 +128,6 @@ test("registers the dashboard and standalone card types", async () => {
     "home-socket-card",
     "home-river-card",
     "home-energy-card",
-    "home-energy-details-card",
     "home-battery-card",
   ]) {
     assert.equal(
@@ -179,12 +178,6 @@ test("standalone card markup and sizing match pre-refactor characterization", as
       { columns: 12, rows: 5, min_columns: 6, min_rows: 4 },
     ],
     [
-      "home-energy-details-card",
-      "811394de09997caa017b58c0642629df1ba9ee8a165db8241c6d054b4a66bc4e",
-      5,
-      { columns: 6, rows: 3, min_columns: 3, min_rows: 2 },
-    ],
-    [
       "home-battery-card",
       "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c",
       8,
@@ -226,7 +219,6 @@ test("configured live-card markup matches pre-refactor characterization", async 
     ["home-socket-card", "ae9b16f9795e98d009e2fa75409ae256d26e14182f4babfc3bee5eb19200fade"],
     ["home-river-card", "6ed85c09d35c8c8ca831477a617d655680039a361b73ba5a33448d44e54325ea"],
     ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],
-    ["home-energy-details-card", "d4359628bc5dd48d7b4b8adc50b04f2abab579eec68163859af69d86a7298b03"],
     ["home-battery-card", "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c"],
   ];
 
@@ -353,40 +345,6 @@ test("configured energy and battery paths are navigated by standalone cards", as
   click("view-energy");
   assert.equal(card._view, "home");
   assert.equal(renders, 0);
-});
-
-test("energy details refresh readings and mount the normal boiler history graph", async () => {
-  const { registry, window } = await loadCards();
-  const card = new (registry.get("home-energy-details-card"))();
-  card._config = {
-    power_entity: "sensor.boiler_power",
-    voltage_entity: "sensor.boiler_voltage",
-    current_entity: "sensor.boiler_current",
-    energy_total: "sensor.boiler_total",
-    energy_daily: "sensor.boiler_daily",
-    energy_monthly: "sensor.boiler_monthly",
-  };
-  card._hass = { states: {} };
-  card._setText = () => {};
-  card._setHidden = () => {};
-  let energyUpdates = 0;
-  card._updateEnergy = () => { energyUpdates++; };
-  card._updateDynamic();
-  assert.equal(energyUpdates, 1);
-
-  const slot = { dataset: { graph: "boiler" }, replaceChildren(child) { this.child = child; } };
-  card.shadowRoot.querySelectorAll = () => [slot];
-  let historyConfig;
-  window.loadCardHelpers = async () => ({
-    createCardElement(config) {
-      historyConfig = config;
-      return { style: {} };
-    },
-  });
-  await card._mountGraphs(card._generation);
-  assert.equal(historyConfig.title, "Потужність бойлера · 24 години");
-  assert.equal(JSON.stringify(historyConfig.entities), JSON.stringify(["sensor.boiler_power"]));
-  assert.equal(slot.child.style.height, "");
 });
 
 test("empty editor stubs are safe and invalid configuration types report the option", async () => {

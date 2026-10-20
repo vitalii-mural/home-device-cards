@@ -24,7 +24,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       socket: "switch_entity",
       river: "river_status",
       energy: "power_entity",
-      energy_details: "power_entity",
     }[kind];
     return {
       schema: [

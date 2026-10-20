@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3
+
+- Remove the unused `home-energy-details-card`, its editor configuration and registration.
+- Preserve the appearance and behavior of all remaining cards.
+
 ## 1.0.2
 
 - Move maintained source into `src/`, with a separate class file for each card.

@@ -32,7 +32,6 @@ HACS bundle under `dist/`.
 | `src/cards/socket-card.js` | Socket markup, service action, and updates |
 | `src/cards/river-card.js` | EcoFlow markup, details action, graphs, and updates |
 | `src/cards/energy-card.js` | Energy overview markup and updates |
-| `src/cards/energy-details-card.js` | Energy detail card markup |
 | `src/cards/battery-card.js` | Battery card markup and updates |
 
 The distribution stays self-contained: no runtime package downloads, extra
