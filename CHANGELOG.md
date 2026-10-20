@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.4
+
+- Use each standalone card's rendered width for compact and desktop layouts.
+- Render the boiler and air cards directly from their own templates while preserving their current markup and controls.
+- Recognize EcoFlow online state from either a sensor (`online`) or binary sensor (`on`).
+- Report closer card-size estimates for compact room and socket cards.
+- Add Chromium layout regression checks to local tests and CI.
+
 ## 1.0.3
 
 - Remove the unused `home-energy-details-card`, its editor configuration and registration.

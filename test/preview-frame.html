@@ -219,12 +219,14 @@
     delete states["switch.example_8"];
     states["switch.example_10"] = { state: "unavailable", attributes: {} };
     const initial = structuredClone(states);
+    let serviceCalls = 0;
     const hass = {
       states,
       themes: { darkMode: false },
       language: "uk",
       locale: { language: "uk" },
       callService: async () => {
+        serviceCalls++;
         throw Error("Real commands are disabled in fixture");
       },
     };
@@ -308,5 +310,6 @@
       );
       document.querySelector("#results").textContent = out.join("\n");
     };
+    window.fixture = { cards, hass, initial, refresh, get serviceCalls() { return serviceCalls; } };
   })();
 </script>

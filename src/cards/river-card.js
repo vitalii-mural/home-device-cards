@@ -9,7 +9,7 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
     return this._river();
   }
   _riverRead(configKey, unit, digits = 1) {
-    if (this._state(this._config.river_status)?.state !== "online") return "—";
+    if (!this._riverOnline()) return "—";
     const state = this._state(this._config[configKey]);
     let value = this._number(state?.state);
     if (value === null) return "—";
@@ -37,7 +37,7 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
   }
 
   _riverRuntime() {
-    if (this._state(this._config.river_status)?.state !== "online") return "—";
+    if (!this._riverOnline()) return "—";
     const state = this._state(this._config.river_runtime);
     const value = this._number(state?.state);
     if (value === null || value <= 0) return "—";
@@ -60,7 +60,7 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
 
   _river() {
     const c = this._config,
-      online = this._state(c.river_status)?.state === "online";
+      online = this._riverOnline();
     const percent = online
       ? this._number(this._state(c.river_battery)?.state)
       : null;
@@ -109,12 +109,12 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
 .river-outputs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:14px;padding:0 0 14px;border-bottom:1px solid var(--river-line)}.river-outputs[hidden],.river-outputs>div>div[hidden]{display:none}.river-output-column{display:contents}.river-outputs>div>div{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;font-size:11px}.river-outputs>div>div>span{display:flex;align-items:center;gap:4px;color:var(--k-muted);white-space:nowrap}.river-outputs svg{width:14px;height:14px}.river-outputs strong{font-size:13px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}.river-outputs strong small{font-size:10px;color:var(--k-muted);margin-left:2px}
 .river-batteries{display:grid;grid-template-columns:1fr 1fr;background:var(--river-soft);border-radius:14px;padding:12px 0}.river-battery{padding:0 14px;min-width:0}.river-battery+.river-battery{border-left:1px solid var(--river-line)}.river-battery-title{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--k-muted)}.river-percent{font-size:28px;line-height:1.2;letter-spacing:-.6px;margin:8px 0 7px;font-variant-numeric:tabular-nums}.river-percent small{font-size:12px;margin-left:3px;color:var(--k-muted)}.river-battery .river-track{height:4px;margin-bottom:8px;background:var(--k-card)}.river-readings{display:flex;justify-content:space-between;align-items:center;gap:5px}.river-reading{display:flex;align-items:center;gap:3px;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}.river-reading svg{width:14px;height:14px;color:var(--k-muted)}
 .river-details{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;padding:12px 0 0;background:transparent;color:var(--k-muted);font-size:12px}.river-details svg{transition:transform .15s ease}.river-details[aria-expanded=true] svg{transform:rotate(180deg)}.river-detail-row{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:6px;padding:10px 0;border-bottom:1px solid var(--river-line);font-size:11px}.river-detail-row>span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}.river-detail-head{color:var(--k-muted)}
-@media(max-width:380px){.river-card{padding:16px}.river-battery{padding:0 10px}.river-outputs{gap:3px}.river-outputs>div>div>span{gap:2px;font-size:10px}.river-outputs svg{width:12px;height:12px}.river-outputs strong{font-size:12px}}
+@container device-card (max-width:380px){.river-card{padding:16px}.river-battery{padding:0 10px}.river-outputs{gap:3px}.river-outputs>div>div>span{gap:2px;font-size:10px}.river-outputs svg{width:12px;height:12px}.river-outputs strong{font-size:12px}}
 </style><article class="river-card" aria-label="EcoFlow RIVER Max" data-live-panel="river" data-offline="${!online}"><header class="river-header"><span class="river-device">${icon("battery-charging")}</span><div class="river-heading"><h2>${this._escape(this._config.title || "EcoFlow RIVER Max")}</h2><span class="secondary" data-live="river-status">${online ? "Онлайн" : "Станція офлайн"}</span></div><span class="river-connection ${online ? "" : "offline"}" data-live="river-connection" aria-label="${online ? "Онлайн" : "Офлайн"}">${icon("wifi")}</span></header><p class="river-offline-note" data-live="river-offline-note" ${online ? "hidden" : ""}>Станція офлайн. Поточні дані знову будуть після підключення.</p><div class="river-charge"><div><div class="river-large"><span data-live="river-battery">${percent === null ? "—" : this._format(percent, 0)}</span><small>%</small></div><span class="secondary">Загальний заряд</span></div><div class="river-runtime"><span class="secondary">${icon("clock-3")}Залишилось</span><strong data-live="river-runtime">${this._riverRuntime()}</strong></div></div><div class="river-track" role="meter" aria-label="Загальний заряд" aria-valuemin="0" aria-valuemax="100" ${percent === null ? "" : `aria-valuenow="${fill}"`}><span data-live="river-charge-fill" style="width:${fill}%"></span></div><div class="river-power"><div><span class="secondary">${icon("arrow-down-left")}Вхід</span><strong><span data-live="river-input">${this._riverRead("river_input", "", 0)}</span><small>Вт</small></strong></div><div><span class="secondary">${icon("arrow-up-right")}Загальний вихід</span><strong><span data-live="river-output">${this._riverRead("river_output", "", 0)}</span><small>Вт</small></strong></div></div><section class="river-outputs" aria-label="Потужність виходів"><div class="river-output-column">${output("river_ac_output", "AC", "plug")}${output("river_dc_output", "DC", "cable")}${output("river_usb_c_output", "USB-C", "usb")}</div><div class="river-output-column">${output("river_usb_1_output", "USB 1", "usb")}${output("river_usb_2_output", "USB 2", "usb")}${output("river_usb_3_output", "USB 3", "usb")}</div></section><section class="river-batteries" aria-label="Дві батареї">${battery("Основна", "main", "battery")}${battery("Додаткова", "slave", "battery-plus")}</section><button class="river-details" data-action="river-details" aria-expanded="false" aria-controls="river-extra"><span>Деталі батарей</span>${icon("chevron-down")}</button><div id="river-extra" hidden><div class="river-detail-row river-detail-head"><span></span><span>Основна</span><span>Додаткова</span></div>${detailRows.map(([label, main, slave, key]) => `<div class="river-detail-row"><span>${label}</span><span data-live="river-main-${key}">${main}</span><span data-live="river-slave-${key}">${slave}</span></div>`).join("")}</div></article>`;
   }
 
   _updateRiver() {
-    const online = this._state(this._config.river_status)?.state === "online";
+    const online = this._riverOnline();
     const riverCard = this.shadowRoot.querySelector(".river-card");
     if (riverCard) riverCard.dataset.offline = String(!online);
     this._setHidden('[data-live="river-offline-note"]', online);

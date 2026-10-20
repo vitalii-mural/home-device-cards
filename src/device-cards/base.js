@@ -98,24 +98,47 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
   }
 
   getCardSize() {
-    return this._cardType === "battery" || this._cardType === "energy" ? 8 : 5;
+    return {
+      room: 3,
+      socket: 4,
+      air: 8,
+      river: 8,
+      energy: 8,
+      battery: 8,
+    }[this._cardType] || 5;
   }
   getGridOptions() {
     const kind = this._cardType;
+    const rows = {
+      boiler: 5,
+      air: 8,
+      river: 8,
+      energy: 5,
+      battery: 5,
+      socket: 4,
+      room: 3,
+    }[kind] || 5;
     return kind === "energy" || kind === "river"
       ? {
           columns: 12,
-          rows: kind === "river" ? 8 : 5,
+          rows,
           min_columns: 6,
           min_rows: kind === "river" ? 5 : 4,
         }
       : {
           columns: 6,
-          rows:
-            kind === "boiler" || kind === "air" || kind === "battery" ? 5 : 3,
+          rows,
           min_columns: 3,
           min_rows: 2,
         };
+  }
+
+  _riverOnline() {
+    const entity = this._config?.river_status,
+      state = this._state(entity)?.state;
+    return entity?.startsWith("binary_sensor.")
+      ? state === "on"
+      : state === "online";
   }
 
   _displayName(entityKey, name, fallback) {
@@ -302,7 +325,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     if (!this._config || !this._hass) return;
     this.toggleAttribute("dark", !!this._hass.themes?.darkMode);
     const content = this._content();
-    this.shadowRoot.innerHTML = `<style>${HOME_DEVICE_CARD_STYLE}.pending-hint{min-height:17px;visibility:hidden}.pending-hint[data-pending="true"]{visibility:visible}.live-error{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.18)}.single-card{width:100%}.single-card .desktop-board{display:block}[hidden]{display:none!important}@media(max-width:380px){.single-card .panel{padding:14px}}@media(min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}</style><ha-card><div class="single-card"><div class="error live-error" role="alert" data-live="error" ${this._error ? "" : "hidden"}>${this._escape(this._error)}</div>${content}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<style>${HOME_DEVICE_CARD_STYLE}${HOME_DEVICE_CONTAINER_STYLE}.pending-hint{min-height:17px;visibility:hidden}.pending-hint[data-pending="true"]{visibility:visible}.live-error{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.18)}.single-card{width:100%}.single-card .desktop-board{display:block}[hidden]{display:none!important}</style><ha-card><div class="single-card"><div class="error live-error" role="alert" data-live="error" ${this._error ? "" : "hidden"}>${this._escape(this._error)}</div>${content}</div></ha-card>`;
     const feedbackStyle = document.createElement("style");
     feedbackStyle.textContent = HOME_DEVICE_FEEDBACK_STYLE;
     this.shadowRoot.append(feedbackStyle);

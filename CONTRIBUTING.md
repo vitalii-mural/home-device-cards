@@ -23,17 +23,23 @@ https://developers.home-assistant.io/docs/frontend/custom-ui/custom-card/
 
 ## Checks and releases
 
-No dependency installation is needed for the current Node-based build/tests.
+Install the locked Node dependencies and Chromium browser before running the
+checks. The test suite uses a synthetic fixture and never controls real devices.
 
 ```sh
+npm ci
+npx playwright install chromium
 npm run build
 npm run check
 npm test
+npm run test:browser
 git diff --check
 ```
 
-Review the browser preview as well; unit tests cannot prove visual correctness.
-The commands and manual checklist are in [TESTING.md](TESTING.md).
+The automated browser checks cover narrow touch and desktop layouts, a narrow
+card inside a wide viewport, dark mode, EcoFlow offline recovery, and synthetic
+control dispatch. Use [TESTING.md](TESTING.md) for the preview and manual
+checklist as well.
 Commit the generated `dist/home-device-cards.js` alongside its sources.
 CI checks that the committed bundle matches the source.
 
@@ -50,5 +56,4 @@ Keep the build order explicit and do not edit generated files directly.
 The source still contains duplicated legacy dashboard styles and rendering
 helpers. Refactor them incrementally behind regression tests.
 Extract Ukrainian labels into a localization layer before adding languages.
-Add real-browser automated layout and interaction tests before claiming full
-frontend compatibility. Avoid a whole-codebase rewrite just to change framework.
+Avoid a whole-codebase rewrite just to change framework.

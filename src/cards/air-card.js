@@ -15,41 +15,11 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
   }
 
   _air() {
-    let html = super._air();
-    html = html.replace(
-      this._icon("air-conditioner"),
-      this._lucideIcon("air-vent"),
-    );
     const id = this._airId(),
       state = this._state(id),
       a = state?.attributes || {},
       available = this._available(id);
-    html = html.replace(/<span data-live="air-room">[\s\S]*?<\/span>/, "");
     const room = this._number(a.current_temperature);
-    html = html.replace(
-      '<span class="secondary">Задана температура</span>',
-      `<span class="secondary" data-live="air-room-caption">У кімнаті ${available ? this._format(room) : "—"} °C</span>`,
-    );
-    html = html.replace(
-      /<div class="modes"[^>]*>[\s\S]*?<\/div>/,
-      `<div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(a.hvac_modes, state?.state, available, this._busy(id))}</div>`,
-    );
-    html = html.replace(
-      /(<button class="round" data-action="air-minus"[^>]*>)[\s\S]*?(<\/button>)/,
-      (_, open, close) => `${open}${this._lucideIcon("minus")}${close}`,
-    );
-    html = html.replace(
-      /(<button class="round" data-action="air-plus"[^>]*>)[\s\S]*?(<\/button>)/,
-      (_, open, close) => `${open}${this._lucideIcon("plus")}${close}`,
-    );
-    html = html.replace(
-      /(<button class="icon-button[^>]*data-action="air-power"[^>]*>)[\s\S]*?(<\/button>)/,
-      (_, open, close) => `${open}${this._lucideIcon("power")}${close}`,
-    );
-    html = html.replace(
-      /<div class="fan">[\s\S]*?<\/div>/,
-      `<div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || "—")}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, this._busy(id))}</div></div>`,
-    );
     const fullMode = this._swingOption(a.swing_modes, "swing_full"),
       defaultMode = this._swingOption(a.swing_modes, "default");
     const moving = String(a.swing_mode || "")
@@ -60,7 +30,6 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
       .startsWith("fixed");
     const fixedPosition = fixed ? this._fixedSwingPosition(a.swing_mode) : 2;
     const fixedModes = this._fixedSwingModes(a.swing_modes);
-    const swing = `<div class="air-swing-main" role="group" aria-label="Вертикальні жалюзі"><button class="air-swing-main-button" data-action="air-swing-toggle" title="Вгору-вниз" aria-label="Вгору-вниз" aria-pressed="${moving}" ${this._disabled(!available || !fullMode || !defaultMode, id)}><span class="air-swing-main-icon">${this._swingMainIcon("up-down")}</span><span>Вгору-вниз</span></button><button class="air-swing-main-button" data-action="air-swing-palette" title="Фіксований кут" aria-label="Фіксований кут" aria-pressed="${fixed || !!this._airFixedPaletteOpen}" aria-expanded="${!!this._airFixedPaletteOpen}" aria-controls="air-fixed-palette" ${this._disabled(!available || !fixedModes.length, id)}><span class="air-swing-main-icon" data-position="${fixedPosition}">${this._fixedAngleIcon(fixedPosition)}</span><span>Фіксований кут</span></button></div><div class="air-fixed-palette" id="air-fixed-palette" data-air-fixed-palette ${this._airFixedPaletteOpen ? "" : "hidden"}>${this._fixedSwingButtons(fixedModes, a.swing_mode, available, this._busy(id))}</div>`;
     const firstKeys = [
       "air_lights_entity",
       "air_x_fan_entity",
@@ -73,15 +42,36 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
       "air_power_save_entity",
       "air_beeper_entity",
     ]);
-    const swingButtons = swing
-      .slice(swing.indexOf(">") + 1, swing.indexOf("</div>"))
-      .replace("<span>Вгору-вниз</span>", "<span>Рух</span>")
-      .replace("<span>Фіксований кут</span>", "<span>Кут</span>");
-    const palette = swing.slice(
-      swing.indexOf('<div class="air-fixed-palette"'),
-    );
+    const swingButtons = `<button class="air-swing-main-button" data-action="air-swing-toggle" title="Вгору-вниз" aria-label="Вгору-вниз" aria-pressed="${moving}" ${this._disabled(!available || !fullMode || !defaultMode, id)}><span class="air-swing-main-icon">${this._swingMainIcon("up-down")}</span><span>Рух</span></button><button class="air-swing-main-button" data-action="air-swing-palette" title="Фіксований кут" aria-label="Фіксований кут" aria-pressed="${fixed || !!this._airFixedPaletteOpen}" aria-expanded="${!!this._airFixedPaletteOpen}" aria-controls="air-fixed-palette" ${this._disabled(!available || !fixedModes.length, id)}><span class="air-swing-main-icon" data-position="${fixedPosition}">${this._fixedAngleIcon(fixedPosition)}</span><span>Кут</span></button>`;
+    const palette = `<div class="air-fixed-palette" id="air-fixed-palette" data-air-fixed-palette ${this._airFixedPaletteOpen ? "" : "hidden"}>${this._fixedSwingButtons(fixedModes, a.swing_mode, available, this._busy(id))}</div>`;
     const controls = `<div class="air-unified"><div class="air-unified-first">${swingButtons}${first}</div><div class="air-unified-second" ${this._airFixedPaletteOpen ? "hidden" : ""}>${second}</div>${palette}</div>`;
-    return html.replace("</article>", `${controls}</article>`);
+    const modes = a.hvac_modes || [],
+      target =
+        this._pendingTargets.get(id)?.temperature ?? this._number(a.temperature),
+      on = available && state.state !== "off";
+    const names = {
+      cool: "Охолодження",
+      heat: "Обігрів",
+      dry: "Осушення",
+      fan_only: "Вентиляція",
+      auto: "Авто",
+      heat_cool: "Авто",
+    };
+    const status = !state
+      ? "Не підключений до HA"
+      : !available
+        ? "Недоступний"
+        : on
+          ? names[state.state] || "Увімкнений"
+          : "Вимкнений";
+    const minimum = this._number(a.min_temp) ?? 16,
+      maximum = this._number(a.max_temp) ?? 30;
+    const busy = this._busy(id),
+      pending = this._pendingTargets.has(id);
+
+    return `<article class="panel" aria-label="Кондиціонер" data-live-panel="air"><div class="panel-top"><div class="heading"><span class="device-icon cool">${this._lucideIcon("air-vent")}</span><div><h2>Кондиціонер</h2><span class="secondary"><span data-live="air-status">${status}</span></span></div></div><button class="icon-button ${on ? "active-cool" : ""}" data-action="air-power" aria-label="${on ? "Вимкнути" : "Увімкнути"} кондиціонер" aria-pressed="${on}" ${this._disabled(!available, id)}>${this._lucideIcon("power")}</button></div>
+    <div class="air-temperature"><button class="round" data-action="air-minus" aria-label="Зменшити температуру кондиціонера" ${this._disabled(!available || target === null || target <= minimum, id)}>${this._lucideIcon("minus")}</button><div><span class="air-value" data-live="air-target">${available ? this._format(target) : "—"}</span><span class="air-degree">°C</span><span class="secondary" data-live="air-room-caption">У кімнаті ${available ? this._format(room) : "—"} °C</span><span class="secondary pending-hint" data-live="air-pending" data-pending="${pending}" aria-hidden="${!pending}" role="status">Очікує підтвердження</span></div><button class="round" data-action="air-plus" aria-label="Збільшити температуру кондиціонера" ${this._disabled(!available || target === null || target >= maximum, id)}>${this._lucideIcon("plus")}</button></div>
+    <div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(modes, state?.state, available, busy)}</div><div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || "—")}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, busy)}</div></div>${controls}</article>`;
   }
 
   _airModeButtons(modes, current, available, busy) {

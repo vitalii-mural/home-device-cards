@@ -12,9 +12,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: npm run check
       - run: npm test
+      - run: npm run test:browser
       - run: git diff --exit-code -- home-dashboard.js home-device-cards.js dist/
       - name: Verify version tag
         run: node -e "if ('v' + require('./package.json').version !== process.env.GITHUB_REF_NAME) process.exit(1)"

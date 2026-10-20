@@ -6,6 +6,8 @@ are needed. Run these commands from the repository root.
 ## Automated checks
 
 ```sh
+npm ci
+npx playwright install chromium
 npm run build
 npm run check
 npm test
@@ -14,11 +16,13 @@ git diff --check
 
 The build tests verify generated artifacts and deterministic source assembly.
 The Node tests cover registration, invalid and empty configuration, explicit
-entity selection, disconnect/reconnect cleanup, and stale service responses.
-They use a small fake DOM; they do not replace browser testing.
-GitHub Actions runs these checks on pushes and pull requests. The release
-workflow also verifies that the version tag matches `package.json` and that
-the committed bundle matches the source.
+entity selection, EcoFlow online states, disconnect/reconnect cleanup, and
+stale service responses. Chromium browser tests check 360 px touch and desktop
+widths, a narrow card inside a wide viewport, light/dark styling, offline
+recovery, and controls using a stub that rejects device commands. They do not
+connect to Home Assistant or call real devices. GitHub Actions runs these checks
+on pushes and pull requests. The release workflow also verifies that the version
+tag matches `package.json` and that the committed bundle matches the source.
 
 ## Browser preview
 

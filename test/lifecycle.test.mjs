@@ -138,6 +138,30 @@ test("registers the dashboard and standalone card types", async () => {
   }
 });
 
+test("EcoFlow online state supports sensor and binary_sensor entities", async () => {
+  const { registry } = await loadCards();
+  const RiverCard = registry.get("home-river-card");
+  const card = new RiverCard();
+
+  card._config = { river_status: "sensor.river_status" };
+  card._hass = { states: { "sensor.river_status": { state: "online" } } };
+  assert.equal(card._riverOnline(), true);
+  card._hass.states["sensor.river_status"].state = "unavailable";
+  assert.equal(card._riverOnline(), false);
+
+  card._config.river_status = "binary_sensor.river_status";
+  card._hass.states["binary_sensor.river_status"] = { state: "on" };
+  assert.equal(card._riverOnline(), true);
+  card._hass.states["binary_sensor.river_status"].state = "off";
+  assert.equal(card._riverOnline(), false);
+
+  const fields = RiverCard.getConfigForm().schema;
+  assert.deepEqual(
+    Array.from(fields.find((field) => field.name === "river_status").selector.entity.domain),
+    ["sensor", "binary_sensor"],
+  );
+});
+
 test("standalone card markup and sizing match pre-refactor characterization", async () => {
   const { registry } = await loadCards();
   const contracts = [
@@ -150,25 +174,25 @@ test("standalone card markup and sizing match pre-refactor characterization", as
     [
       "home-air-card",
       "d4b5d9a30816972f074103c73c9373af8366b72c0f4e9c4c96b9ad2647c67019",
-      5,
-      { columns: 6, rows: 5, min_columns: 3, min_rows: 2 },
+      8,
+      { columns: 6, rows: 8, min_columns: 3, min_rows: 2 },
     ],
     [
       "home-room-card",
       "254ba45249759a748364d16db9803c413fed25c9c8065c397436ba4cf7188465",
-      5,
+      3,
       { columns: 6, rows: 3, min_columns: 3, min_rows: 2 },
     ],
     [
       "home-socket-card",
       "0fa64060e79c71755879a7455e70b1d6348899c67d788dde555ea6acc8c9342e",
-      5,
-      { columns: 6, rows: 3, min_columns: 3, min_rows: 2 },
+      4,
+      { columns: 6, rows: 4, min_columns: 3, min_rows: 2 },
     ],
     [
       "home-river-card",
-      "5f531651f3baaa17b696a45ca6802d03163ab691a8e238ffd695093d3f88c81c",
-      5,
+      "59f8456eebf88035f3d8ef9dc9fd820091622cc6b5f2fa2a4f79e80a6fc04ce0",
+      8,
       { columns: 12, rows: 8, min_columns: 6, min_rows: 5 },
     ],
     [
@@ -217,7 +241,7 @@ test("configured live-card markup matches pre-refactor characterization", async 
     ["home-air-card", "2fddd0611caac77f3aee08432b90daa4d25c58104de9b01f9041be3351a82315"],
     ["home-room-card", "b34b70a51dc259ddb5ca3ae0c8bf88e543fdc7b807dff504f99effcb4dff0f44"],
     ["home-socket-card", "ae9b16f9795e98d009e2fa75409ae256d26e14182f4babfc3bee5eb19200fade"],
-    ["home-river-card", "6ed85c09d35c8c8ca831477a617d655680039a361b73ba5a33448d44e54325ea"],
+    ["home-river-card", "e5643629beb69ba09093c07d76a6821b5c2c938545b5a4811e11eab69fd97a6c"],
     ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],
     ["home-battery-card", "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c"],
   ];

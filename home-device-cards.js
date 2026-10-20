@@ -1,5 +1,5 @@
 customElements.whenDefined('home-dashboard').then(() => {
-const HOME_DEVICE_CARD_STYLE = ":host{display:block;color-scheme:light;--k-bg:#f4f3ef;--k-card:#fff;--k-text:#26322e;--k-muted:#64716b;--k-line:#e5e8e1;--k-soft:#edf0eb;--k-warm:#a46135;--k-warm-bg:#fbefe3;--k-cool:#386d7b;--k-cool-bg:#e9f2f3;--k-accent:#55765f;--k-accent-bg:#e8f0e7;--k-danger:#a53333}\n:host([dark]){color-scheme:dark;--k-bg:#171a1c;--k-card:#24282b;--k-text:#eef1ed;--k-muted:#abb6af;--k-line:#363d3b;--k-soft:#303735;--k-warm:#efb185;--k-warm-bg:#3b3028;--k-cool:#94cbd3;--k-cool-bg:#26373c;--k-accent:#a5cfaf;--k-accent-bg:#2d3e32;--k-danger:#ffb4ab}\n*{box-sizing:border-box}ha-card{display:block;background:transparent;box-shadow:none;border:0;border-radius:0;color:var(--k-text);font-family:var(--primary-font-family,system-ui,sans-serif)}\n.screen{max-width:440px;width:100%;margin:0 auto;background:var(--k-bg);border-radius:28px;padding:24px 17px 12px;min-height:360px}\nheader{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 6px 19px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--k-muted)}h1{font-size:31px;line-height:1.2;letter-spacing:-1px;font-weight:500;margin:4px 0 0}h2{font-size:15px;line-height:1.4;font-weight:500;letter-spacing:-.2px;margin:0}h3{font-size:14px;font-weight:500;margin:0 0 12px}.header-icon{color:var(--k-accent);--mdc-icon-size:23px}\nmain{display:grid;gap:13px}.panel{padding:17px;border-radius:23px;background:var(--k-card)}.panel-top{display:flex;align-items:center;justify-content:space-between;gap:9px}.heading{display:flex;align-items:center;gap:10px;min-width:0}.device-icon{height:39px;width:39px;flex-shrink:0;border-radius:14px;display:grid;place-items:center;--mdc-icon-size:21px}.warm{background:var(--k-warm-bg);color:var(--k-warm)}.cool{background:var(--k-cool-bg);color:var(--k-cool)}.neutral{background:var(--k-soft);color:var(--k-muted)}\n.secondary{display:block;color:var(--k-muted);font-size:11px;line-height:1.5;margin-top:2px}.heating{color:var(--k-warm)}button,select{font:inherit;font-size:12px;color:inherit}button{border:0;cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--k-accent);outline-offset:3px}button:disabled,select:disabled{cursor:default;opacity:.42}button[disabled] ha-icon{opacity:.7}.icon-button,.round{display:grid;place-items:center;width:44px;height:44px;min-width:44px;border-radius:50%;background:var(--k-soft);--mdc-icon-size:19px}.icon-button.active-warm{background:var(--k-warm-bg);color:var(--k-warm)}.icon-button.active-cool{background:var(--k-cool-bg);color:var(--k-cool)}\n.water-large{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:25px 1px 20px}.current{font-size:54px;line-height:1;letter-spacing:-2px;font-weight:400;white-space:nowrap;font-variant-numeric:tabular-nums}.degree{font-size:18px;letter-spacing:0;vertical-align:top;display:inline-block;margin:4px 0 0 3px}.setpoint{text-align:center}.adjust{display:flex;align-items:center;gap:9px;margin-top:8px}.adjust .round{width:40px;height:40px;min-width:40px}.target{font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}.progress{height:6px;background:var(--k-soft);border-radius:5px;overflow:hidden}.progress>span{display:block;height:100%;background:var(--k-warm);border-radius:5px}.waiting.progress>span{background:var(--k-muted)}.time{display:flex;align-items:center;gap:6px;color:var(--k-muted);font-size:11px;margin-top:12px;--mdc-icon-size:14px}\n.features,.modes{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:4px;padding:4px;background:var(--k-soft);border-radius:14px;margin-top:14px}.feature,.mode{min-height:42px;border-radius:10px;font-size:11px;background:transparent;padding:6px 3px;white-space:nowrap}.feature[aria-pressed=true]{background:var(--k-card);color:var(--k-warm)}.mode{display:flex;align-items:center;justify-content:center;gap:4px;--mdc-icon-size:15px}.mode[aria-pressed=true]{background:var(--k-card);color:var(--k-cool)}\n.air-temperature{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:23px 11px;text-align:center}.air-value{font-size:43px;line-height:1;letter-spacing:-1.8px;font-variant-numeric:tabular-nums}.air-degree{font-size:17px;vertical-align:top}.fan{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;font-size:11px;color:var(--k-muted)}.fan-label{display:flex;align-items:center;gap:7px;--mdc-icon-size:16px}.fan select{max-width:145px;min-height:36px;background:transparent;border:0;border-radius:8px;padding:7px 6px;font-size:11px}.fan option{background:var(--k-card);color:var(--k-text)}\n.small-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{position:relative;border-radius:21px;background:var(--k-card);padding:17px;min-width:0}.metric>ha-icon{position:absolute;right:14px;top:17px;color:var(--k-muted);--mdc-icon-size:17px}.metric-value{display:block;margin-top:10px;font-size:27px;font-variant-numeric:tabular-nums;letter-spacing:-.8px}.metric-value small{font-size:13px;letter-spacing:0;color:var(--k-muted)}.metric .secondary{padding-right:15px}.empty-caption{display:block;color:var(--k-muted);font-size:11px;margin-top:4px}\n.status-dot{width:7px;height:7px;border-radius:50%;background:var(--k-muted);margin-right:5px}.status-dot.online{background:var(--k-accent)}.river-values{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:18px}.river-value{font-size:29px;line-height:1.2;font-variant-numeric:tabular-nums}.river-value small{font-size:14px}.power-values{font-size:16px;margin-top:5px;font-variant-numeric:tabular-nums}.text-button{display:flex;align-items:center;justify-content:space-between;width:100%;padding:15px 0 0;color:var(--k-muted);background:transparent;font-size:11px;min-height:38px;--mdc-icon-size:16px}\n.links{display:grid;gap:8px}.link{display:flex;align-items:center;gap:12px;width:100%;padding:14px 17px;border-radius:18px;background:var(--k-card);text-align:left;color:var(--k-text);text-decoration:none;--mdc-icon-size:20px;min-height:67px}.link>ha-icon{flex-shrink:0;color:var(--k-muted)}.link .chevron{margin-left:auto;--mdc-icon-size:17px}.link strong{font-size:12px;font-weight:500}.link small{display:block;font-size:11px;font-weight:400;color:var(--k-muted);margin-top:3px}\nnav{display:flex;justify-content:space-around;gap:5px;border-top:1px solid var(--k-line);margin-top:17px;padding-top:12px}.nav-button{display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent;color:var(--k-muted);border-radius:14px;padding:8px 17px;font-size:11px;min-width:75px;--mdc-icon-size:20px}.nav-button[aria-pressed=true]{background:var(--k-accent-bg);color:var(--k-accent)}\n.data-row{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--k-line);padding:12px 0;font-size:12px;line-height:1.5}.data-row:last-child{border:0}.data-row>span:last-child{text-align:right;font-variant-numeric:tabular-nums}.subheading{font-size:11px;color:var(--k-muted);margin:6px 0 3px}.notice{font-size:12px;line-height:1.6;color:var(--k-muted);margin:0}.error{padding:12px 15px;border-radius:15px;background:var(--k-card);color:var(--k-danger);font-size:12px;line-height:1.5}.graph-slot{min-height:120px}.graph-slot>*{display:block}.button-row{display:flex;gap:8px;flex-wrap:wrap}.flat-button{background:var(--k-soft);border-radius:12px;min-height:44px;padding:10px 14px;font-size:12px}.wide-button{width:100%;text-align:left}.powered-note{font-size:11px;color:var(--k-muted);line-height:1.5}.screen [hidden]{display:none!important}\n@media(max-width:380px){.screen{padding:20px 12px 12px;border-radius:23px}.panel{padding:14px}.heading{gap:8px}.device-icon{width:34px;height:34px}.current{font-size:47px}.adjust{gap:6px}.adjust .round{min-width:36px;width:36px;height:42px}.target{font-size:19px}h2{font-size:14px}.air-temperature{padding:22px 3px}.metric{padding:14px}.metric-value{font-size:25px}.feature,.mode{font-size:11px}.water-large{gap:8px}.data-row{gap:8px}}\n@media(pointer:coarse){.feature,.mode,.fan select,.round,.adjust .round{min-height:44px}.adjust .round{min-width:40px;width:40px}}\n.screen[data-layout=desktop]{max-width:none;min-height:calc(100vh - 56px);padding:28px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;gap:22px;border-radius:0}\n.screen[data-layout=desktop] header{padding:0}.screen[data-layout=desktop] .header-icon{display:none}.desktop-caption{font-size:12px;color:var(--k-muted);margin:8px 0 0}\n.screen[data-layout=desktop] nav{grid-column:2;grid-row:1;margin:0;padding:0;border:0;align-self:center}.screen[data-layout=desktop] main{grid-column:1/-1;min-width:0;align-content:start}\n.desktop-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:'water air overview' 'energy energy energy';gap:16px;align-items:start}\n.desktop-water{grid-area:water}.desktop-air{grid-area:air}.desktop-overview{grid-area:overview;display:grid;gap:14px;min-width:0}.desktop-energy{grid-area:energy;min-width:0}.desktop-media{grid-area:media;min-width:0}\n.desktop-water>.panel,.desktop-air>.panel{min-height:300px}.desktop-board .panel{padding:20px}.desktop-board .current{font-size:52px}.desktop-board .water-large{margin-top:30px;margin-bottom:25px}.desktop-board .heading{gap:8px}.desktop-board h2{font-size:14px}.desktop-board .target{font-size:19px}.desktop-board .adjust{gap:6px}.desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.desktop-board .metric{padding:15px}.desktop-board .metric .secondary{padding-right:14px}.desktop-board .metric-value{font-size:26px}\n.energy-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.power-now{font-size:20px;white-space:nowrap;font-variant-numeric:tabular-nums}.power-now small{font-size:11px;color:var(--k-muted)}.energy-stats{display:flex;gap:34px;margin:16px 0 10px}.energy-stats strong{display:block;font-size:24px;font-weight:400;margin-top:4px;font-variant-numeric:tabular-nums}.energy-stats strong small{font-size:11px;color:var(--k-muted)}.desktop-energy .graph-slot{min-height:180px}.desktop-energy .text-button{border-top:1px solid var(--k-line)}.desktop-media>.device-icon{margin-bottom:16px}.desktop-media .link{background:var(--k-soft);margin-top:22px;padding:12px}.desktop-media .notice{margin-top:14px}\n.screen[data-columns=two] .desktop-board{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'water air' 'overview overview' 'energy energy'}.screen[data-columns=two] .desktop-overview{grid-template-columns:1fr 1fr;align-items:stretch}.screen[data-columns=two] .desktop-overview>.small-grid{align-content:stretch}.screen[data-columns=two] .energy-heading{align-items:start;flex-direction:column}.screen[data-columns=two] .energy-stats{gap:16px;flex-wrap:wrap}.screen[data-columns=two]{padding:20px}";
+const HOME_DEVICE_CARD_STYLE = ":host{display:block;color-scheme:light;--k-bg:#f4f3ef;--k-card:#fff;--k-text:#26322e;--k-muted:#64716b;--k-line:#e5e8e1;--k-soft:#edf0eb;--k-warm:#a46135;--k-warm-bg:#fbefe3;--k-cool:#386d7b;--k-cool-bg:#e9f2f3;--k-accent:#55765f;--k-accent-bg:#e8f0e7;--k-danger:#a53333}\n:host([dark]){color-scheme:dark;--k-bg:#171a1c;--k-card:#24282b;--k-text:#eef1ed;--k-muted:#abb6af;--k-line:#363d3b;--k-soft:#303735;--k-warm:#efb185;--k-warm-bg:#3b3028;--k-cool:#94cbd3;--k-cool-bg:#26373c;--k-accent:#a5cfaf;--k-accent-bg:#2d3e32;--k-danger:#ffb4ab}\n*{box-sizing:border-box}ha-card{display:block;background:transparent;box-shadow:none;border:0;border-radius:0;color:var(--k-text);font-family:var(--primary-font-family,system-ui,sans-serif)}\n.screen{max-width:440px;width:100%;margin:0 auto;background:var(--k-bg);border-radius:28px;padding:24px 17px 12px;min-height:360px}\nheader{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 6px 19px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--k-muted)}h1{font-size:31px;line-height:1.2;letter-spacing:-1px;font-weight:500;margin:4px 0 0}h2{font-size:15px;line-height:1.4;font-weight:500;letter-spacing:-.2px;margin:0}h3{font-size:14px;font-weight:500;margin:0 0 12px}.header-icon{color:var(--k-accent);--mdc-icon-size:23px}\nmain{display:grid;gap:13px}.panel{padding:17px;border-radius:23px;background:var(--k-card)}.panel-top{display:flex;align-items:center;justify-content:space-between;gap:9px}.heading{display:flex;align-items:center;gap:10px;min-width:0}.device-icon{height:39px;width:39px;flex-shrink:0;border-radius:14px;display:grid;place-items:center;--mdc-icon-size:21px}.warm{background:var(--k-warm-bg);color:var(--k-warm)}.cool{background:var(--k-cool-bg);color:var(--k-cool)}.neutral{background:var(--k-soft);color:var(--k-muted)}\n.secondary{display:block;color:var(--k-muted);font-size:11px;line-height:1.5;margin-top:2px}.heating{color:var(--k-warm)}button,select{font:inherit;font-size:12px;color:inherit}button{border:0;cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--k-accent);outline-offset:3px}button:disabled,select:disabled{cursor:default;opacity:.42}button[disabled] ha-icon{opacity:.7}.icon-button,.round{display:grid;place-items:center;width:44px;height:44px;min-width:44px;border-radius:50%;background:var(--k-soft);--mdc-icon-size:19px}.icon-button.active-warm{background:var(--k-warm-bg);color:var(--k-warm)}.icon-button.active-cool{background:var(--k-cool-bg);color:var(--k-cool)}\n.water-large{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:25px 1px 20px}.current{font-size:54px;line-height:1;letter-spacing:-2px;font-weight:400;white-space:nowrap;font-variant-numeric:tabular-nums}.degree{font-size:18px;letter-spacing:0;vertical-align:top;display:inline-block;margin:4px 0 0 3px}.setpoint{text-align:center}.adjust{display:flex;align-items:center;gap:9px;margin-top:8px}.adjust .round{width:40px;height:40px;min-width:40px}.target{font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}.progress{height:6px;background:var(--k-soft);border-radius:5px;overflow:hidden}.progress>span{display:block;height:100%;background:var(--k-warm);border-radius:5px}.waiting.progress>span{background:var(--k-muted)}.time{display:flex;align-items:center;gap:6px;color:var(--k-muted);font-size:11px;margin-top:12px;--mdc-icon-size:14px}\n.features,.modes{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:4px;padding:4px;background:var(--k-soft);border-radius:14px;margin-top:14px}.feature,.mode{min-height:42px;border-radius:10px;font-size:11px;background:transparent;padding:6px 3px;white-space:nowrap}.feature[aria-pressed=true]{background:var(--k-card);color:var(--k-warm)}.mode{display:flex;align-items:center;justify-content:center;gap:4px;--mdc-icon-size:15px}.mode[aria-pressed=true]{background:var(--k-card);color:var(--k-cool)}\n.air-temperature{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:23px 11px;text-align:center}.air-value{font-size:43px;line-height:1;letter-spacing:-1.8px;font-variant-numeric:tabular-nums}.air-degree{font-size:17px;vertical-align:top}.fan{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;font-size:11px;color:var(--k-muted)}.fan-label{display:flex;align-items:center;gap:7px;--mdc-icon-size:16px}.fan select{max-width:145px;min-height:36px;background:transparent;border:0;border-radius:8px;padding:7px 6px;font-size:11px}.fan option{background:var(--k-card);color:var(--k-text)}\n.small-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{position:relative;border-radius:21px;background:var(--k-card);padding:17px;min-width:0}.metric>ha-icon{position:absolute;right:14px;top:17px;color:var(--k-muted);--mdc-icon-size:17px}.metric-value{display:block;margin-top:10px;font-size:27px;font-variant-numeric:tabular-nums;letter-spacing:-.8px}.metric-value small{font-size:13px;letter-spacing:0;color:var(--k-muted)}.metric .secondary{padding-right:15px}.empty-caption{display:block;color:var(--k-muted);font-size:11px;margin-top:4px}\n.status-dot{width:7px;height:7px;border-radius:50%;background:var(--k-muted);margin-right:5px}.status-dot.online{background:var(--k-accent)}.river-values{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:18px}.river-value{font-size:29px;line-height:1.2;font-variant-numeric:tabular-nums}.river-value small{font-size:14px}.power-values{font-size:16px;margin-top:5px;font-variant-numeric:tabular-nums}.text-button{display:flex;align-items:center;justify-content:space-between;width:100%;padding:15px 0 0;color:var(--k-muted);background:transparent;font-size:11px;min-height:38px;--mdc-icon-size:16px}\n.links{display:grid;gap:8px}.link{display:flex;align-items:center;gap:12px;width:100%;padding:14px 17px;border-radius:18px;background:var(--k-card);text-align:left;color:var(--k-text);text-decoration:none;--mdc-icon-size:20px;min-height:67px}.link>ha-icon{flex-shrink:0;color:var(--k-muted)}.link .chevron{margin-left:auto;--mdc-icon-size:17px}.link strong{font-size:12px;font-weight:500}.link small{display:block;font-size:11px;font-weight:400;color:var(--k-muted);margin-top:3px}\nnav{display:flex;justify-content:space-around;gap:5px;border-top:1px solid var(--k-line);margin-top:17px;padding-top:12px}.nav-button{display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent;color:var(--k-muted);border-radius:14px;padding:8px 17px;font-size:11px;min-width:75px;--mdc-icon-size:20px}.nav-button[aria-pressed=true]{background:var(--k-accent-bg);color:var(--k-accent)}\n.data-row{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--k-line);padding:12px 0;font-size:12px;line-height:1.5}.data-row:last-child{border:0}.data-row>span:last-child{text-align:right;font-variant-numeric:tabular-nums}.subheading{font-size:11px;color:var(--k-muted);margin:6px 0 3px}.notice{font-size:12px;line-height:1.6;color:var(--k-muted);margin:0}.error{padding:12px 15px;border-radius:15px;background:var(--k-card);color:var(--k-danger);font-size:12px;line-height:1.5}.graph-slot{min-height:120px}.graph-slot>*{display:block}.button-row{display:flex;gap:8px;flex-wrap:wrap}.flat-button{background:var(--k-soft);border-radius:12px;min-height:44px;padding:10px 14px;font-size:12px}.wide-button{width:100%;text-align:left}.powered-note{font-size:11px;color:var(--k-muted);line-height:1.5}.screen [hidden]{display:none!important}\n\n@media(pointer:coarse){.feature,.mode,.fan select,.round,.adjust .round{min-height:44px}.adjust .round{min-width:40px;width:40px}}\n.screen[data-layout=desktop]{max-width:none;min-height:calc(100vh - 56px);padding:28px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;gap:22px;border-radius:0}\n.screen[data-layout=desktop] header{padding:0}.screen[data-layout=desktop] .header-icon{display:none}.desktop-caption{font-size:12px;color:var(--k-muted);margin:8px 0 0}\n.screen[data-layout=desktop] nav{grid-column:2;grid-row:1;margin:0;padding:0;border:0;align-self:center}.screen[data-layout=desktop] main{grid-column:1/-1;min-width:0;align-content:start}\n.desktop-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:'water air overview' 'energy energy energy';gap:16px;align-items:start}\n.desktop-water{grid-area:water}.desktop-air{grid-area:air}.desktop-overview{grid-area:overview;display:grid;gap:14px;min-width:0}.desktop-energy{grid-area:energy;min-width:0}.desktop-media{grid-area:media;min-width:0}\n.desktop-water>.panel,.desktop-air>.panel{min-height:300px}.desktop-board .panel{padding:20px}.desktop-board .current{font-size:52px}.desktop-board .water-large{margin-top:30px;margin-bottom:25px}.desktop-board .heading{gap:8px}.desktop-board h2{font-size:14px}.desktop-board .target{font-size:19px}.desktop-board .adjust{gap:6px}.desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.desktop-board .metric{padding:15px}.desktop-board .metric .secondary{padding-right:14px}.desktop-board .metric-value{font-size:26px}\n.energy-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.power-now{font-size:20px;white-space:nowrap;font-variant-numeric:tabular-nums}.power-now small{font-size:11px;color:var(--k-muted)}.energy-stats{display:flex;gap:34px;margin:16px 0 10px}.energy-stats strong{display:block;font-size:24px;font-weight:400;margin-top:4px;font-variant-numeric:tabular-nums}.energy-stats strong small{font-size:11px;color:var(--k-muted)}.desktop-energy .graph-slot{min-height:180px}.desktop-energy .text-button{border-top:1px solid var(--k-line)}.desktop-media>.device-icon{margin-bottom:16px}.desktop-media .link{background:var(--k-soft);margin-top:22px;padding:12px}.desktop-media .notice{margin-top:14px}\n.screen[data-columns=two] .desktop-board{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'water air' 'overview overview' 'energy energy'}.screen[data-columns=two] .desktop-overview{grid-template-columns:1fr 1fr;align-items:stretch}.screen[data-columns=two] .desktop-overview>.small-grid{align-content:stretch}.screen[data-columns=two] .energy-heading{align-items:start;flex-direction:column}.screen[data-columns=two] .energy-stats{gap:16px;flex-wrap:wrap}.screen[data-columns=two]{padding:20px}";
 
 const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .socket-card,.single-card .room-sensor-card{width:100%;margin:0;padding:20px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
@@ -38,7 +38,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .river-card .river-large.river-missing{font-size:23px!important;margin-bottom:10px}
 .single-card .river-card .river-percent.river-missing{font-size:17px!important;margin-top:13px;margin-bottom:14px}
 .single-card .river-card .river-power strong.river-missing{font-size:15px!important;margin-top:9px}
-@media(max-width:380px){.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{font-size:34px}.single-card .socket-metrics>div{padding:0 8px}.single-card .socket-metrics strong{font-size:17px}.single-card .socket-metrics strong small{font-size:11px}.single-card .room-reading+.room-reading{padding-left:16px}}
+
 .single-card .socket-card .socket-missing,.single-card .room-sensor-card .room-missing,.single-card .river-card .river-missing{font-size:16px!important;color:var(--k-muted);font-weight:400!important;letter-spacing:0!important}
 .single-card .socket-missing small,.single-card .room-missing small,.single-card .river-missing small{display:none}
 .single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{min-height:43px;display:flex;align-items:baseline}
@@ -143,10 +143,17 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .water-large>.boiler-current-label{grid-column:1;grid-row:1;margin:0}
 .single-card .desktop-board .water-large .adjust{height:48px;gap:8px}
 .single-card .water-large .target{min-width:45px;text-align:center}
-@media(max-width:400px){.single-card .desktop-board .water-large{column-gap:8px}.single-card .desktop-board .water-large .adjust{gap:5px}}
+
 @keyframes home-pending-spin{to{transform:rotate(360deg)}}
 @media(pointer:coarse){.single-card [data-live-panel="boiler"] .adjust .round{width:44px;height:44px;min-width:44px;min-height:44px;flex-basis:44px}}
 @media(prefers-reduced-motion:reduce){.round[data-pending="true"] .pending-spinner{animation:none}}
+`;
+
+const HOME_DEVICE_CONTAINER_STYLE = `
+:host{container-type:inline-size;container-name:device-card}
+@container device-card (max-width:380px){.single-card .panel{padding:14px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:0}.single-card .heading{gap:8px}.single-card .device-icon{width:34px;height:34px}.single-card .current{font-size:47px}.single-card .adjust{gap:6px}.single-card .adjust .round{min-width:36px;width:36px;height:42px}.single-card .target{font-size:19px}.single-card .desktop-board h2{font-size:14px}.single-card .air-temperature{padding:22px 3px;gap:8px}.single-card .metric{padding:14px}.single-card .metric-value{font-size:25px}.single-card .feature,.single-card .mode{font-size:11px}.single-card .desktop-board .water-large{gap:8px}.single-card .data-row{gap:8px}.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{font-size:34px}.single-card .socket-metrics>div{padding:0 8px}.single-card .socket-metrics strong{font-size:17px}.single-card .socket-metrics strong small{font-size:11px}.single-card .room-reading+.room-reading{padding-left:16px}}
+@container device-card (min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}
+@container device-card (max-width:400px){.single-card .desktop-board .water-large{column-gap:8px}.single-card .desktop-board .water-large .adjust{gap:5px}}
 `;
 
 // Swing icons from https://github.com/lageorgem/ha-material-thermostat-card
@@ -317,7 +324,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_label', 'Підпис енергії', 'text'],
   ],
   river: [
-    ['river_status', 'Статус станції', 'sensor'],
+    ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ['river_battery', 'Заряд станції', 'sensor'],
     ['river_input', 'Вхідна потужність', 'sensor'],
     ['river_output', 'Вихідна потужність', 'sensor'],
@@ -351,7 +358,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_path', 'Шлях до деталей енергії', 'text'],
   ],
   battery: [
-    ['river_status', 'Статус станції', 'sensor'],
+    ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ...[
       ['main_level_entity', 'Заряд основної батареї'], ['main_full_entity', 'Повна ємність основної'],
       ['main_remain_entity', 'Залишкова ємність основної'], ['main_volts_entity', 'Напруга основної батареї'],
@@ -478,24 +485,47 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
   }
 
   getCardSize() {
-    return this._cardType === "battery" || this._cardType === "energy" ? 8 : 5;
+    return {
+      room: 3,
+      socket: 4,
+      air: 8,
+      river: 8,
+      energy: 8,
+      battery: 8,
+    }[this._cardType] || 5;
   }
   getGridOptions() {
     const kind = this._cardType;
+    const rows = {
+      boiler: 5,
+      air: 8,
+      river: 8,
+      energy: 5,
+      battery: 5,
+      socket: 4,
+      room: 3,
+    }[kind] || 5;
     return kind === "energy" || kind === "river"
       ? {
           columns: 12,
-          rows: kind === "river" ? 8 : 5,
+          rows,
           min_columns: 6,
           min_rows: kind === "river" ? 5 : 4,
         }
       : {
           columns: 6,
-          rows:
-            kind === "boiler" || kind === "air" || kind === "battery" ? 5 : 3,
+          rows,
           min_columns: 3,
           min_rows: 2,
         };
+  }
+
+  _riverOnline() {
+    const entity = this._config?.river_status,
+      state = this._state(entity)?.state;
+    return entity?.startsWith("binary_sensor.")
+      ? state === "on"
+      : state === "online";
   }
 
   _displayName(entityKey, name, fallback) {
@@ -682,7 +712,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     if (!this._config || !this._hass) return;
     this.toggleAttribute("dark", !!this._hass.themes?.darkMode);
     const content = this._content();
-    this.shadowRoot.innerHTML = `<style>${HOME_DEVICE_CARD_STYLE}.pending-hint{min-height:17px;visibility:hidden}.pending-hint[data-pending="true"]{visibility:visible}.live-error{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.18)}.single-card{width:100%}.single-card .desktop-board{display:block}[hidden]{display:none!important}@media(max-width:380px){.single-card .panel{padding:14px}}@media(min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}</style><ha-card><div class="single-card"><div class="error live-error" role="alert" data-live="error" ${this._error ? "" : "hidden"}>${this._escape(this._error)}</div>${content}</div></ha-card>`;
+    this.shadowRoot.innerHTML = `<style>${HOME_DEVICE_CARD_STYLE}${HOME_DEVICE_CONTAINER_STYLE}.pending-hint{min-height:17px;visibility:hidden}.pending-hint[data-pending="true"]{visibility:visible}.live-error{position:fixed;z-index:20;left:50%;bottom:18px;transform:translateX(-50%);width:min(440px,calc(100vw - 32px));box-shadow:0 8px 24px rgba(0,0,0,.18)}.single-card{width:100%}.single-card .desktop-board{display:block}[hidden]{display:none!important}</style><ha-card><div class="single-card"><div class="error live-error" role="alert" data-live="error" ${this._error ? "" : "hidden"}>${this._escape(this._error)}</div>${content}</div></ha-card>`;
     const feedbackStyle = document.createElement("style");
     feedbackStyle.textContent = HOME_DEVICE_FEEDBACK_STYLE;
     this.shadowRoot.append(feedbackStyle);
@@ -720,37 +750,48 @@ class HomeBoilerCard extends HomeDeviceStandaloneCard {
   }
 
   _boiler() {
-    let html = super._boiler();
-    html = html.replace(
-      '<div class="water-large">',
-      '<div class="water-large"><span class="secondary boiler-current-label">Температура води</span>',
-    );
-    html = html.replace(this._icon("water-boiler"), this._lucideIcon("heater"));
-    for (const [action, icon] of [
-      ["boiler-minus", "minus"],
-      ["boiler-plus", "plus"],
-      ["boiler-power", "power"],
-    ]) {
-      const pattern = new RegExp(
-        `(<button[^>]*data-action="${action}"[^>]*>)[\\s\\S]*?(<\\/button>)`,
-      );
-      html = html.replace(
-        pattern,
-        (_, open, close) => `${open}${this._lucideIcon(icon)}${close}`,
-      );
-    }
-    html = html.replace(
-      '<small class="degree">°C</small>',
-      '<small class="degree" data-live="boiler-current-unit">°C</small>',
-    );
-    html = html.replace(
-      /(<span data-live="boiler-target">[^<]*<\/span>)°/,
-      '$1<small data-live="boiler-target-unit">°C</small>',
-    );
-    html = html.replace(/<div class="features"[^>]*>[\s\S]*?<\/div>/, () =>
-      this._boilerFeatures(),
-    );
-    return html;
+    const c = this._config,
+      state = this._state(c.boiler_entity),
+      a = state?.attributes || {};
+    const available = this._available(c.boiler_entity),
+      on = available && state.state !== "off",
+      heating =
+        on && (a.hvac_action === "heating" || a.heating === true);
+    const current = this._number(a.current_temperature),
+      pendingTarget = this._pendingTargets.get(c.boiler_entity),
+      target = pendingTarget?.temperature ?? this._number(a.temperature),
+      min = this._number(a.min_temp) ?? 30;
+    const progress =
+      current !== null && target !== null && target > min
+        ? Math.min(100, Math.max(0, ((current - min) / (target - min)) * 100))
+        : 0;
+    const h = this._value(c.boiler_hours),
+      m = this._value(c.boiler_minutes),
+      remaining = c.boiler_entity?.startsWith("water_heater.")
+        ? this._number(a.heating_time_remaining)
+        : h !== null && m !== null && h >= 0 && m >= 0
+          ? h * 60 + m
+          : null;
+    const time =
+      remaining !== null && remaining > 0
+        ? `${remaining >= 60 ? Math.floor(remaining / 60) + " год " : ""}${remaining % 60} хв`
+        : "";
+    const status = !state
+      ? "Не підключено"
+      : !available
+        ? "Недоступний"
+        : !on
+          ? "Вимкнено"
+          : heating
+            ? "Нагрівання"
+            : a.hvac_action === "idle" || a.keep_warm === true
+              ? "Підтримання температури"
+              : "Увімкнено";
+
+    return `<article class="panel" aria-label="Бойлер" data-live-panel="boiler"><div class="panel-top"><div class="heading"><span class="device-icon warm">${this._lucideIcon("heater")}</span><div><h2>Гаряча вода</h2><span class="secondary ${heating ? "heating" : ""}" data-live="boiler-status">${status}</span></div></div><button class="icon-button ${on ? "active-warm" : ""}" data-action="boiler-power" aria-label="${on ? "Вимкнути" : "Увімкнути"} бойлер" aria-pressed="${on}" ${this._disabled(!available, c.boiler_entity)}>${this._lucideIcon("power")}</button></div>
+    <div class="water-large"><span class="secondary boiler-current-label">Температура води</span><span class="current"><span data-live="boiler-current">${available ? this._format(current) : "—"}</span><small class="degree" data-live="boiler-current-unit">°C</small></span><div class="setpoint"><span class="secondary">Нагріти до</span><div class="adjust"><button class="round" data-action="boiler-minus" aria-label="Зменшити температуру бойлера" ${this._disabled(!available || target === null || target <= min, c.boiler_entity)}>${this._lucideIcon("minus")}</button><span class="target"><span data-live="boiler-target">${this._format(target)}</span><small data-live="boiler-target-unit">°C</small></span><button class="round" data-action="boiler-plus" aria-label="Збільшити температуру бойлера" ${this._disabled(!available || target === null || target >= (this._number(a.max_temp) ?? 80), c.boiler_entity)}>${this._lucideIcon("plus")}</button></div><span class="secondary pending-hint" data-live="boiler-pending" data-pending="${!!pendingTarget}" aria-hidden="${!pendingTarget}" role="status">Очікує підтвердження</span></div></div>
+    <div class="progress ${heating ? "" : "waiting"}" data-live="boiler-progress" role="progressbar" aria-label="Температура води до заданої" aria-valuenow="${Math.round(progress)}" aria-valuemin="0" aria-valuemax="100"><span style="width:${progress}%"></span></div>
+    <div class="time" data-live="boiler-time" ${heating && time ? "" : "hidden"}>${this._icon("clock-outline")}<span>До нагрівання · ${time}</span></div>${this._boilerFeatures()}</article>`;
   }
 
   _boilerFeatures() {
@@ -876,41 +917,11 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
   }
 
   _air() {
-    let html = super._air();
-    html = html.replace(
-      this._icon("air-conditioner"),
-      this._lucideIcon("air-vent"),
-    );
     const id = this._airId(),
       state = this._state(id),
       a = state?.attributes || {},
       available = this._available(id);
-    html = html.replace(/<span data-live="air-room">[\s\S]*?<\/span>/, "");
     const room = this._number(a.current_temperature);
-    html = html.replace(
-      '<span class="secondary">Задана температура</span>',
-      `<span class="secondary" data-live="air-room-caption">У кімнаті ${available ? this._format(room) : "—"} °C</span>`,
-    );
-    html = html.replace(
-      /<div class="modes"[^>]*>[\s\S]*?<\/div>/,
-      `<div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(a.hvac_modes, state?.state, available, this._busy(id))}</div>`,
-    );
-    html = html.replace(
-      /(<button class="round" data-action="air-minus"[^>]*>)[\s\S]*?(<\/button>)/,
-      (_, open, close) => `${open}${this._lucideIcon("minus")}${close}`,
-    );
-    html = html.replace(
-      /(<button class="round" data-action="air-plus"[^>]*>)[\s\S]*?(<\/button>)/,
-      (_, open, close) => `${open}${this._lucideIcon("plus")}${close}`,
-    );
-    html = html.replace(
-      /(<button class="icon-button[^>]*data-action="air-power"[^>]*>)[\s\S]*?(<\/button>)/,
-      (_, open, close) => `${open}${this._lucideIcon("power")}${close}`,
-    );
-    html = html.replace(
-      /<div class="fan">[\s\S]*?<\/div>/,
-      `<div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || "—")}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, this._busy(id))}</div></div>`,
-    );
     const fullMode = this._swingOption(a.swing_modes, "swing_full"),
       defaultMode = this._swingOption(a.swing_modes, "default");
     const moving = String(a.swing_mode || "")
@@ -921,7 +932,6 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
       .startsWith("fixed");
     const fixedPosition = fixed ? this._fixedSwingPosition(a.swing_mode) : 2;
     const fixedModes = this._fixedSwingModes(a.swing_modes);
-    const swing = `<div class="air-swing-main" role="group" aria-label="Вертикальні жалюзі"><button class="air-swing-main-button" data-action="air-swing-toggle" title="Вгору-вниз" aria-label="Вгору-вниз" aria-pressed="${moving}" ${this._disabled(!available || !fullMode || !defaultMode, id)}><span class="air-swing-main-icon">${this._swingMainIcon("up-down")}</span><span>Вгору-вниз</span></button><button class="air-swing-main-button" data-action="air-swing-palette" title="Фіксований кут" aria-label="Фіксований кут" aria-pressed="${fixed || !!this._airFixedPaletteOpen}" aria-expanded="${!!this._airFixedPaletteOpen}" aria-controls="air-fixed-palette" ${this._disabled(!available || !fixedModes.length, id)}><span class="air-swing-main-icon" data-position="${fixedPosition}">${this._fixedAngleIcon(fixedPosition)}</span><span>Фіксований кут</span></button></div><div class="air-fixed-palette" id="air-fixed-palette" data-air-fixed-palette ${this._airFixedPaletteOpen ? "" : "hidden"}>${this._fixedSwingButtons(fixedModes, a.swing_mode, available, this._busy(id))}</div>`;
     const firstKeys = [
       "air_lights_entity",
       "air_x_fan_entity",
@@ -934,15 +944,36 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
       "air_power_save_entity",
       "air_beeper_entity",
     ]);
-    const swingButtons = swing
-      .slice(swing.indexOf(">") + 1, swing.indexOf("</div>"))
-      .replace("<span>Вгору-вниз</span>", "<span>Рух</span>")
-      .replace("<span>Фіксований кут</span>", "<span>Кут</span>");
-    const palette = swing.slice(
-      swing.indexOf('<div class="air-fixed-palette"'),
-    );
+    const swingButtons = `<button class="air-swing-main-button" data-action="air-swing-toggle" title="Вгору-вниз" aria-label="Вгору-вниз" aria-pressed="${moving}" ${this._disabled(!available || !fullMode || !defaultMode, id)}><span class="air-swing-main-icon">${this._swingMainIcon("up-down")}</span><span>Рух</span></button><button class="air-swing-main-button" data-action="air-swing-palette" title="Фіксований кут" aria-label="Фіксований кут" aria-pressed="${fixed || !!this._airFixedPaletteOpen}" aria-expanded="${!!this._airFixedPaletteOpen}" aria-controls="air-fixed-palette" ${this._disabled(!available || !fixedModes.length, id)}><span class="air-swing-main-icon" data-position="${fixedPosition}">${this._fixedAngleIcon(fixedPosition)}</span><span>Кут</span></button>`;
+    const palette = `<div class="air-fixed-palette" id="air-fixed-palette" data-air-fixed-palette ${this._airFixedPaletteOpen ? "" : "hidden"}>${this._fixedSwingButtons(fixedModes, a.swing_mode, available, this._busy(id))}</div>`;
     const controls = `<div class="air-unified"><div class="air-unified-first">${swingButtons}${first}</div><div class="air-unified-second" ${this._airFixedPaletteOpen ? "hidden" : ""}>${second}</div>${palette}</div>`;
-    return html.replace("</article>", `${controls}</article>`);
+    const modes = a.hvac_modes || [],
+      target =
+        this._pendingTargets.get(id)?.temperature ?? this._number(a.temperature),
+      on = available && state.state !== "off";
+    const names = {
+      cool: "Охолодження",
+      heat: "Обігрів",
+      dry: "Осушення",
+      fan_only: "Вентиляція",
+      auto: "Авто",
+      heat_cool: "Авто",
+    };
+    const status = !state
+      ? "Не підключений до HA"
+      : !available
+        ? "Недоступний"
+        : on
+          ? names[state.state] || "Увімкнений"
+          : "Вимкнений";
+    const minimum = this._number(a.min_temp) ?? 16,
+      maximum = this._number(a.max_temp) ?? 30;
+    const busy = this._busy(id),
+      pending = this._pendingTargets.has(id);
+
+    return `<article class="panel" aria-label="Кондиціонер" data-live-panel="air"><div class="panel-top"><div class="heading"><span class="device-icon cool">${this._lucideIcon("air-vent")}</span><div><h2>Кондиціонер</h2><span class="secondary"><span data-live="air-status">${status}</span></span></div></div><button class="icon-button ${on ? "active-cool" : ""}" data-action="air-power" aria-label="${on ? "Вимкнути" : "Увімкнути"} кондиціонер" aria-pressed="${on}" ${this._disabled(!available, id)}>${this._lucideIcon("power")}</button></div>
+    <div class="air-temperature"><button class="round" data-action="air-minus" aria-label="Зменшити температуру кондиціонера" ${this._disabled(!available || target === null || target <= minimum, id)}>${this._lucideIcon("minus")}</button><div><span class="air-value" data-live="air-target">${available ? this._format(target) : "—"}</span><span class="air-degree">°C</span><span class="secondary" data-live="air-room-caption">У кімнаті ${available ? this._format(room) : "—"} °C</span><span class="secondary pending-hint" data-live="air-pending" data-pending="${pending}" aria-hidden="${!pending}" role="status">Очікує підтвердження</span></div><button class="round" data-action="air-plus" aria-label="Збільшити температуру кондиціонера" ${this._disabled(!available || target === null || target >= maximum, id)}>${this._lucideIcon("plus")}</button></div>
+    <div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(modes, state?.state, available, busy)}</div><div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || "—")}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, busy)}</div></div>${controls}</article>`;
   }
 
   _airModeButtons(modes, current, available, busy) {
@@ -1842,7 +1873,7 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
     return this._river();
   }
   _riverRead(configKey, unit, digits = 1) {
-    if (this._state(this._config.river_status)?.state !== "online") return "—";
+    if (!this._riverOnline()) return "—";
     const state = this._state(this._config[configKey]);
     let value = this._number(state?.state);
     if (value === null) return "—";
@@ -1870,7 +1901,7 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
   }
 
   _riverRuntime() {
-    if (this._state(this._config.river_status)?.state !== "online") return "—";
+    if (!this._riverOnline()) return "—";
     const state = this._state(this._config.river_runtime);
     const value = this._number(state?.state);
     if (value === null || value <= 0) return "—";
@@ -1893,7 +1924,7 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
 
   _river() {
     const c = this._config,
-      online = this._state(c.river_status)?.state === "online";
+      online = this._riverOnline();
     const percent = online
       ? this._number(this._state(c.river_battery)?.state)
       : null;
@@ -1942,12 +1973,12 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
 .river-outputs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:14px;padding:0 0 14px;border-bottom:1px solid var(--river-line)}.river-outputs[hidden],.river-outputs>div>div[hidden]{display:none}.river-output-column{display:contents}.river-outputs>div>div{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;font-size:11px}.river-outputs>div>div>span{display:flex;align-items:center;gap:4px;color:var(--k-muted);white-space:nowrap}.river-outputs svg{width:14px;height:14px}.river-outputs strong{font-size:13px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}.river-outputs strong small{font-size:10px;color:var(--k-muted);margin-left:2px}
 .river-batteries{display:grid;grid-template-columns:1fr 1fr;background:var(--river-soft);border-radius:14px;padding:12px 0}.river-battery{padding:0 14px;min-width:0}.river-battery+.river-battery{border-left:1px solid var(--river-line)}.river-battery-title{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--k-muted)}.river-percent{font-size:28px;line-height:1.2;letter-spacing:-.6px;margin:8px 0 7px;font-variant-numeric:tabular-nums}.river-percent small{font-size:12px;margin-left:3px;color:var(--k-muted)}.river-battery .river-track{height:4px;margin-bottom:8px;background:var(--k-card)}.river-readings{display:flex;justify-content:space-between;align-items:center;gap:5px}.river-reading{display:flex;align-items:center;gap:3px;font-size:11px;white-space:nowrap;font-variant-numeric:tabular-nums}.river-reading svg{width:14px;height:14px;color:var(--k-muted)}
 .river-details{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:44px;padding:12px 0 0;background:transparent;color:var(--k-muted);font-size:12px}.river-details svg{transition:transform .15s ease}.river-details[aria-expanded=true] svg{transform:rotate(180deg)}.river-detail-row{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:6px;padding:10px 0;border-bottom:1px solid var(--river-line);font-size:11px}.river-detail-row>span:not(:first-child){text-align:right;font-variant-numeric:tabular-nums}.river-detail-head{color:var(--k-muted)}
-@media(max-width:380px){.river-card{padding:16px}.river-battery{padding:0 10px}.river-outputs{gap:3px}.river-outputs>div>div>span{gap:2px;font-size:10px}.river-outputs svg{width:12px;height:12px}.river-outputs strong{font-size:12px}}
+@container device-card (max-width:380px){.river-card{padding:16px}.river-battery{padding:0 10px}.river-outputs{gap:3px}.river-outputs>div>div>span{gap:2px;font-size:10px}.river-outputs svg{width:12px;height:12px}.river-outputs strong{font-size:12px}}
 </style><article class="river-card" aria-label="EcoFlow RIVER Max" data-live-panel="river" data-offline="${!online}"><header class="river-header"><span class="river-device">${icon("battery-charging")}</span><div class="river-heading"><h2>${this._escape(this._config.title || "EcoFlow RIVER Max")}</h2><span class="secondary" data-live="river-status">${online ? "Онлайн" : "Станція офлайн"}</span></div><span class="river-connection ${online ? "" : "offline"}" data-live="river-connection" aria-label="${online ? "Онлайн" : "Офлайн"}">${icon("wifi")}</span></header><p class="river-offline-note" data-live="river-offline-note" ${online ? "hidden" : ""}>Станція офлайн. Поточні дані знову будуть після підключення.</p><div class="river-charge"><div><div class="river-large"><span data-live="river-battery">${percent === null ? "—" : this._format(percent, 0)}</span><small>%</small></div><span class="secondary">Загальний заряд</span></div><div class="river-runtime"><span class="secondary">${icon("clock-3")}Залишилось</span><strong data-live="river-runtime">${this._riverRuntime()}</strong></div></div><div class="river-track" role="meter" aria-label="Загальний заряд" aria-valuemin="0" aria-valuemax="100" ${percent === null ? "" : `aria-valuenow="${fill}"`}><span data-live="river-charge-fill" style="width:${fill}%"></span></div><div class="river-power"><div><span class="secondary">${icon("arrow-down-left")}Вхід</span><strong><span data-live="river-input">${this._riverRead("river_input", "", 0)}</span><small>Вт</small></strong></div><div><span class="secondary">${icon("arrow-up-right")}Загальний вихід</span><strong><span data-live="river-output">${this._riverRead("river_output", "", 0)}</span><small>Вт</small></strong></div></div><section class="river-outputs" aria-label="Потужність виходів"><div class="river-output-column">${output("river_ac_output", "AC", "plug")}${output("river_dc_output", "DC", "cable")}${output("river_usb_c_output", "USB-C", "usb")}</div><div class="river-output-column">${output("river_usb_1_output", "USB 1", "usb")}${output("river_usb_2_output", "USB 2", "usb")}${output("river_usb_3_output", "USB 3", "usb")}</div></section><section class="river-batteries" aria-label="Дві батареї">${battery("Основна", "main", "battery")}${battery("Додаткова", "slave", "battery-plus")}</section><button class="river-details" data-action="river-details" aria-expanded="false" aria-controls="river-extra"><span>Деталі батарей</span>${icon("chevron-down")}</button><div id="river-extra" hidden><div class="river-detail-row river-detail-head"><span></span><span>Основна</span><span>Додаткова</span></div>${detailRows.map(([label, main, slave, key]) => `<div class="river-detail-row"><span>${label}</span><span data-live="river-main-${key}">${main}</span><span data-live="river-slave-${key}">${slave}</span></div>`).join("")}</div></article>`;
   }
 
   _updateRiver() {
-    const online = this._state(this._config.river_status)?.state === "online";
+    const online = this._riverOnline();
     const riverCard = this.shadowRoot.querySelector(".river-card");
     if (riverCard) riverCard.dataset.offline = String(!online);
     this._setHidden('[data-live="river-offline-note"]', online);
@@ -2154,7 +2185,7 @@ class HomeBatteryCard extends HomeDeviceStandaloneCard {
     return this._batteryDetails();
   }
   _batteryDetails() {
-    const online = this._state(this._config.river_status)?.state === "online";
+    const online = this._riverOnline();
     const read = (entity, unit, digits = 1, positive = false) => {
       const value = this._value(this._config[entity]);
       return online && value !== null && (!positive || value > 0)
@@ -2234,7 +2265,7 @@ class HomeBatteryCard extends HomeDeviceStandaloneCard {
   }
 
   _updateBattery() {
-    const online = this._state(this._config.river_status)?.state === "online";
+    const online = this._riverOnline();
     const read = (entity, unit, digits = 1, positive = false) => {
       const value = this._value(this._config[entity]);
       return online && value !== null && (!positive || value > 0)

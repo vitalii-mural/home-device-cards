@@ -6,7 +6,7 @@ class HomeBatteryCard extends HomeDeviceStandaloneCard {
     return this._batteryDetails();
   }
   _batteryDetails() {
-    const online = this._state(this._config.river_status)?.state === "online";
+    const online = this._riverOnline();
     const read = (entity, unit, digits = 1, positive = false) => {
       const value = this._value(this._config[entity]);
       return online && value !== null && (!positive || value > 0)
@@ -86,7 +86,7 @@ class HomeBatteryCard extends HomeDeviceStandaloneCard {
   }
 
   _updateBattery() {
-    const online = this._state(this._config.river_status)?.state === "online";
+    const online = this._riverOnline();
     const read = (entity, unit, digits = 1, positive = false) => {
       const value = this._value(this._config[entity]);
       return online && value !== null && (!positive || value > 0)

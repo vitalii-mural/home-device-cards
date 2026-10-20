@@ -141,7 +141,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_label', 'Підпис енергії', 'text'],
   ],
   river: [
-    ['river_status', 'Статус станції', 'sensor'],
+    ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ['river_battery', 'Заряд станції', 'sensor'],
     ['river_input', 'Вхідна потужність', 'sensor'],
     ['river_output', 'Вихідна потужність', 'sensor'],
@@ -175,7 +175,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_path', 'Шлях до деталей енергії', 'text'],
   ],
   battery: [
-    ['river_status', 'Статус станції', 'sensor'],
+    ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ...[
       ['main_level_entity', 'Заряд основної батареї'], ['main_full_entity', 'Повна ємність основної'],
       ['main_remain_entity', 'Залишкова ємність основної'], ['main_volts_entity', 'Напруга основної батареї'],
