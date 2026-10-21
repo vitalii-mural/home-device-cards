@@ -216,6 +216,7 @@ test("TV remote follows the approved compact layout at 360px and desktop widths"
             viewport: innerWidth,
             documentWidth: document.documentElement.scrollWidth,
             cardWidth: card.getBoundingClientRect().width,
+            hostWidth: element.getBoundingClientRect().width,
             dpadWidth: dpad.getBoundingClientRect().width,
             gap: system.getBoundingClientRect().top - dpad.getBoundingClientRect().bottom,
             systemWidth: system.getBoundingClientRect().width,
@@ -228,6 +229,7 @@ test("TV remote follows the approved compact layout at 360px and desktop widths"
           };
         });
       assert.ok(geometry.documentWidth <= geometry.viewport);
+      assert.equal(geometry.cardWidth, geometry.hostWidth);
       assert.equal(geometry.dpadWidth, 140);
       assert.equal(geometry.gap, 24);
       assert.equal(geometry.systemWidth, 232);

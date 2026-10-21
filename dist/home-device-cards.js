@@ -1,4 +1,4 @@
-// Home Device Cards v1.0.6 — bundled base and standalone cards.
+// Home Device Cards v1.0.7 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -686,7 +686,7 @@ const HOME_DEVICE_CONTAINER_STYLE = `
 `;
 
 const HOME_TV_CARD_STYLE = `
-.single-card [data-live-panel="tv"]{--tv-bg:var(--k-card);--tv-soft:var(--k-soft);--tv-active:var(--k-accent-bg);--tv-text:var(--k-text);--tv-muted:var(--k-muted);width:100%;max-width:400px;margin:0 auto;padding:18px;background:var(--tv-bg);color:var(--tv-text);border-radius:24px}
+.single-card [data-live-panel="tv"]{--tv-bg:var(--k-card);--tv-soft:var(--k-soft);--tv-active:var(--k-accent-bg);--tv-text:var(--k-text);--tv-muted:var(--k-muted);width:100%;margin:0;padding:18px;background:var(--tv-bg);color:var(--tv-text);border-radius:24px}
 .single-card [data-live-panel="tv"] .tv-header{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:0}
 .single-card [data-live-panel="tv"] .tv-symbol{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:12px;background:var(--tv-soft);color:var(--tv-muted)}
 .single-card [data-live-panel="tv"] .tv-symbol svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}

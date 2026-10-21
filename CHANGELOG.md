@@ -1,3 +1,7 @@
+## 1.0.7
+
+- Let the TV remote card fill the width assigned by the Home Assistant dashboard.
+
 ## 1.0.6
 
 - Add a compact standalone Android TV remote card with editable remote and optional media-player entities.
