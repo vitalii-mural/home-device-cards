@@ -1,4 +1,4 @@
-// Home Device Cards v1.0.5 — bundled base and standalone cards.
+// Home Device Cards v1.0.6 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -685,6 +685,39 @@ const HOME_DEVICE_CONTAINER_STYLE = `
 @container device-card (max-width:400px){.single-card .desktop-board .water-large{column-gap:8px}.single-card .desktop-board .water-large .adjust{gap:5px}}
 `;
 
+const HOME_TV_CARD_STYLE = `
+.single-card [data-live-panel="tv"]{--tv-bg:var(--k-card);--tv-soft:var(--k-soft);--tv-active:var(--k-accent-bg);--tv-text:var(--k-text);--tv-muted:var(--k-muted);width:100%;max-width:400px;margin:0 auto;padding:18px;background:var(--tv-bg);color:var(--tv-text);border-radius:24px}
+.single-card [data-live-panel="tv"] .tv-header{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:0}
+.single-card [data-live-panel="tv"] .tv-symbol{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:12px;background:var(--tv-soft);color:var(--tv-muted)}
+.single-card [data-live-panel="tv"] .tv-symbol svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.single-card [data-live-panel="tv"] .tv-heading{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+.single-card [data-live-panel="tv"] .tv-heading h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:500}
+.single-card [data-live-panel="tv"] .tv-status{overflow:hidden;color:var(--tv-muted);font-size:12px;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.single-card [data-live-panel="tv"] button{display:grid;place-items:center;position:relative;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;font:500 13px/1 system-ui,sans-serif;touch-action:manipulation}
+.single-card [data-live-panel="tv"] button:hover:not(:disabled){background:var(--tv-active)}
+.single-card [data-live-panel="tv"] button:active:not(:disabled){transform:scale(.95)}
+.single-card [data-live-panel="tv"] button:focus-visible{outline:2px solid var(--k-accent);outline-offset:2px}
+.single-card [data-live-panel="tv"] button:disabled{cursor:default;opacity:.36}
+.single-card [data-live-panel="tv"] button[aria-pressed="true"]{background:var(--tv-active)}
+.single-card [data-live-panel="tv"] button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.single-card [data-live-panel="tv"] .tv-power{margin-left:auto}
+.single-card [data-live-panel="tv"] .tv-main{display:grid;grid-template-columns:44px 140px 44px;align-items:center;justify-content:space-evenly;gap:8px;margin-bottom:24px}
+.single-card [data-live-panel="tv"] .tv-assist{color:var(--tv-muted)}
+.single-card [data-live-panel="tv"] .tv-dpad{display:grid;grid-template:repeat(3,44px)/repeat(3,44px);padding:4px;border-radius:50%;background:var(--tv-soft)}
+.single-card [data-live-panel="tv"] .tv-up{grid-area:1/2}.single-card [data-live-panel="tv"] .tv-left{grid-area:2/1}.single-card [data-live-panel="tv"] .tv-ok{grid-area:2/2;background:var(--tv-bg);box-shadow:0 1px 4px color-mix(in srgb,var(--tv-text) 8%,transparent)}.single-card [data-live-panel="tv"] .tv-right{grid-area:2/3}.single-card [data-live-panel="tv"] .tv-down{grid-area:3/2}
+.single-card [data-live-panel="tv"] .tv-volume{display:flex;flex-direction:column;border-radius:22px;background:var(--tv-soft)}
+.single-card [data-live-panel="tv"] .tv-system{display:grid;grid-template-columns:repeat(2,1fr);width:min(100%,232px);margin-inline:auto;padding:2px;border-radius:14px;background:var(--tv-soft)}
+.single-card [data-live-panel="tv"] .tv-system button{border-radius:12px}
+.single-card [data-live-panel="tv"] .tv-media{display:grid;grid-template-columns:repeat(3,1fr);width:min(100%,232px);margin:6px auto 0}
+.single-card [data-live-panel="tv"] .tv-system button,.single-card [data-live-panel="tv"] .tv-media button{display:flex;justify-content:center;gap:2px;width:100%}
+.single-card [data-live-panel="tv"] .tv-media button:nth-child(2) svg{width:16px;height:16px}
+.single-card [data-live-panel="tv"] .tv-pending{display:none;position:absolute;width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:home-pending-spin .75s linear infinite}
+.single-card [data-live-panel="tv"] button[data-pending="true"] svg{visibility:hidden}
+.single-card [data-live-panel="tv"] button[data-pending="true"] .tv-pending{display:block}
+@media(prefers-reduced-motion:reduce){.single-card [data-live-panel="tv"] button[data-pending="true"] .tv-pending{animation:none}}
+@container device-card (max-width:380px){.single-card [data-live-panel="tv"]{padding:16px}.single-card [data-live-panel="tv"] .tv-main{grid-template-columns:44px 140px 44px;gap:2px}}
+`;
+
 // Swing icons from https://github.com/lageorgem/ha-material-thermostat-card
 /* MIT License
 
@@ -748,6 +781,10 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     current_entity: null,
     energy_daily_entity: null,
     energy_label: 'Енергія',
+  },
+  tv: {
+    remote_entity: null,
+    media_player_entity: null,
   },
   river: {
     river_status: null,
@@ -854,6 +891,10 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_daily_entity', 'Споживання', 'sensor'],
     ['energy_label', 'Підпис енергії', 'text'],
   ],
+  tv: [
+    ['remote_entity', 'Пульт Android TV', 'remote'],
+    ['media_player_entity', 'Медіаплеєр · необов’язково', 'media_player'],
+  ],
   river: [
     ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ['river_battery', 'Заряд станції', 'sensor'],
@@ -911,6 +952,7 @@ const HOME_DEVICE_CARD_META = {
   air: ['home-air-card', 'Кондиціонер', 'Картка керування кондиціонером.'],
   room: ['home-room-card', 'Кімната', 'Температура та вологість датчика.'],
   socket: ['home-socket-card', 'Розетка', 'Керування та електричні показники розетки.'],
+  tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
   energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],
@@ -940,6 +982,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       air: "air_entity",
       room: "room_temperature_entity",
       socket: "switch_entity",
+      tv: "remote_entity",
       river: "river_status",
       energy: "power_entity",
     }[kind];
@@ -948,7 +991,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       required:
         (kind === "boiler" && name === "boiler_entity") ||
         (kind === "air" && name === "air_entity") ||
-        (kind === "socket" && name === "switch_entity"),
+        (kind === "socket" && name === "switch_entity") ||
+        (kind === "tv" && name === "remote_entity"),
       default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
       selector:
         type === "text"
@@ -1034,6 +1078,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     return {
       room: 3,
       socket: 4,
+      tv: 8,
       air: 8,
       river: 8,
       energy: 8,
@@ -1049,6 +1094,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       energy: 5,
       battery: 5,
       socket: 4,
+      tv: 8,
       room: 3,
     }[kind] || 5;
     return kind === "energy" || kind === "river"
@@ -1108,6 +1154,18 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
       "volume-2":
         '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+      "volume-x":
+        '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6m0-6-5 6"/>',
+      mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-4 0h8"/>',
+      "arrow-left": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+      circle: '<circle cx="12" cy="12" r="10"/>',
+      "chevron-up": '<path d="m18 15-6-6-6 6"/>',
+      "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+      "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+      "skip-back": '<path d="M19 20 9 12l10-8zM5 19V5"/>',
+      "skip-forward": '<path d="m5 4 10 8-10 8zM19 5v14"/>',
+      play: '<path d="m7 4 13 8-13 8z"/>',
+      pause: '<path d="M10 4H6v16h4zM18 4h-4v16h4z"/>',
       "air-vent":
         '<path d="M18 17.5a2.5 2.5 0 1 1-4 2.03V12M6 12H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 8h12M6.6 15.572A2 2 0 1 0 10 17v-5"/>',
       heater:
@@ -1115,6 +1173,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       minus: '<path d="M5 12h14"/>',
       plus: '<path d="M5 12h14M12 5v14"/>',
       power: '<path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/>',
+      tv: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="m17 2-5 5-5-5"/>',
       "battery-charging":
         '<path d="m11 7-3 5h4l-3 5"/><path d="M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935"/><path d="M22 14v-4"/><path d="M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936"/>',
       battery:
@@ -3113,6 +3172,176 @@ class HomeBatteryCard extends HomeDeviceStandaloneCard {
 }
 if (!customElements.get("home-battery-card"))
   customElements.define("home-battery-card", HomeBatteryCard);
+class HomeTvCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "tv";
+  }
+
+  static get cardTitle() {
+    return ["remote_entity", "Телевізор"];
+  }
+
+  setConfig(config) {
+    if (this._tvPending) clearTimeout(this._tvPending.timer);
+    this._tvPending = null;
+    super.setConfig(config);
+  }
+
+  disconnectedCallback() {
+    if (this._tvPending) clearTimeout(this._tvPending.timer);
+    this._tvPending = null;
+    super.disconnectedCallback();
+  }
+
+  _content() {
+    const command = (key, label, icon, extra = "") =>
+      `<button type="button" data-action="tv-send" data-command="${key}" aria-label="${label}" title="${label}" ${extra}>${Array.isArray(icon) ? icon.map(name => this._lucideIcon(name)).join("") : icon ? this._lucideIcon(icon) : "OK"}<span class="tv-pending" aria-hidden="true"></span></button>`;
+    const remote = this._state(this._config.remote_entity),
+      available = this._available(this._config.remote_entity),
+      isOn = available && remote.state !== "off",
+      app = this._tvAppName();
+    const appText = isOn && app ? ` · ${this._escape(app)}` : "";
+    const status = !available
+      ? "Пульт недоступний"
+      : isOn
+        ? `Увімкнено${appText}`
+        : "Вимкнено";
+    return `<style>${HOME_TV_CARD_STYLE}</style>
+      <article class="tv-card" data-live-panel="tv" aria-label="Пульт Android TV">
+        <header class="tv-header">
+          <span class="tv-symbol">${this._lucideIcon("tv")}</span>
+          <div class="tv-heading"><h2 data-live="tv-name">${this._escape(this._displayName("remote_entity", this._config.title, "Телевізор"))}</h2><span class="tv-status" data-live="tv-status" title="${this._escape(status)}">${status}</span></div>
+          ${command("POWER", "Живлення", "power", `class="tv-power" aria-pressed="${isOn}"`)}
+        </header>
+        <div class="tv-main">
+          ${command("ASSIST", "Відкрити асистента", "mic", 'class="tv-assist"')}
+          <div class="tv-dpad" role="group" aria-label="Навігація">
+            ${command("DPAD_UP", "Вгору", "chevron-up", 'class="tv-up"')}
+            ${command("DPAD_LEFT", "Ліворуч", "chevron-left", 'class="tv-left"')}
+            ${command("DPAD_CENTER", "Підтвердити", null, 'class="tv-ok"')}
+            ${command("DPAD_RIGHT", "Праворуч", "chevron-right", 'class="tv-right"')}
+            ${command("DPAD_DOWN", "Вниз", "chevron-down", 'class="tv-down"')}
+          </div>
+          <div class="tv-volume" role="group" aria-label="Гучність">
+            ${command("VOLUME_UP", "Гучніше", "plus")}
+            ${command("VOLUME_MUTE", "Без звуку", "volume-2")}
+            ${command("VOLUME_DOWN", "Тихіше", "minus")}
+          </div>
+        </div>
+        <div class="tv-system" role="group" aria-label="Системні кнопки">
+          ${command("BACK", "Назад", "arrow-left")}
+          ${command("HOME", "Додому", "circle")}
+        </div>
+        <div class="tv-media" role="group" aria-label="Керування відтворенням">
+          ${command("MEDIA_PREVIOUS", "Попереднє", "skip-back")}
+          ${command("MEDIA_PLAY_PAUSE", "Відтворення або пауза", ["play", "pause"])}
+          ${command("MEDIA_NEXT", "Наступне", "skip-forward")}
+        </div>
+      </article>`;
+  }
+
+  _tvAppName() {
+    const player = this._state(this._config.media_player_entity),
+      remote = this._state(this._config.remote_entity),
+      playerApp = player?.attributes?.app_name,
+      activity = remote?.attributes?.current_activity;
+    return typeof playerApp === "string" && playerApp.trim()
+      ? playerApp.trim()
+      : typeof activity === "string" && activity.trim()
+        ? activity.trim()
+        : "";
+  }
+
+  _updateTV() {
+    const entity = this._config.remote_entity,
+      remote = this._state(entity),
+      available = this._available(entity),
+      isOn = available && remote.state !== "off",
+      pending = this._tvPending,
+      app = this._tvAppName();
+    const status = !available
+      ? "Пульт недоступний"
+      : isOn
+        ? `Увімкнено${app ? ` · ${app}` : ""}`
+        : "Вимкнено";
+    if (!available && this._tvPending) {
+      clearTimeout(this._tvPending.timer);
+      this._tvPending = null;
+    }
+    this._setText('[data-live="tv-name"]', this._displayName("remote_entity", this._config.title, "Телевізор"));
+    this._setText('[data-live="tv-status"]', status);
+    const statusNode = this.shadowRoot.querySelector('[data-live="tv-status"]');
+    statusNode?.setAttribute("title", status);
+    for (const button of this.shadowRoot.querySelectorAll('[data-action="tv-send"]')) {
+      const power = button.dataset.command === "POWER";
+      button.disabled = !available || (!isOn && !power) || !!pending;
+      if (power) button.setAttribute("aria-pressed", String(isOn));
+      button.dataset.pending = String(pending?.command === button.dataset.command);
+      button.setAttribute("aria-busy", String(pending?.command === button.dataset.command));
+    }
+    this._setText('[data-live="error"]', this._error);
+    this._setHidden('[data-live="error"]', !this._error);
+  }
+
+  async _sendRemoteCommand(command) {
+    const entity = this._config.remote_entity,
+      remote = this._state(entity),
+      available = this._available(entity);
+    if (
+      !available ||
+      (remote.state === "off" && command !== "POWER") ||
+      this._tvPending
+    )
+      return;
+    this._error = "";
+    const generation = this._generation,
+      pending = { command, timer: null };
+    this._tvPending = pending;
+    this._updateTV();
+    pending.timer = setTimeout(() => {
+      if (this._tvPending !== pending) return;
+      this._tvPending = null;
+      this._error = "Home Assistant не відповів на команду за 15 секунд.";
+      this._updateTV();
+    }, 15000);
+    try {
+      await this._hass.callService("remote", "send_command", {
+        entity_id: entity,
+        command,
+      });
+      if (generation !== this._generation || this._tvPending !== pending) return;
+      clearTimeout(pending.timer);
+      this._tvPending = null;
+      this._updateTV();
+    } catch (error) {
+      if (generation !== this._generation || this._tvPending !== pending) return;
+      clearTimeout(pending.timer);
+      this._tvPending = null;
+      this._error = error?.message || "Не вдалося надіслати команду телевізору.";
+      this._updateTV();
+    }
+  }
+
+  _updateCardDynamic({ all, has }) {
+    const entities = HOME_DEVICE_CARD_FIELDS.tv.map(([name]) => this._config[name]);
+    if (all || entities.some(has)) this._updateTV();
+  }
+
+  _handleCardClick(button) {
+    if (button?.dataset.action !== "tv-send") return false;
+    this._sendRemoteCommand(button.dataset.command);
+    return true;
+  }
+
+  _click(event) {
+    if (this._handleCardClick(event.target.closest('button[data-action="tv-send"]')))
+      return;
+    super._click(event);
+  }
+}
+
+if (!customElements.get("home-tv-card"))
+  customElements.define("home-tv-card", HomeTvCard);
 window.customCards = window.customCards || [];
 for (const [type, name, description] of Object.values(HOME_DEVICE_CARD_META)) {
   if (!window.customCards.some(card => card.type === type)) window.customCards.push({ type, name, description });

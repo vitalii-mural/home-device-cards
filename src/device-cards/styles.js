@@ -156,3 +156,36 @@ const HOME_DEVICE_CONTAINER_STYLE = `
 @container device-card (max-width:400px){.single-card .desktop-board .water-large{column-gap:8px}.single-card .desktop-board .water-large .adjust{gap:5px}}
 `;
 
+const HOME_TV_CARD_STYLE = `
+.single-card [data-live-panel="tv"]{--tv-bg:var(--k-card);--tv-soft:var(--k-soft);--tv-active:var(--k-accent-bg);--tv-text:var(--k-text);--tv-muted:var(--k-muted);width:100%;max-width:400px;margin:0 auto;padding:18px;background:var(--tv-bg);color:var(--tv-text);border-radius:24px}
+.single-card [data-live-panel="tv"] .tv-header{display:flex;align-items:center;gap:10px;margin:0 0 14px;padding:0}
+.single-card [data-live-panel="tv"] .tv-symbol{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border-radius:12px;background:var(--tv-soft);color:var(--tv-muted)}
+.single-card [data-live-panel="tv"] .tv-symbol svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.single-card [data-live-panel="tv"] .tv-heading{display:flex;flex:1;min-width:0;flex-direction:column;gap:2px}
+.single-card [data-live-panel="tv"] .tv-heading h2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:500}
+.single-card [data-live-panel="tv"] .tv-status{overflow:hidden;color:var(--tv-muted);font-size:12px;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.single-card [data-live-panel="tv"] button{display:grid;place-items:center;position:relative;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:50%;background:transparent;color:inherit;font:500 13px/1 system-ui,sans-serif;touch-action:manipulation}
+.single-card [data-live-panel="tv"] button:hover:not(:disabled){background:var(--tv-active)}
+.single-card [data-live-panel="tv"] button:active:not(:disabled){transform:scale(.95)}
+.single-card [data-live-panel="tv"] button:focus-visible{outline:2px solid var(--k-accent);outline-offset:2px}
+.single-card [data-live-panel="tv"] button:disabled{cursor:default;opacity:.36}
+.single-card [data-live-panel="tv"] button[aria-pressed="true"]{background:var(--tv-active)}
+.single-card [data-live-panel="tv"] button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.single-card [data-live-panel="tv"] .tv-power{margin-left:auto}
+.single-card [data-live-panel="tv"] .tv-main{display:grid;grid-template-columns:44px 140px 44px;align-items:center;justify-content:space-evenly;gap:8px;margin-bottom:24px}
+.single-card [data-live-panel="tv"] .tv-assist{color:var(--tv-muted)}
+.single-card [data-live-panel="tv"] .tv-dpad{display:grid;grid-template:repeat(3,44px)/repeat(3,44px);padding:4px;border-radius:50%;background:var(--tv-soft)}
+.single-card [data-live-panel="tv"] .tv-up{grid-area:1/2}.single-card [data-live-panel="tv"] .tv-left{grid-area:2/1}.single-card [data-live-panel="tv"] .tv-ok{grid-area:2/2;background:var(--tv-bg);box-shadow:0 1px 4px color-mix(in srgb,var(--tv-text) 8%,transparent)}.single-card [data-live-panel="tv"] .tv-right{grid-area:2/3}.single-card [data-live-panel="tv"] .tv-down{grid-area:3/2}
+.single-card [data-live-panel="tv"] .tv-volume{display:flex;flex-direction:column;border-radius:22px;background:var(--tv-soft)}
+.single-card [data-live-panel="tv"] .tv-system{display:grid;grid-template-columns:repeat(2,1fr);width:min(100%,232px);margin-inline:auto;padding:2px;border-radius:14px;background:var(--tv-soft)}
+.single-card [data-live-panel="tv"] .tv-system button{border-radius:12px}
+.single-card [data-live-panel="tv"] .tv-media{display:grid;grid-template-columns:repeat(3,1fr);width:min(100%,232px);margin:6px auto 0}
+.single-card [data-live-panel="tv"] .tv-system button,.single-card [data-live-panel="tv"] .tv-media button{display:flex;justify-content:center;gap:2px;width:100%}
+.single-card [data-live-panel="tv"] .tv-media button:nth-child(2) svg{width:16px;height:16px}
+.single-card [data-live-panel="tv"] .tv-pending{display:none;position:absolute;width:18px;height:18px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:home-pending-spin .75s linear infinite}
+.single-card [data-live-panel="tv"] button[data-pending="true"] svg{visibility:hidden}
+.single-card [data-live-panel="tv"] button[data-pending="true"] .tv-pending{display:block}
+@media(prefers-reduced-motion:reduce){.single-card [data-live-panel="tv"] button[data-pending="true"] .tv-pending{animation:none}}
+@container device-card (max-width:380px){.single-card [data-live-panel="tv"]{padding:16px}.single-card [data-live-panel="tv"] .tv-main{grid-template-columns:44px 140px 44px;gap:2px}}
+`;
+

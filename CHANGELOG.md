@@ -1,3 +1,7 @@
+## 1.0.6
+
+- Add a compact standalone Android TV remote card with editable remote and optional media-player entities.
+
 ## 1.0.5
 
 - Automatically resolve Midea Local Memo U, sterilization and heating-time entities from the selected water heater's entity-registry device identity.

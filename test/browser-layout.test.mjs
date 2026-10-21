@@ -50,7 +50,7 @@ async function openFixture(width, height = 1500, options = {}) {
     ...options,
   });
   await page.goto(`${previewUrl}/preview-frame.html`);
-  await page.waitForFunction(() => window.fixture?.cards?.length === 5);
+  await page.waitForFunction(() => window.fixture?.cards?.length === 6);
   return page;
 }
 
@@ -191,6 +191,81 @@ test("standalone boiler uses natural panel height at phone and desktop widths", 
         true,
         `heating time hidden when not heating at ${width}px`,
       );
+    } finally {
+      await page.close();
+    }
+  }
+});
+
+test("TV remote follows the approved compact layout at 360px and desktop widths", async () => {
+  for (const width of [360, 900]) {
+    const page = await openFixture(width, 1500, {
+      isMobile: width === 360,
+      hasTouch: width === 360,
+    });
+    try {
+      const tv = page.locator("home-tv-card"),
+        geometry = await tv.evaluate((element) => {
+          const root = element.shadowRoot,
+            card = root.querySelector('[data-live-panel="tv"]'),
+            dpad = root.querySelector(".tv-dpad"),
+            system = root.querySelector(".tv-system"),
+            media = root.querySelector(".tv-media"),
+            buttons = Array.from(root.querySelectorAll("button[data-action]"));
+          return {
+            viewport: innerWidth,
+            documentWidth: document.documentElement.scrollWidth,
+            cardWidth: card.getBoundingClientRect().width,
+            dpadWidth: dpad.getBoundingClientRect().width,
+            gap: system.getBoundingClientRect().top - dpad.getBoundingClientRect().bottom,
+            systemWidth: system.getBoundingClientRect().width,
+            mediaWidth: media.getBoundingClientRect().width,
+            buttons: buttons.map((button) => {
+              const rect = button.getBoundingClientRect();
+              return { width: rect.width, height: rect.height, label: button.getAttribute("aria-label") };
+            }),
+            hasMiButton: buttons.some((button) => button.getAttribute("aria-label")?.includes("PatchWall")),
+          };
+        });
+      assert.ok(geometry.documentWidth <= geometry.viewport);
+      assert.equal(geometry.dpadWidth, 140);
+      assert.equal(geometry.gap, 24);
+      assert.equal(geometry.systemWidth, 232);
+      assert.equal(geometry.mediaWidth, 232);
+      assert.ok(geometry.buttons.every((button) => button.width >= 44 && button.height >= 44));
+      assert.ok(geometry.buttons.every((button) => button.label));
+      assert.equal(geometry.hasMiButton, false);
+      const status = tv.locator('[data-live="tv-status"]');
+      assert.equal(await status.textContent(), "Увімкнено · Jellyfin");
+      const preserved = await page.evaluate(() => {
+        const { hass, refresh } = window.fixture;
+        const tvCard = document.querySelector("home-tv-card"),
+          article = tvCard.shadowRoot.querySelector('[data-live-panel="tv"]');
+        hass.states = {
+          ...hass.states,
+          "media_player.example_50": {
+            state: "paused",
+            attributes: { app_name: "Netflix", volume_level: 0.55 },
+          },
+        };
+        refresh();
+        return article === tvCard.shadowRoot.querySelector('[data-live-panel="tv"]');
+      });
+      assert.equal(await status.textContent(), "Увімкнено · Netflix");
+      assert.equal(preserved, true);
+
+      await tv.locator('[data-command="POWER"]').focus();
+      await page.keyboard.press("Tab");
+      assert.equal(
+        await tv.evaluate((element) => element.shadowRoot.activeElement?.getAttribute("aria-label")),
+        "Відкрити асистента",
+      );
+      await page.evaluate(() => document.querySelector("#dark").click());
+      assert.equal(await tv.evaluate((element) => element.hasAttribute("dark")), true);
+      await page.evaluate(() => document.querySelector("#offline").click());
+      assert.equal(await tv.locator('[data-action="tv-send"]').count(), 15);
+      assert.ok(await tv.locator('[data-action="tv-send"]').evaluateAll((buttons) => buttons.every((button) => button.disabled)));
+      assert.equal(await page.evaluate(() => window.fixture.serviceCalls), 0);
     } finally {
       await page.close();
     }

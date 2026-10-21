@@ -46,6 +46,7 @@
       "home-river-card",
       "home-room-card",
       "home-socket-card",
+      "home-tv-card",
     ];
     await Promise.all(tags.map((x) => customElements.whenDefined(x)));
     const defaults = {
@@ -86,6 +87,10 @@
         current_entity: "sensor.example_18",
         energy_daily_entity: "sensor.example_19",
         energy_label: "Енергія",
+      },
+      tv: {
+        remote_entity: "remote.example_49",
+        media_player_entity: "media_player.example_50",
       },
       river: {
         river_status: "sensor.example_20",
@@ -133,7 +138,7 @@
       for (const id of Object.values(c._config))
         if (
           typeof id === "string" &&
-          /^(sensor|switch|climate|water_heater)\./.test(id)
+          /^(sensor|switch|climate|water_heater|remote|media_player)\./.test(id)
         )
           states[id] = {
             state: id.startsWith("switch.") ? "off" : "42",
@@ -215,6 +220,8 @@
       "switch.example_2": { state: "on", attributes: {} },
       "switch.example_6": { state: "on", attributes: {} },
       "switch.example_15": { state: "on", attributes: {} },
+      "remote.example_49": { state: "on", attributes: { current_activity: "Jellyfin" } },
+      "media_player.example_50": { state: "playing", attributes: { app_name: "Jellyfin", volume_level: 0.42 } },
     });
     delete states["switch.example_8"];
     states["switch.example_10"] = { state: "unavailable", attributes: {} };

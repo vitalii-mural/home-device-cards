@@ -129,6 +129,7 @@ test("registers the dashboard and standalone card types", async () => {
     "home-river-card",
     "home-energy-card",
     "home-battery-card",
+    "home-tv-card",
   ]) {
     assert.equal(
       typeof registry.get(name),
@@ -775,4 +776,97 @@ test("an older service completion does not clear a newer request busy state", as
   resolvers[1]();
   await current;
   assert.equal(dashboard._busy("climate.boiler"), false);
+});
+
+test("TV remote editor and rendered controls use the generic entity and key map", async () => {
+  const { registry } = await loadCards();
+  const Tv = registry.get("home-tv-card"),
+    schema = Tv.getConfigForm().schema,
+    remote = schema.find((field) => field.name === "remote_entity"),
+    player = schema.find((field) => field.name === "media_player_entity");
+  assert.equal(remote.required, true);
+  assert.equal(remote.selector.entity.domain[0], "remote");
+  assert.equal(player.required, false);
+  assert.equal(player.selector.entity.domain[0], "media_player");
+  const card = new Tv();
+  card._render = () => {};
+  card.setConfig({ remote_entity: "remote.example_tv" });
+  assert.deepEqual(JSON.parse(JSON.stringify(card._entityIds())), ["remote.example_tv"]);
+  const content = card._content();
+  for (const command of [
+    "POWER", "ASSIST", "DPAD_UP", "DPAD_LEFT", "DPAD_CENTER", "DPAD_RIGHT",
+    "DPAD_DOWN", "VOLUME_UP", "VOLUME_MUTE", "VOLUME_DOWN", "BACK", "HOME",
+    "MEDIA_PREVIOUS", "MEDIA_PLAY_PAUSE", "MEDIA_NEXT",
+  ])
+    assert.match(content, new RegExp(`data-command="${command}"`));
+  assert.doesNotMatch(content, /PatchWall|data-command="MI"/);
+  assert.match(content, /aria-label="Відкрити асистента"/);
+  assert.match(content, /class="tv-ok"[^>]*>OK</);
+  for (const icon of ["chevron-up", "chevron-left", "chevron-right", "circle"])
+    assert.notEqual(card._lucideIcon(icon), card._lucideIcon("fan"));
+  assert.match(content, /\.tv-main[^}]*grid-template-columns:44px 140px 44px/s);
+});
+
+test("TV commands are sent once, unavailable controls stay inert, and service errors clear busy state", async () => {
+  const { registry, timers, clearedTimers } = await loadCards();
+  const Tv = registry.get("home-tv-card"),
+    card = new Tv(),
+    remote = { state: "on", attributes: {} },
+    calls = [];
+  card._render = () => {};
+  card._updateTV = () => {};
+  card.setConfig({ remote_entity: "remote.example_tv" });
+  card._hass = {
+    states: { "remote.example_tv": remote },
+    callService: async (...args) => calls.push(args),
+  };
+  card._sendRemoteCommand("DPAD_UP");
+  assert.equal(card._tvPending.command, "DPAD_UP");
+  const timer = card._tvPending.timer;
+  await card._sendRemoteCommand("HOME");
+  assert.equal(calls.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls[0])), [
+    "remote", "send_command", { entity_id: "remote.example_tv", command: "DPAD_UP" },
+  ]);
+  assert.equal(card._tvPending, null);
+  assert.ok(clearedTimers.includes(timer));
+  assert.equal(timers.has(timer), false);
+
+  remote.state = "off";
+  await card._sendRemoteCommand("HOME");
+  assert.equal(calls.length, 1);
+  await card._sendRemoteCommand("POWER");
+  assert.equal(calls.length, 2);
+  remote.state = "unavailable";
+  await card._sendRemoteCommand("POWER");
+  assert.equal(calls.length, 2);
+
+  remote.state = "on";
+  card._hass.callService = async () => {
+    throw Error("mock failure");
+  };
+  await card._sendRemoteCommand("BACK");
+  assert.equal(card._tvPending, null);
+  assert.equal(card._error, "mock failure");
+});
+
+test("disconnect cancels a pending TV request and ignores its late result", async () => {
+  const { registry, clearedTimers } = await loadCards();
+  const card = new (registry.get("home-tv-card"))();
+  let rejectService;
+  card._render = () => {};
+  card._updateTV = () => {};
+  card.setConfig({ remote_entity: "remote.example_tv" });
+  card._hass = {
+    states: { "remote.example_tv": { state: "on", attributes: {} } },
+    callService: () => new Promise((resolve, reject) => { rejectService = reject; }),
+  };
+  const request = card._sendRemoteCommand("HOME"),
+    timer = card._tvPending.timer;
+  card.disconnectedCallback();
+  assert.equal(card._tvPending, null);
+  assert.ok(clearedTimers.includes(timer));
+  rejectService(Error("late failure"));
+  await request;
+  assert.equal(card._error, "");
 });

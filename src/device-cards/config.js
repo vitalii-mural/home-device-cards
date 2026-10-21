@@ -37,6 +37,10 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     energy_daily_entity: null,
     energy_label: 'Енергія',
   },
+  tv: {
+    remote_entity: null,
+    media_player_entity: null,
+  },
   river: {
     river_status: null,
     river_battery: null,
@@ -142,6 +146,10 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_daily_entity', 'Споживання', 'sensor'],
     ['energy_label', 'Підпис енергії', 'text'],
   ],
+  tv: [
+    ['remote_entity', 'Пульт Android TV', 'remote'],
+    ['media_player_entity', 'Медіаплеєр · необов’язково', 'media_player'],
+  ],
   river: [
     ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ['river_battery', 'Заряд станції', 'sensor'],
@@ -199,6 +207,7 @@ const HOME_DEVICE_CARD_META = {
   air: ['home-air-card', 'Кондиціонер', 'Картка керування кондиціонером.'],
   room: ['home-room-card', 'Кімната', 'Температура та вологість датчика.'],
   socket: ['home-socket-card', 'Розетка', 'Керування та електричні показники розетки.'],
+  tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
   energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],

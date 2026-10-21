@@ -38,11 +38,28 @@ the browser, for example `/local/home-device-cards.js?v=2`.
 - `custom:home-river-card`
 - `custom:home-socket-card`
 - `custom:home-room-card`
+- `custom:home-tv-card`
 
 Select entities and names in each card's visual editor. Entity defaults were
 cleared for this repository; existing installations should keep their explicit
 card configuration. Device features require matching entities/integrations;
 these cards do not add device protocol support.
+
+The Android TV remote card needs a `remote` entity from the Android TV Remote
+integration. Its optional `media_player` entity provides the active app name;
+the card falls back to the remote's current activity. It does not infer
+playback state from the remote entity. Commands use
+Home Assistant's `remote.send_command`; supported keys and their behavior vary
+by TV model, firmware, and the app in the foreground. The assistant key sends
+`ASSIST` and does not transmit voice audio. Mi/PatchWall is omitted because
+the integration's generic command list does not confirm a matching key for
+this TV model. The card uses example entity IDs only:
+
+```yaml
+type: custom:home-tv-card
+remote_entity: remote.example_tv
+media_player_entity: media_player.example_tv
+```
 
 For the boiler, Midea Local Memo U and sterilization switches are detected
 automatically when they share the selected water heater's Midea Local device

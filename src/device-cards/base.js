@@ -22,6 +22,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       air: "air_entity",
       room: "room_temperature_entity",
       socket: "switch_entity",
+      tv: "remote_entity",
       river: "river_status",
       energy: "power_entity",
     }[kind];
@@ -30,7 +31,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       required:
         (kind === "boiler" && name === "boiler_entity") ||
         (kind === "air" && name === "air_entity") ||
-        (kind === "socket" && name === "switch_entity"),
+        (kind === "socket" && name === "switch_entity") ||
+        (kind === "tv" && name === "remote_entity"),
       default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
       selector:
         type === "text"
@@ -116,6 +118,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     return {
       room: 3,
       socket: 4,
+      tv: 8,
       air: 8,
       river: 8,
       energy: 8,
@@ -131,6 +134,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       energy: 5,
       battery: 5,
       socket: 4,
+      tv: 8,
       room: 3,
     }[kind] || 5;
     return kind === "energy" || kind === "river"
@@ -190,6 +194,18 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       moon: '<path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/>',
       "volume-2":
         '<path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298zM16 9a5 5 0 0 1 0 6M19.364 18.364a9 9 0 0 0 0-12.728"/>',
+      "volume-x":
+        '<path d="M11 5 6 9H3v6h3l5 4z"/><path d="m16 9 5 6m0-6-5 6"/>',
+      mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-4 0h8"/>',
+      "arrow-left": '<path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>',
+      circle: '<circle cx="12" cy="12" r="10"/>',
+      "chevron-up": '<path d="m18 15-6-6-6 6"/>',
+      "chevron-left": '<path d="m15 18-6-6 6-6"/>',
+      "chevron-right": '<path d="m9 18 6-6-6-6"/>',
+      "skip-back": '<path d="M19 20 9 12l10-8zM5 19V5"/>',
+      "skip-forward": '<path d="m5 4 10 8-10 8zM19 5v14"/>',
+      play: '<path d="m7 4 13 8-13 8z"/>',
+      pause: '<path d="M10 4H6v16h4zM18 4h-4v16h4z"/>',
       "air-vent":
         '<path d="M18 17.5a2.5 2.5 0 1 1-4 2.03V12M6 12H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 8h12M6.6 15.572A2 2 0 1 0 10 17v-5"/>',
       heater:
@@ -197,6 +213,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       minus: '<path d="M5 12h14"/>',
       plus: '<path d="M5 12h14M12 5v14"/>',
       power: '<path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/>',
+      tv: '<rect x="2" y="7" width="20" height="14" rx="2"/><path d="m17 2-5 5-5-5"/>',
       "battery-charging":
         '<path d="m11 7-3 5h4l-3 5"/><path d="M14.856 6H16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.935"/><path d="M22 14v-4"/><path d="M5.14 18H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h2.936"/>',
       battery:
