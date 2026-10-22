@@ -586,6 +586,39 @@ test("card-specific controls dispatch through their owning card classes", async 
   assert.equal(socketToggleCount, 1);
 });
 
+test("air power preserves the device mode instead of selecting cooling", async () => {
+  const { registry } = await loadCards();
+  for (const tag of ["home-dashboard", "home-air-card"]) {
+    const card = new (registry.get(tag))();
+    card._config = { air_entity: "climate.office" };
+    const state = {
+      state: "off",
+      attributes: { hvac_modes: ["off", "cool", "heat", "dry", "fan_only", "auto"] },
+    };
+    card._hass = { states: { "climate.office": state } };
+    const calls = [];
+    card._service = (...args) => calls.push(args);
+    const click = () => card._click({
+      target: { closest: () => ({ dataset: { action: "air-power" } }) },
+    });
+
+    click();
+    for (const mode of ["heat", "cool", "dry", "fan_only", "auto"]) {
+      state.state = mode;
+      click();
+    }
+    assert.equal(JSON.stringify(calls), JSON.stringify([
+      ["climate", "turn_on", { entity_id: "climate.office" }],
+      ...Array.from({ length: 5 }, () =>
+        ["climate", "turn_off", { entity_id: "climate.office" }]),
+    ]), tag);
+
+    state.state = "unavailable";
+    click();
+    assert.equal(calls.length, 6, tag);
+  }
+});
+
 test("configured energy and battery paths are navigated by standalone cards", async () => {
   const { registry } = await loadCards();
   const card = new (registry.get("home-energy-card"))();

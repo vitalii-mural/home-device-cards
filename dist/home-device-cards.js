@@ -1,4 +1,4 @@
-// Home Device Cards v1.0.7 — bundled base and standalone cards.
+// Home Device Cards v1.0.8 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -508,9 +508,7 @@ class HomeDashboard extends HTMLElement {
       this._service('climate','set_hvac_mode',{entity_id:air,hvac_mode:button.dataset.mode});return;
     }
     if(action==='air-power'&&this._available(air)){
-      const state=this._state(air),modes=state.attributes.hvac_modes||[];
-      const mode=state.state!=='off'?'off':modes.includes('cool')?'cool':modes.find(m=>m!=='off');
-      if(mode)this._service('climate','set_hvac_mode',{entity_id:air,hvac_mode:mode});
+      this._service('climate',this._state(air).state==='off'?'turn_on':'turn_off',{entity_id:air});
     }
   }
 

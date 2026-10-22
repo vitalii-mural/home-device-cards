@@ -1,3 +1,7 @@
+## 1.0.8
+
+- Preserve the air conditioner's previous operating mode when turning it on from the power button.
+
 ## 1.0.7
 
 - Let the TV remote card fill the width assigned by the Home Assistant dashboard.
