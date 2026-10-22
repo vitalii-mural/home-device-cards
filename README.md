@@ -82,6 +82,13 @@ Assistant frontend components and should be checked after frontend updates.
 The HACS bundle includes both the base and standalone cards.
 
 ## Publishing an update
+The standalone air card requests a state refresh every ten seconds while connected,
+the browser tab is visible, and the AC entity is on. It stops additional refreshes
+when hidden, disconnected, off, or unavailable. The integration's own polling stays
+unchanged. Multiple open clients can each request refreshes. The card remembers the
+last observed operating mode in browser storage for display while off; it does not
+guess a mode before observing one, or use the remembered mode to control the AC.
+
 
 Edit the maintained sources under `src/`. The two root JavaScript files and
 the HACS bundle are generated distribution files; rebuild them before committing.

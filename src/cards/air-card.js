@@ -1,4 +1,72 @@
 class HomeAirCard extends HomeDeviceStandaloneCard {
+  connectedCallback() {
+    super.connectedCallback();
+    this._airRefreshAttached = true;
+    this._airVisibilityListener ||= () => this._syncAirRefresh();
+    document.addEventListener("visibilitychange", this._airVisibilityListener);
+    this._syncAirRefresh();
+  }
+
+  disconnectedCallback() {
+    this._airRefreshAttached = false;
+    document.removeEventListener("visibilitychange", this._airVisibilityListener);
+    clearTimeout(this._airRefreshTimer);
+    this._airRefreshTimer = null;
+    super.disconnectedCallback();
+  }
+
+  _canRefreshAir() {
+    const entity = this._airId();
+    return this._airRefreshAttached && document.visibilityState === "visible" &&
+      this._available(entity) && this._state(entity).state !== "off";
+  }
+
+  _displayAirMode() {
+    const entity = this._airId(), state = this._state(entity);
+    const modes = (state?.attributes?.hvac_modes || []).filter((mode) => mode !== "off");
+    this._lastAirModes ||= new Map();
+    const key = `home-device-cards:air-mode:${entity}`;
+    if (modes.includes(state?.state)) {
+      if (this._lastAirModes.get(entity) !== state.state) {
+        this._lastAirModes.set(entity, state.state);
+        try { localStorage.setItem(key, state.state); } catch { /* Storage may be disabled. */ }
+      }
+      return state.state;
+    }
+    if (state?.state !== "off") return null;
+    let previous = this._lastAirModes.get(entity);
+    if (!previous) {
+      try { previous = localStorage.getItem(key); } catch { /* Storage may be disabled. */ }
+    }
+    return modes.includes(previous) ? previous : null;
+  }
+
+  _syncAirRefresh() {
+    if (!this._canRefreshAir()) {
+      clearTimeout(this._airRefreshTimer);
+      this._airRefreshTimer = null;
+      return;
+    }
+    if (this._airRefreshTimer != null || this._airRefreshPending) return;
+    this._airRefreshTimer = setTimeout(() => this._refreshAir(), 10000);
+  }
+
+  async _refreshAir() {
+    this._airRefreshTimer = null;
+    if (!this._canRefreshAir() || this._airRefreshPending) return;
+    this._airRefreshPending = true;
+    try {
+      await this._hass.callService("homeassistant", "update_entity", {
+        entity_id: this._airId(),
+      });
+    } catch {
+      // A background refresh must not interrupt the card's controls or retry early.
+    } finally {
+      this._airRefreshPending = false;
+      this._syncAirRefresh();
+    }
+  }
+
   static get cardType() {
     return "air";
   }
@@ -71,7 +139,7 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
 
     return `<article class="panel" aria-label="Кондиціонер" data-live-panel="air"><div class="panel-top"><div class="heading"><span class="device-icon cool">${this._lucideIcon("air-vent")}</span><div><h2>Кондиціонер</h2><span class="secondary"><span data-live="air-status">${status}</span></span></div></div><button class="icon-button ${on ? "active-cool" : ""}" data-action="air-power" aria-label="${on ? "Вимкнути" : "Увімкнути"} кондиціонер" aria-pressed="${on}" ${this._disabled(!available, id)}>${this._lucideIcon("power")}</button></div>
     <div class="air-temperature"><button class="round" data-action="air-minus" aria-label="Зменшити температуру кондиціонера" ${this._disabled(!available || target === null || target <= minimum, id)}>${this._lucideIcon("minus")}</button><div><span class="air-value" data-live="air-target">${available ? this._format(target) : "—"}</span><span class="air-degree">°C</span><span class="secondary" data-live="air-room-caption">У кімнаті ${available ? this._format(room) : "—"} °C</span><span class="secondary pending-hint" data-live="air-pending" data-pending="${pending}" aria-hidden="${!pending}" role="status">Очікує підтвердження</span></div><button class="round" data-action="air-plus" aria-label="Збільшити температуру кондиціонера" ${this._disabled(!available || target === null || target >= maximum, id)}>${this._lucideIcon("plus")}</button></div>
-    <div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(modes, state?.state, available, busy)}</div><div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || "—")}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, busy)}</div></div>${controls}</article>`;
+    <div class="modes" role="group" aria-label="Режим кондиціонера">${this._airModeButtons(modes, this._displayAirMode(), available, busy)}</div><div class="air-fan"><div class="air-fan-heading"><span>Швидкість вентилятора</span><span class="air-fan-speed" data-live="air-fan-speed">${this._escape(this._fanLabel(a.fan_mode) || "—")}</span></div><div class="air-fan-speeds" data-air-fan-speeds role="group" aria-label="Швидкість вентилятора кондиціонера">${this._airFanButtons(a.fan_modes, a.fan_mode, available, busy)}</div></div>${controls}</article>`;
   }
 
   _airModeButtons(modes, current, available, busy) {
@@ -368,7 +436,7 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
       if (supportedModes.join("|") !== currentModes.join("|"))
         modeGroup.innerHTML = this._airModeButtons(
           supportedModes,
-          state?.state,
+          this._displayAirMode(),
           available,
           this._busy(id),
         );
@@ -382,7 +450,7 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
           : "Режим тимчасово недоступний";
         button.setAttribute(
           "aria-pressed",
-          String(state?.state === button.dataset.mode),
+          String(this._displayAirMode() === button.dataset.mode),
         );
       }
     }
@@ -550,6 +618,7 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
     }
   }
   _updateCardDynamic({ all, has, serviceEntity }) {
+    this._syncAirRefresh();
     const sources = [
       this._airId(),
       ...HOME_DEVICE_CARD_FIELDS.air

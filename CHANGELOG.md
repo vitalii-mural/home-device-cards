@@ -1,3 +1,8 @@
+## 1.0.9
+
+- Refresh the standalone AC card every ten seconds while the AC is on and its browser tab is visible; stop on hide, power-off, or disconnect.
+- Remember the last observed AC operating mode in the browser and highlight it while the AC is off.
+
 ## 1.0.8
 
 - Preserve the air conditioner's previous operating mode when turning it on from the power button.
