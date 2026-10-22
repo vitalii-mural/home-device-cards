@@ -368,6 +368,18 @@ class HomeBoilerCard extends HomeDeviceStandaloneCard {
       hasVisibleFeature ||= exists;
     }
     this._setHidden(".features", !hasVisibleFeature, panel);
+    if (boiler?.state === "off") {
+      for (const button of panel.querySelectorAll("button[data-action]")) {
+        if (button.dataset.action !== "boiler-power") button.disabled = true;
+      }
+    }
+  }
+
+  _click(event) {
+    const button = event.target.closest("button[data-action]");
+    if (this._state(this._config.boiler_entity)?.state === "off" && button?.dataset.action !== "boiler-power")
+      return;
+    super._click(event);
   }
 
   _updateTemperatureFeedback() {

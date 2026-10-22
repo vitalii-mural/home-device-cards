@@ -55,14 +55,12 @@ function createEnvironment() {
     addEventListener(name, listener) { if (name === "visibilitychange") visibilityListeners.add(listener); },
     removeEventListener(name, listener) { if (name === "visibilitychange") visibilityListeners.delete(listener); },
   };
-  const storage = new Map();
   const context = vm.createContext({
     HTMLElement,
     ResizeObserver,
     customElements,
     window,
     document,
-    localStorage: { getItem: (key) => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value) },
     console,
     Intl,
     Number,
@@ -653,30 +651,6 @@ test("air refresh runs every ten seconds only while powered on and visible", asy
   assert.equal(timers.size, 1, "failed refresh waits for the next interval");
   card.disconnectedCallback();
   assert.equal(timers.size, 0);
-});
-
-test("air mode highlight remembers confirmed modes while off without guessing", async () => {
-  const { registry } = await loadCards();
-  const Air = registry.get("home-air-card");
-  const card = new Air();
-  card._config = { air_entity: "climate.office" };
-  const state = { state: "off", attributes: { hvac_modes: ["off", "heat", "cool"] } };
-  card._hass = { states: { "climate.office": state } };
-  assert.equal(card._displayAirMode(), null);
-  state.state = "heat";
-  assert.equal(card._displayAirMode(), "heat");
-  state.state = "off";
-  assert.equal(card._displayAirMode(), "heat");
-  const reloaded = new Air();
-  reloaded._config = card._config;
-  reloaded._hass = card._hass;
-  assert.equal(reloaded._displayAirMode(), "heat");
-  state.state = "cool";
-  assert.equal(reloaded._displayAirMode(), "cool");
-  state.state = "off";
-  assert.equal(reloaded._displayAirMode(), "cool");
-  reloaded._config = { air_entity: "climate.other" };
-  assert.equal(reloaded._displayAirMode(), null);
 });
 
 test("air power preserves the device mode instead of selecting cooling", async () => {

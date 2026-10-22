@@ -1,3 +1,8 @@
+## 1.0.10
+
+- Disable AC and boiler settings while powered off, leaving only the power button available.
+- Display operating modes only from Home Assistant; do not cache modes in browser storage.
+
 ## 1.0.9
 
 - Refresh the standalone AC card every ten seconds while the AC is on and its browser tab is visible; stop on hide, power-off, or disconnect.

@@ -273,6 +273,67 @@ test("TV remote follows the approved compact layout at 360px and desktop widths"
     }
   }
 });
+test("powered-off AC settings stay disabled and resume when powered on", async () => {
+  const page = await openFixture(360);
+  try {
+    const air = page.locator("home-air-card");
+    await page.evaluate(() => {
+      const { hass, cards, refresh } = window.fixture;
+      const entity = cards[1]._config.air_entity;
+      hass.states[entity] = { ...hass.states[entity], state: "off" };
+      refresh();
+    });
+    const settings = air.locator('button[data-action]:not([data-action="air-power"])');
+    assert.ok(await settings.evaluateAll((buttons) => buttons.every((button) => button.disabled)));
+    assert.equal(await air.locator('[data-action="air-power"]').isEnabled(), true);
+    assert.equal(await air.locator('.mode[aria-pressed="true"]').count(), 0);
+    await air.evaluate((card) => {
+      for (const action of ["air-mode", "air-plus", "air-fan-mode", "feature", "air-swing-palette"])
+        card._click({ target: { closest: () => ({ dataset: { action, mode: "cool" }, disabled: false }) } });
+    });
+    assert.equal(await page.evaluate(() => window.fixture.serviceCalls), 0);
+    await page.evaluate(() => {
+      const { hass, cards, refresh } = window.fixture;
+      const entity = cards[1]._config.air_entity;
+      hass.states[entity] = { ...hass.states[entity], state: "heat" };
+      refresh();
+    });
+    assert.equal(await air.locator('[data-action="air-plus"]').isEnabled(), true);
+    assert.equal(await air.locator('[data-action="air-mode"][data-mode="heat"]').isEnabled(), true);
+    assert.equal(await air.locator('[data-action="air-mode"][data-mode="heat"]').getAttribute("aria-pressed"), "true");
+  } finally {
+    await page.close();
+  }
+});
+
+test("powered-off boiler settings stay disabled and resume when powered on", async () => {
+  const page = await openFixture(900);
+  try {
+    const boiler = page.locator("home-boiler-card");
+    for (const state of ["off", "heat"]) {
+      await page.evaluate((state) => {
+        const { hass, cards, refresh } = window.fixture;
+        const entity = cards[0]._config.boiler_entity;
+        hass.states[entity] = { ...hass.states[entity], state };
+        refresh();
+      }, state);
+      assert.equal(await boiler.locator('[data-action="boiler-power"]').isEnabled(), true);
+      assert.equal(await boiler.locator('[data-action="boiler-plus"]').isEnabled(), state !== "off");
+      const settings = boiler.locator('button[data-action]:not([data-action="boiler-power"])');
+      if (state === "off") {
+        assert.ok(await settings.evaluateAll((buttons) => buttons.every((button) => button.disabled)));
+        await boiler.evaluate((card) => {
+          for (const action of ["boiler-plus", "boiler-minus", "feature"])
+            card._click({ target: { closest: () => ({ dataset: { action }, disabled: false }) } });
+        });
+      }
+    }
+    assert.equal(await page.evaluate(() => window.fixture.serviceCalls), 0);
+  } finally {
+    await page.close();
+  }
+});
+
 test("dark mode, offline recovery, and controls stay synthetic", async () => {
   const page = await openFixture(900);
   try {
