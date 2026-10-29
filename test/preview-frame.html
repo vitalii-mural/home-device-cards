@@ -47,6 +47,8 @@
       "home-room-card",
       "home-socket-card",
       "home-tv-card",
+      "home-leak-card",
+      "home-door-card",
     ];
     await Promise.all(tags.map((x) => customElements.whenDefined(x)));
     const defaults = {
@@ -91,6 +93,17 @@
       tv: {
         remote_entity: "remote.example_49",
         media_player_entity: "media_player.example_50",
+      },
+      leak: {
+        leak_entity: "binary_sensor.example_51",
+        battery_entity: "sensor.example_52",
+        location: "Туалет",
+      },
+      door: {
+        door_entity: "binary_sensor.example_53",
+        vibration_entity: "binary_sensor.example_54",
+        battery_entity: "sensor.example_55",
+        location: "Коридор",
       },
       river: {
         river_status: "sensor.example_20",
@@ -138,7 +151,7 @@
       for (const id of Object.values(c._config))
         if (
           typeof id === "string" &&
-          /^(sensor|switch|climate|water_heater|remote|media_player)\./.test(id)
+          /^(sensor|binary_sensor|switch|climate|water_heater|remote|media_player)\./.test(id)
         )
           states[id] = {
             state: id.startsWith("switch.") ? "off" : "42",
@@ -222,6 +235,11 @@
       "switch.example_15": { state: "on", attributes: {} },
       "remote.example_49": { state: "on", attributes: { current_activity: "Jellyfin" } },
       "media_player.example_50": { state: "playing", attributes: { app_name: "Jellyfin", volume_level: 0.42 } },
+      "binary_sensor.example_51": { state: "off", attributes: {} },
+      "sensor.example_52": { state: "65", attributes: {} },
+      "binary_sensor.example_53": { state: "off", attributes: {} },
+      "binary_sensor.example_54": { state: "off", attributes: {} },
+      "sensor.example_55": { state: "84", attributes: {} },
     });
     delete states["switch.example_8"];
     states["switch.example_10"] = { state: "unavailable", attributes: {} };

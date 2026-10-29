@@ -674,6 +674,32 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 @keyframes home-pending-spin{to{transform:rotate(360deg)}}
 @media(pointer:coarse){.single-card [data-live-panel="boiler"] .adjust .round{width:44px;height:44px;min-width:44px;min-height:44px;flex-basis:44px}}
 @media(prefers-reduced-motion:reduce){.round[data-pending="true"] .pending-spinner{animation:none}}
+.single-card .sensor-status-card{width:100%;margin:0;padding:16px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
+.single-card .sensor-header{display:flex;align-items:center;gap:10px;padding:0}
+.single-card .sensor-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:14px;background:var(--k-accent-bg);color:var(--k-accent)}
+.single-card .sensor-icon svg,.single-card .sensor-caption svg,.single-card .sensor-inline-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.single-card .sensor-heading{flex:1;min-width:0}
+.single-card .sensor-status-card h2{overflow:hidden;margin:0;color:var(--k-text);font-size:14px;font-weight:500;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.single-card .sensor-location{display:block;overflow:hidden;margin-top:2px;color:var(--k-muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.single-card .sensor-battery{display:flex;align-items:center;gap:5px;color:var(--k-muted);font-size:12px;white-space:nowrap}
+.single-card .sensor-inline-icon{display:flex}
+.single-card .sensor-inline-icon svg{width:16px;height:16px}
+.single-card .sensor-main{display:flex;align-items:center;gap:9px;min-height:28px;margin-top:15px}
+.single-card .sensor-status{color:var(--k-text);font-size:20px;line-height:1.3;letter-spacing:-.2px}
+.single-card .sensor-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--k-accent)}
+.single-card .sensor-status-card[data-kind=leak][data-state=active] .sensor-icon{background:color-mix(in srgb,var(--k-danger) 12%,var(--k-card));color:var(--k-danger)}
+.single-card .sensor-status-card[data-kind=leak][data-state=active] .sensor-dot{background:var(--k-danger)}
+.single-card .sensor-status-card[data-kind=door][data-state=active] .sensor-icon{background:var(--k-warm-bg);color:var(--k-warm)}
+.single-card .sensor-status-card[data-kind=door][data-state=active] .sensor-dot{background:var(--k-warm)}
+.single-card .sensor-status-card[data-state=offline] .sensor-icon{background:var(--k-soft);color:var(--k-muted)}
+.single-card .sensor-status-card[data-state=offline] .sensor-dot{background:var(--k-muted)}
+.single-card .sensor-status-card[data-state=offline] .sensor-status{color:var(--k-muted)}
+.single-card .sensor-extra{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--k-line);font-size:12px}
+.single-card .sensor-caption{display:flex;align-items:center;gap:5px;color:var(--k-muted)}
+.single-card .sensor-caption svg{width:15px;height:15px}
+.single-card .sensor-extra-value{color:var(--k-text)}
+.single-card .sensor-extra-missing{color:var(--k-muted)}
+@container device-card (max-width:380px){.single-card .sensor-status-card{padding:14px}.single-card .sensor-status{font-size:19px}.single-card .sensor-header{gap:8px}.single-card .sensor-icon{width:36px;height:36px;flex-basis:36px}}
 `;
 
 const HOME_DEVICE_CONTAINER_STYLE = `
@@ -764,6 +790,17 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     air_auto_x_fan_entity: null,
     air_auto_light_entity: null,
     air_beeper_entity: null,
+  },
+  leak: {
+    leak_entity: null,
+    battery_entity: null,
+    location: '',
+  },
+  door: {
+    door_entity: null,
+    vibration_entity: null,
+    battery_entity: null,
+    location: '',
   },
   room: {
     room_temperature_entity: null,
@@ -874,6 +911,17 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['air_auto_light_entity', 'Автоматичне підсвічування', 'switch'],
     ['air_beeper_entity', 'Звуковий сигнал', 'switch'],
   ],
+  leak: [
+    ['leak_entity', 'Датчик протікання', 'binary_sensor'],
+    ['battery_entity', 'Заряд батареї', 'sensor'],
+    ['location', 'Місце', 'text'],
+  ],
+  door: [
+    ['door_entity', 'Датчик дверей', 'binary_sensor'],
+    ['vibration_entity', 'Датчик вібрації', 'binary_sensor'],
+    ['battery_entity', 'Заряд батареї', 'sensor'],
+    ['location', 'Місце', 'text'],
+  ],
   room: [
     ['room_temperature_entity', 'Температура кімнати', 'sensor'],
     ['humidity_entity', 'Вологість кімнати', 'sensor'],
@@ -948,6 +996,8 @@ const HOME_DEVICE_CARD_FIELDS = {
 const HOME_DEVICE_CARD_META = {
   boiler: ['home-boiler-card', 'Бойлер', 'Картка керування бойлером Midea.'],
   air: ['home-air-card', 'Кондиціонер', 'Картка керування кондиціонером.'],
+  leak: ['home-leak-card', 'Датчик протікання', 'Стан датчика води й заряд батареї.'],
+  door: ['home-door-card', 'Датчик дверей', 'Стан дверей, вібрація та заряд батареї.'],
   room: ['home-room-card', 'Кімната', 'Температура та вологість датчика.'],
   socket: ['home-socket-card', 'Розетка', 'Керування та електричні показники розетки.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
@@ -979,6 +1029,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       boiler: "boiler_entity",
       air: "air_entity",
       room: "room_temperature_entity",
+      leak: "leak_entity",
+      door: "door_entity",
       socket: "switch_entity",
       tv: "remote_entity",
       river: "river_status",
@@ -1075,6 +1127,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
   getCardSize() {
     return {
       room: 3,
+      leak: 3,
+      door: 3,
       socket: 4,
       tv: 8,
       air: 8,
@@ -1094,6 +1148,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       socket: 4,
       tv: 8,
       room: 3,
+      leak: 3,
+      door: 3,
     }[kind] || 5;
     return kind === "energy" || kind === "river"
       ? {
@@ -1133,6 +1189,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
         '<path d="m10 20-1.25-2.5L6 18M10 4 8.75 6.5 6 6m8 14 1.25-2.5L18 18m-4-14 1.25 2.5L18 6m-1 15-3-6h-4m7-12-3 6 1.5 3M2 12h6.5L10 9m10 1-1.5 2 1.5 2m2-2h-6.5L14 15m-10-5 1.5 2L4 14m3 7 3-6-1.5-3m-2-9 3 6h4"/>',
       sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2m8-10h2M2 12h2m14.07-7.07 1.41-1.41M4.93 19.07l1.41-1.41m12.73 1.41-1.41-1.41M4.93 4.93l1.41 1.41"/>',
       fan: '<path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/>',
+      'door-closed':
+        '<path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16m-8-9h.01"/>',
       droplet:
         '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
       "circle-a":
@@ -2456,6 +2514,71 @@ class HomeAirCard extends HomeDeviceStandaloneCard {
 }
 if (!customElements.get("home-air-card"))
   customElements.define("home-air-card", HomeAirCard);
+class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
+  _battery() {
+    const id = this._config.battery_entity, state = this._state(id);
+    const visible = !!id && this._available(id);
+    const value = visible ? this._number(state.state) : null;
+    this._setHidden('[data-live="sensor-battery"]', !visible);
+    this._setText('[data-live="sensor-battery-value"]', value === null ? '—' : this._format(value, 0));
+  }
+
+  _status(entity) {
+    const state = this._state(this._config[entity]);
+    if (!state || state.state === 'unavailable') return { label: 'Немає зв’язку', state: 'offline' };
+    if (state.state === 'unknown') return { label: 'Стан невідомий', state: 'offline' };
+    if (state.state === 'on') return { label: this._cardType === 'leak' ? 'Виявлено воду' : 'Відчинено', state: 'active' };
+    if (state.state === 'off') return { label: this._cardType === 'leak' ? 'Сухо' : 'Зачинено', state: 'normal' };
+    return { label: 'Невідомий стан', state: 'offline' };
+  }
+
+  _updateStatus() {
+    const primary = this._status(this._cardType === 'leak' ? 'leak_entity' : 'door_entity');
+    this._setText('[data-live="sensor-status"]', primary.label);
+    const article = this.shadowRoot.querySelector('[data-live-panel="sensor"]');
+    article?.setAttribute('data-state', primary.state);
+    this._battery();
+    if (this._cardType !== 'door') return;
+
+    const vibrationId = this._config.vibration_entity,
+      vibration = this._state(vibrationId),
+      unavailable = !vibration || vibration.state === 'unavailable';
+    this._setText('[data-live="vibration-value"]', !vibrationId || unavailable ? '' : vibration.state === 'on' ? 'Вібрація' : vibration.state === 'off' ? 'Без вібрації' : 'Стан невідомий');
+    this._setHidden('[data-live="vibration"]', !vibrationId || unavailable);
+    this._setHidden('[data-live="vibration-missing"]', !vibrationId || !unavailable);
+  }
+
+  _content() {
+    const leak = this._cardType === 'leak',
+      title = this._displayName(leak ? 'leak_entity' : 'door_entity', this._config.title, leak ? 'Протікання води' : 'Вхідні двері'),
+      location = this._config.location,
+      state = this._status(leak ? 'leak_entity' : 'door_entity'),
+      icon = leak ? 'droplets' : 'door-closed',
+      vibrationId = this._config.vibration_entity,
+      batteryId = this._config.battery_entity;
+    const battery = batteryId ? `<span class="sensor-battery" data-live="sensor-battery"><span class="sensor-inline-icon">${this._lucideIcon('battery-medium')}</span><span data-live="sensor-battery-value"></span>%</span>` : '';
+    const vibration = !leak && vibrationId ? `<div class="sensor-extra" data-live="vibration" hidden><span class="sensor-caption">${this._lucideIcon('activity')}Вібрація</span><span class="sensor-extra-value" data-live="vibration-value"></span></div><div class="sensor-extra sensor-extra-missing" data-live="vibration-missing" hidden>Вібрація: немає зв’язку</div>` : '';
+    return `<article class="sensor-status-card" data-live-panel="sensor" data-kind="${leak ? 'leak' : 'door'}" data-state="${state.state}"><header class="sensor-header"><span class="sensor-icon">${this._lucideIcon(icon)}</span><div class="sensor-heading"><h2>${this._escape(title)}</h2>${location ? `<span class="sensor-location">${this._escape(location)}</span>` : ''}</div>${battery}</header><div class="sensor-main"><span class="sensor-dot" aria-hidden="true"></span><span class="sensor-status" data-live="sensor-status" aria-live="polite">${this._escape(state.label)}</span></div>${vibration}</article>`;
+  }
+
+  _updateCardDynamic({ all, has }) {
+    const entities = this._cardType === 'leak' ? ['leak_entity', 'battery_entity'] : ['door_entity', 'vibration_entity', 'battery_entity'];
+    if (all || entities.some(key => has(this._config[key]))) this._updateStatus();
+  }
+}
+
+class HomeLeakCard extends HomeSensorStatusCard {
+  static get cardType() { return 'leak'; }
+  static get cardTitle() { return ['leak_entity', 'Протікання води']; }
+}
+
+class HomeDoorCard extends HomeSensorStatusCard {
+  static get cardType() { return 'door'; }
+  static get cardTitle() { return ['door_entity', 'Вхідні двері']; }
+}
+
+if (!customElements.get('home-leak-card')) customElements.define('home-leak-card', HomeLeakCard);
+if (!customElements.get('home-door-card')) customElements.define('home-door-card', HomeDoorCard);
 class HomeRoomCard extends HomeDeviceStandaloneCard {
   static get cardType() {
     return "room";

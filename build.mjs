@@ -16,6 +16,7 @@ export const SOURCE_FILES = Object.freeze({
     'src/device-cards/base.js',
     'src/cards/boiler-card.js',
     'src/cards/air-card.js',
+    'src/cards/sensor-cards.js',
     'src/cards/room-card.js',
     'src/cards/socket-card.js',
     'src/cards/river-card.js',

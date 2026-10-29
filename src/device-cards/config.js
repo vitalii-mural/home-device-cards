@@ -22,6 +22,17 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     air_auto_light_entity: null,
     air_beeper_entity: null,
   },
+  leak: {
+    leak_entity: null,
+    battery_entity: null,
+    location: '',
+  },
+  door: {
+    door_entity: null,
+    vibration_entity: null,
+    battery_entity: null,
+    location: '',
+  },
   room: {
     room_temperature_entity: null,
     humidity_entity: null,
@@ -131,6 +142,17 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['air_auto_light_entity', 'Автоматичне підсвічування', 'switch'],
     ['air_beeper_entity', 'Звуковий сигнал', 'switch'],
   ],
+  leak: [
+    ['leak_entity', 'Датчик протікання', 'binary_sensor'],
+    ['battery_entity', 'Заряд батареї', 'sensor'],
+    ['location', 'Місце', 'text'],
+  ],
+  door: [
+    ['door_entity', 'Датчик дверей', 'binary_sensor'],
+    ['vibration_entity', 'Датчик вібрації', 'binary_sensor'],
+    ['battery_entity', 'Заряд батареї', 'sensor'],
+    ['location', 'Місце', 'text'],
+  ],
   room: [
     ['room_temperature_entity', 'Температура кімнати', 'sensor'],
     ['humidity_entity', 'Вологість кімнати', 'sensor'],
@@ -205,6 +227,8 @@ const HOME_DEVICE_CARD_FIELDS = {
 const HOME_DEVICE_CARD_META = {
   boiler: ['home-boiler-card', 'Бойлер', 'Картка керування бойлером Midea.'],
   air: ['home-air-card', 'Кондиціонер', 'Картка керування кондиціонером.'],
+  leak: ['home-leak-card', 'Датчик протікання', 'Стан датчика води й заряд батареї.'],
+  door: ['home-door-card', 'Датчик дверей', 'Стан дверей, вібрація та заряд батареї.'],
   room: ['home-room-card', 'Кімната', 'Температура та вологість датчика.'],
   socket: ['home-socket-card', 'Розетка', 'Керування та електричні показники розетки.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],

@@ -132,6 +132,8 @@ test("registers the dashboard and standalone card types", async () => {
     "home-boiler-card",
     "home-air-card",
     "home-room-card",
+    "home-leak-card",
+    "home-door-card",
     "home-socket-card",
     "home-river-card",
     "home-energy-card",
@@ -143,6 +145,30 @@ test("registers the dashboard and standalone card types", async () => {
       "function",
       `${name} is registered`,
     );
+  }
+});
+
+test("sensor cards expose only explicit state, battery, location, and vibration bindings", async () => {
+  const { registry } = await loadCards();
+  const Leak = registry.get("home-leak-card"), Door = registry.get("home-door-card");
+  assert.deepEqual(JSON.parse(JSON.stringify(Leak.getStubConfig())), {
+    type: "custom:home-leak-card", leak_entity: null, battery_entity: null, location: "",
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(Door.getStubConfig())), {
+    type: "custom:home-door-card", door_entity: null, vibration_entity: null,
+    battery_entity: null, location: "",
+  });
+  const doorFields = Door.getConfigForm().schema;
+  assert.deepEqual(Array.from(doorFields.filter(field => field.name !== "title"), field => field.name),
+    ["door_entity", "vibration_entity", "battery_entity", "location"]);
+  assert.equal(doorFields.find(field => field.name === "door_entity").required, false);
+  assert.equal(doorFields.find(field => field.name === "vibration_entity").required, false);
+  assert.equal(new Leak().getCardSize(), 3);
+  assert.equal(new Door().getGridOptions().rows, 3);
+  for (const [Card, key] of [[Leak, "leak_entity"], [Door, "door_entity"]]) {
+    const card = new Card();
+    assert.throws(() => card.setConfig({ [key]: 42 }), /entity ID or empty/);
+    assert.throws(() => card.setConfig({ location: 42 }), /must be text/);
   }
 });
 

@@ -21,6 +21,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       boiler: "boiler_entity",
       air: "air_entity",
       room: "room_temperature_entity",
+      leak: "leak_entity",
+      door: "door_entity",
       socket: "switch_entity",
       tv: "remote_entity",
       river: "river_status",
@@ -117,6 +119,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
   getCardSize() {
     return {
       room: 3,
+      leak: 3,
+      door: 3,
       socket: 4,
       tv: 8,
       air: 8,
@@ -136,6 +140,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       socket: 4,
       tv: 8,
       room: 3,
+      leak: 3,
+      door: 3,
     }[kind] || 5;
     return kind === "energy" || kind === "river"
       ? {
@@ -175,6 +181,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
         '<path d="m10 20-1.25-2.5L6 18M10 4 8.75 6.5 6 6m8 14 1.25-2.5L18 18m-4-14 1.25 2.5L18 6m-1 15-3-6h-4m7-12-3 6 1.5 3M2 12h6.5L10 9m10 1-1.5 2 1.5 2m2-2h-6.5L14 15m-10-5 1.5 2L4 14m3 7 3-6-1.5-3m-2-9 3 6h4"/>',
       sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2m8-10h2M2 12h2m14.07-7.07 1.41-1.41M4.93 19.07l1.41-1.41m12.73 1.41-1.41-1.41M4.93 4.93l1.41 1.41"/>',
       fan: '<path d="M10.827 16.379a6.082 6.082 0 0 1-8.618-7.002l5.412 1.45a6.082 6.082 0 0 1 7.002-8.618l-1.45 5.412a6.082 6.082 0 0 1 8.618 7.002l-5.412-1.45a6.082 6.082 0 0 1-7.002 8.618l1.45-5.412Z"/><path d="M12 12v.01"/>',
+      'door-closed':
+        '<path d="M3 21h18M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16m-8-9h.01"/>',
       droplet:
         '<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
       "circle-a":

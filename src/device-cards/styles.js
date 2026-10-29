@@ -147,6 +147,32 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 @keyframes home-pending-spin{to{transform:rotate(360deg)}}
 @media(pointer:coarse){.single-card [data-live-panel="boiler"] .adjust .round{width:44px;height:44px;min-width:44px;min-height:44px;flex-basis:44px}}
 @media(prefers-reduced-motion:reduce){.round[data-pending="true"] .pending-spinner{animation:none}}
+.single-card .sensor-status-card{width:100%;margin:0;padding:16px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
+.single-card .sensor-header{display:flex;align-items:center;gap:10px;padding:0}
+.single-card .sensor-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:14px;background:var(--k-accent-bg);color:var(--k-accent)}
+.single-card .sensor-icon svg,.single-card .sensor-caption svg,.single-card .sensor-inline-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.single-card .sensor-heading{flex:1;min-width:0}
+.single-card .sensor-status-card h2{overflow:hidden;margin:0;color:var(--k-text);font-size:14px;font-weight:500;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}
+.single-card .sensor-location{display:block;overflow:hidden;margin-top:2px;color:var(--k-muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
+.single-card .sensor-battery{display:flex;align-items:center;gap:5px;color:var(--k-muted);font-size:12px;white-space:nowrap}
+.single-card .sensor-inline-icon{display:flex}
+.single-card .sensor-inline-icon svg{width:16px;height:16px}
+.single-card .sensor-main{display:flex;align-items:center;gap:9px;min-height:28px;margin-top:15px}
+.single-card .sensor-status{color:var(--k-text);font-size:20px;line-height:1.3;letter-spacing:-.2px}
+.single-card .sensor-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:var(--k-accent)}
+.single-card .sensor-status-card[data-kind=leak][data-state=active] .sensor-icon{background:color-mix(in srgb,var(--k-danger) 12%,var(--k-card));color:var(--k-danger)}
+.single-card .sensor-status-card[data-kind=leak][data-state=active] .sensor-dot{background:var(--k-danger)}
+.single-card .sensor-status-card[data-kind=door][data-state=active] .sensor-icon{background:var(--k-warm-bg);color:var(--k-warm)}
+.single-card .sensor-status-card[data-kind=door][data-state=active] .sensor-dot{background:var(--k-warm)}
+.single-card .sensor-status-card[data-state=offline] .sensor-icon{background:var(--k-soft);color:var(--k-muted)}
+.single-card .sensor-status-card[data-state=offline] .sensor-dot{background:var(--k-muted)}
+.single-card .sensor-status-card[data-state=offline] .sensor-status{color:var(--k-muted)}
+.single-card .sensor-extra{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--k-line);font-size:12px}
+.single-card .sensor-caption{display:flex;align-items:center;gap:5px;color:var(--k-muted)}
+.single-card .sensor-caption svg{width:15px;height:15px}
+.single-card .sensor-extra-value{color:var(--k-text)}
+.single-card .sensor-extra-missing{color:var(--k-muted)}
+@container device-card (max-width:380px){.single-card .sensor-status-card{padding:14px}.single-card .sensor-status{font-size:19px}.single-card .sensor-header{gap:8px}.single-card .sensor-icon{width:36px;height:36px;flex-basis:36px}}
 `;
 
 const HOME_DEVICE_CONTAINER_STYLE = `
