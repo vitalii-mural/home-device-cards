@@ -18,6 +18,12 @@ Remove the old `/local/home-dashboard.js` and `/local/home-device-cards.js`
 resource entries when migrating to HACS to avoid registering cards twice.
 Card-mod is not required.
 
+## Theme
+
+The Home Cards theme is a separate HACS package.
+Install [Home Cards Theme](https://github.com/vitalii-mural/home-cards-theme)
+with type **Theme**.
+
 ## Manual installation
 
 Copy `home-dashboard.js` and `home-device-cards.js` into `/config/www/`.
