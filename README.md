@@ -45,6 +45,8 @@ the browser, for example `/local/home-device-cards.js?v=2`.
 - `custom:home-socket-card`
 - `custom:home-room-card`
 - `custom:home-tv-card`
+- `custom:home-leak-card`
+- `custom:home-door-card`
 
 Select entities and names in each card's visual editor. Entity defaults were
 cleared for this repository; existing installations should keep their explicit

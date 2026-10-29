@@ -1,4 +1,4 @@
-// Home Device Cards v1.0.10 — bundled base and standalone cards.
+// Home Device Cards v1.1.0 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 

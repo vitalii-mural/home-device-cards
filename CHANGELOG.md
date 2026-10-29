@@ -1,3 +1,9 @@
+## 1.1.0
+
+- Add compact water leak and door sensor cards with visual editors.
+- Show battery level and optional door vibration status.
+- Move the Home Cards theme to its own HACS repository.
+
 ## 1.0.10
 
 - Disable AC and boiler settings while powered off, leaving only the power button available.
