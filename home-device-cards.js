@@ -2476,7 +2476,7 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
         value: this._number(sample?.state),
       })).filter((point) => Number.isFinite(point.time))
         .sort((left, right) => left.time - right.time);
-      const reduced = this._downsampleSocketHistory(points, 60);
+      const reduced = this._downsampleSocketHistory(points, 60, key === "voltage");
       this._socketHistories.set(key, reduced.filter((point) => point.value !== null).length > 1
         ? { type: "line", points: reduced, start: start.getTime(), end: end.getTime() }
         : null);
@@ -2520,7 +2520,7 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     this._socketHistoryLoading.delete(key);
   }
 
-  _downsampleSocketHistory(points, limit) {
+  _downsampleSocketHistory(points, limit, preserveExtrema = false) {
     if (points.length <= limit) return points;
     const buckets = Array.from({ length: limit }, () => []);
     const first = points[0].time, last = points.at(-1).time;
@@ -2533,10 +2533,16 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
       let run = [];
       const flush = () => {
         if (!run.length) return;
-        reduced.push({
-          time: run.reduce((sum, point) => sum + point.time, 0) / run.length,
-          value: run.reduce((sum, point) => sum + point.value, 0) / run.length,
-        });
+        if (preserveExtrema) {
+          const min = run.reduce((lowest, point) => point.value < lowest.value ? point : lowest);
+          const max = run.reduce((highest, point) => point.value > highest.value ? point : highest);
+          reduced.push(...[...new Set([run[0], min, max, run.at(-1)])].sort((left, right) => left.time - right.time));
+        } else {
+          reduced.push({
+            time: run.reduce((sum, point) => sum + point.time, 0) / run.length,
+            value: run.reduce((sum, point) => sum + point.value, 0) / run.length,
+          });
+        }
         run = [];
       };
       for (const point of bucket) {
@@ -2640,8 +2646,9 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     const width = 200, height = 28, padding = 1;
     const voltageUnit = String(this._state(this._config?.voltage_entity)?.attributes?.unit_of_measurement || "").trim().toLowerCase();
     const voltageScale = ["mv", "millivolt", "millivolts"].includes(voltageUnit) ? 1000 : 1;
-    const low = key === "voltage" ? 190 * voltageScale : min === max ? min - 0.5 : min;
-    const high = key === "voltage" ? 270 * voltageScale : min === max ? max + 0.5 : max;
+    const margin = key === "voltage" ? (max > min ? (max - min) * 0.05 : 0.5 * voltageScale) : min === max ? 0.5 : 0;
+    const low = min - margin;
+    const high = max + margin;
     const x = (point) => padding + (point.time - history.start) *
       (width - padding * 2) / (history.end - history.start);
     const y = (value) => height - padding -

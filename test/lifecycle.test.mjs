@@ -399,15 +399,33 @@ test("socket power and current step while short gaps bridge and long gaps stay o
   card._renderSocketHistory("voltage");
   assert.match(paths.get("voltage").line.value, /L/);
   assert.doesNotMatch(paths.get("voltage").line.value, /H.*V/);
-  assert.equal(paths.get("voltage").line.value, "M1.0 17.3 L199.0 15.9 ", "fixed voltage scale");
+  assert.equal(paths.get("voltage").line.value, "M1.0 25.8 L199.0 2.2 ", "voltage extrema with five percent padding");
   card._config = { voltage_entity: "sensor.voltage" };
   card._hass = { states: { "sensor.voltage": { state: "224000", attributes: { unit_of_measurement: "mV" } } } };
   card._socketHistories.get("voltage").points = [{ time: start, value: 220000 }, { time: start + 3600000, value: 224000 }];
   card._renderSocketHistory("voltage");
-  assert.equal(paths.get("voltage").line.value, "M1.0 17.3 L199.0 15.9 ", "equivalent millivolt scale");
+  assert.equal(paths.get("voltage").line.value, "M1.0 25.8 L199.0 2.2 ", "equivalent millivolt scale");
   card._socketHistories.get("voltage").points = [{ time: start, value: 180000 }, { time: start + 3600000, value: 280000 }];
   card._renderSocketHistory("voltage");
-  assert.equal(paths.get("voltage").line.value, "M1.0 27.0 L199.0 1.0 ", "outliers stay inside chart");
+  assert.equal(paths.get("voltage").line.value, "M1.0 25.8 L199.0 2.2 ", "range follows all observed extrema");
+});
+
+test("voltage downsampling preserves observed extrema, order and gaps", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-socket-card"))();
+  const points = Array.from({ length: 1200 }, (_, i) => ({ time: i * 60000, value: 230 }));
+  points[7].value = 211;
+  points[9].value = 249;
+  points[10].value = null;
+  points[11].value = 225;
+  const reduced = card._downsampleSocketHistory(points, 60, true);
+  assert.ok(reduced.length < 300);
+  assert.equal(Math.min(...reduced.filter(p => p.value !== null).map(p => p.value)), 211);
+  assert.equal(Math.max(...reduced.filter(p => p.value !== null).map(p => p.value)), 249);
+  assert.ok(reduced.every((p, i) => !i || p.time >= reduced[i - 1].time));
+  assert.ok(reduced.every(p => points.includes(p)), "uses actual samples, not averages");
+  assert.ok(reduced.includes(points[10]), "unavailable interval retained");
+  assert.ok(reduced.includes(points[9]) && reduced.includes(points[11]), "gap endpoints retained");
 });
 
 test("socket history hides missing statistics and invalidates per entity", async () => {
