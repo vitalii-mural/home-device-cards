@@ -136,21 +136,19 @@ test("HACS bundle registers the same card contracts as the two manual resources"
   );
 });
 
-test("room card renders real 24-hour history and caches empty results", async () => {
+test("room card renders independent, compact 24-hour histories and caches results", async () => {
   const { registry } = await loadCards();
   const card = new (registry.get("home-room-card"))();
-  const path = { value: "", setAttribute(_name, value) { this.value = value; } };
-  const range = { textContent: "" };
-  const button = {
-    hidden: true,
-    attributes: {},
-    setAttribute(name, value) { this.attributes[name] = value; },
-    querySelector(selector) {
-      return selector.includes("range") ? range : path;
-    },
-  };
-  card.shadowRoot = { querySelector: () => button };
-  card._config = { room_temperature_entity: "sensor.bedroom" };
+  const graphs = new Map();
+  for (const key of ["temperature", "humidity"]) {
+    const path = { value: "", setAttribute(_name, value) { this.value = value; } };
+    const button = { hidden: true, setAttribute() {}, querySelector: () => path };
+    graphs.set(key, { path, button });
+  }
+  card.shadowRoot = { querySelector: (selector) => selector.includes("temperature")
+    ? graphs.get("temperature").button
+    : selector.includes("humidity") ? graphs.get("humidity").button : null };
+  card._config = { room_temperature_entity: "sensor.bedroom", humidity_entity: "sensor.bedroom_humidity" };
   card.isConnected = true;
   const now = Date.now();
   let calls = 0;
@@ -158,32 +156,48 @@ test("room card renders real 24-hour history and caches empty results", async ()
     callApi: async (method, request) => {
       calls++;
       assert.equal(method, "GET");
-      assert.match(request, /filter_entity_id=sensor.bedroom/);
+      const humidity = request.includes("sensor.bedroom_humidity");
+      assert.match(request, new RegExp(humidity ? "sensor.bedroom_humidity" : "sensor.bedroom"));
       assert.match(request, /minimal_response&no_attributes/);
       return [[
         { state: "21.7", last_changed: new Date(now - 20_000).toISOString() },
         { state: "unavailable", last_changed: new Date(now - 15_000).toISOString() },
-        { state: "23.5", last_changed: new Date(now - 10_000).toISOString() },
+        { state: humidity ? "63" : "23.5", last_changed: new Date(now - 10_000).toISOString() },
       ]];
     },
   };
 
   await card._loadRoomHistory();
-  assert.equal(calls, 1);
-  assert.equal(button.hidden, false);
-  assert.equal(range.textContent, "21,7 — 23,5 °C");
-  assert.equal((path.value.match(/M/g) || []).length, 2, "unavailable samples break the line");
+  assert.equal(calls, 2);
+  for (const key of ["temperature", "humidity"]) {
+    const graph = graphs.get(key);
+    assert.equal(graph.button.hidden, false);
+    assert.equal((graph.path.value.match(/M/g) || []).length, 2, "unavailable samples break the line");
+  }
   await card._loadRoomHistory();
-  assert.equal(calls, 1, "cached history is reused");
-  card._roomHistory = [
-    { time: now - 20_000, value: 22 },
-    { time: now - 10_000, value: 22 },
-  ];
-  card._renderRoomHistory();
-  assert.doesNotMatch(path.value, /NaN|Infinity/, "flat temperatures still render finite coordinates");
+  assert.equal(calls, 2, "cached histories are reused");
+  const flat = Array.from({ length: 120 }, (_, i) => ({ time: now - 120_000 + i * 1_000, value: 22 }));
+  const reduced = card._downsampleRoomHistory(flat, 60);
+  assert.ok(reduced.length <= 120, "dense histories are reduced to at most two samples per time bucket");
+  const bucketStartGap = card._downsampleRoomHistory([
+    { time: now - 86_000_000, value: null },
+    ...Array.from({ length: 61 }, (_, i) => ({ time: now - 86_000_000 + 1_000 + i * 1_000, value: 20 + i / 60 })),
+    { time: now, value: 21 },
+  ], 60);
+  assert.equal(bucketStartGap[0].value, null, "a gap at the bucket start stays before its readings");
+  assert.ok(bucketStartGap.every((point, i) => i === 0 || point.time >= bucketStartGap[i - 1].time));
+  const bucketEndGap = card._downsampleRoomHistory([
+    ...Array.from({ length: 61 }, (_, i) => ({ time: now - 86_000_000 + i * 1_000, value: 20 + i / 60 })),
+    { time: now - 86_000_000 + 61_000, value: null },
+    { time: now, value: 21 },
+  ], 60);
+  assert.equal(bucketEndGap[1].value, null, "a gap at the bucket end stays after its readings");
+  card._roomHistories.set("temperature", { points: flat.slice(0, 2), start: now - 86400000, end: now });
+  card._renderRoomHistory("temperature");
+  assert.doesNotMatch(graphs.get("temperature").path.value, /NaN|Infinity/, "flat temperatures render finite coordinates");
 
   const emptyCard = new (registry.get("home-room-card"))();
-  emptyCard.shadowRoot = { querySelector: () => button };
+  emptyCard.shadowRoot = card.shadowRoot;
   emptyCard._config = { room_temperature_entity: "sensor.bedroom" };
   emptyCard.isConnected = true;
   let emptyCalls = 0;
@@ -191,13 +205,13 @@ test("room card renders real 24-hour history and caches empty results", async ()
   await emptyCard._loadRoomHistory();
   await emptyCard._loadRoomHistory();
   assert.equal(emptyCalls, 1, "failed history loads are cached for five minutes");
-  assert.equal(button.hidden, true);
+  assert.equal(graphs.get("temperature").button.hidden, true);
 });
 
 test("room history ignores a response after disconnect", async () => {
   const { registry } = await loadCards();
   const card = new (registry.get("home-room-card"))();
-  const button = { hidden: true, querySelector: () => ({ textContent: "", setAttribute() {} }), setAttribute() {} };
+  const button = { hidden: true, querySelector: () => ({ setAttribute() {} }), setAttribute() {} };
   card.shadowRoot = { querySelector: () => button };
   card._config = { room_temperature_entity: "sensor.bedroom" };
   card.isConnected = true;
@@ -207,7 +221,7 @@ test("room history ignores a response after disconnect", async () => {
   card.disconnectedCallback();
   resolveHistory([[{ state: "22", last_changed: new Date().toISOString() }, { state: "23", last_changed: new Date().toISOString() }]]);
   await pending;
-  assert.equal(card._roomHistory, null);
+  assert.equal(card._roomHistories.get("temperature"), undefined);
   assert.equal(button.hidden, true);
 });
 
@@ -215,23 +229,20 @@ test("room history clears and ignores the old entity after configuration changes
   const { registry } = await loadCards();
   const card = new (registry.get("home-room-card"))();
   card._config = { room_temperature_entity: "sensor.old" };
-  card._roomHistoryEntity = "sensor.old";
-  card._roomHistory = [{ time: Date.now(), value: 22 }];
-  card._roomHistoryRange = { start: Date.now() - 86400000, end: Date.now() };
+  card._roomHistories.set("temperature", { points: [{ time: Date.now(), value: 22 }] });
   card._hass = { states: {}, callApi: () => new Promise((resolve) => { card.resolveOldHistory = resolve; }) };
   card.isConnected = true;
   const pending = card._loadRoomHistory();
   card.isConnected = false;
   card._render = function () {
-    assert.equal(this._roomHistory, null, "old data is cleared before the new config renders");
+    assert.equal(this._roomHistories.get("temperature"), undefined, "old data is cleared before the new config renders");
     this._rendered = true;
   };
 
   card.setConfig({ room_temperature_entity: "sensor.new" });
   card.resolveOldHistory([[{ state: "23", last_changed: new Date().toISOString() }]]);
   await pending;
-  assert.equal(card._roomHistory, null);
-  assert.equal(card._roomHistoryEntity, "sensor.new");
+  assert.equal(card._roomHistories.get("temperature"), undefined);
 });
 
 test("room reading and graph commands use native Home Assistant more info", async () => {
@@ -573,9 +584,9 @@ test("standalone card markup and sizing match pre-refactor characterization", as
     ],
     [
       "home-room-card",
-      "dee0e3b50a4050c50355ccde2b6368f67076b06edd37bb0c6afce7ddc37cdd58",
-      4,
-      { columns: 6, rows: 4, min_columns: 3, min_rows: 2 },
+      "723a8da4382e6a03106c03260c1ccc3558fdae7c8b298f52e3c4b7aed4b5fd5f",
+      3,
+      { columns: 6, rows: 3, min_columns: 3, min_rows: 2 },
     ],
     [
       "home-socket-card",
@@ -633,7 +644,7 @@ test("configured live-card markup matches pre-refactor characterization", async 
   const contracts = [
     ["home-boiler-card", "2382d7793a7e0793725711ae31e086d9508dfd6fe49c4b7125c34dd7f93e380a"],
     ["home-air-card", "2fddd0611caac77f3aee08432b90daa4d25c58104de9b01f9041be3351a82315"],
-    ["home-room-card", "8332ee31f1e1d629a76b8389f826f22fd710db1882b925af4fc833207b0c45aa"],
+    ["home-room-card", "26cf1a038b7fcf7a8f53377ced22c86bcbebd4be5c72ed1e04db85ad173550f3"],
     ["home-socket-card", "ae9b16f9795e98d009e2fa75409ae256d26e14182f4babfc3bee5eb19200fade"],
     ["home-river-card", "e5643629beb69ba09093c07d76a6821b5c2c938545b5a4811e11eab69fd97a6c"],
     ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],

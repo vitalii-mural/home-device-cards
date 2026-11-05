@@ -254,12 +254,13 @@
         if (method !== "GET" || !path.startsWith("history/period/"))
           throw Error("Unexpected API request");
         const now = Date.now();
+        const humidity = path.includes("filter_entity_id=sensor.example_13");
         return [[
-          { state: "21.7", last_changed: new Date(now - 22 * 60 * 60 * 1000).toISOString() },
+          { state: humidity ? "58" : "21.7", last_changed: new Date(now - 22 * 60 * 60 * 1000).toISOString() },
           { state: "unknown", last_changed: new Date(now - 18 * 60 * 60 * 1000).toISOString() },
-          { state: "22.2", last_changed: new Date(now - 12 * 60 * 60 * 1000).toISOString() },
-          { state: "23.5", last_changed: new Date(now - 6 * 60 * 60 * 1000).toISOString() },
-          { state: "23.1", last_changed: new Date(now - 1 * 60 * 60 * 1000).toISOString() },
+          { state: humidity ? "62" : "22.2", last_changed: new Date(now - 12 * 60 * 60 * 1000).toISOString() },
+          { state: humidity ? "65" : "23.5", last_changed: new Date(now - 6 * 60 * 60 * 1000).toISOString() },
+          { state: humidity ? "63" : "23.1", last_changed: new Date(now - 1 * 60 * 60 * 1000).toISOString() },
         ]];
       },
       callService: async () => {
@@ -321,8 +322,9 @@
           .textContent === "3,39",
       );
       check(
-        "Room history opens its temperature entity",
-        room.shadowRoot.querySelector('[data-room-more="history"]')?.dataset.entity === room._config.room_temperature_entity,
+        "Room history graphs open their matching entities",
+        room.shadowRoot.querySelector('[data-room-more="history-temperature"]')?.dataset.entity === room._config.room_temperature_entity &&
+          room.shadowRoot.querySelector('[data-room-more="history-humidity"]')?.dataset.entity === room._config.humidity_entity,
       );
       const before = cards.map((c) => c.shadowRoot.querySelector("article"));
       hass.states = {
