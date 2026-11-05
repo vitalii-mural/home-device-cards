@@ -33,6 +33,11 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .room-reading+.room-reading{border-left:1px solid var(--k-line);padding-left:22px}
 .single-card .room-reading .secondary{white-space:nowrap}
 .single-card .room-reading .metric-value{margin-top:8px}
+.single-card .room-more-info{display:block;padding:0;background:transparent;text-align:left;color:inherit;width:100%;min-width:0}
+.single-card .room-history{display:block;width:100%;padding:0;margin-top:16px;background:transparent;color:var(--k-cool);text-align:left}
+.single-card .room-sensor-card svg.room-history-chart{display:block;width:100%;height:48px;fill:none}
+.single-card .room-history-chart path{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.single-card .room-history-caption{display:flex;justify-content:space-between;gap:8px;margin-top:6px;color:var(--k-muted);font-size:11px}
 .single-card .river-card .river-missing{color:var(--k-muted);font-size:17px!important;letter-spacing:0!important;font-weight:400!important}
 .single-card .river-card .river-large.river-missing{font-size:23px!important;margin-bottom:10px}
 .single-card .river-card .river-percent.river-missing{font-size:17px!important;margin-top:13px;margin-bottom:14px}

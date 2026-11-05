@@ -29,6 +29,16 @@ function createEnvironment() {
       return this.shadowRoot;
     }
     toggleAttribute() {}
+    dispatchEvent(event) {
+      this.lastDispatchedEvent = event;
+      return true;
+    }
+  }
+  class CustomEvent {
+    constructor(type, options = {}) {
+      this.type = type;
+      Object.assign(this, options);
+    }
   }
   class ResizeObserver {
     constructor(callback) {
@@ -57,6 +67,7 @@ function createEnvironment() {
   };
   const context = vm.createContext({
     HTMLElement,
+    CustomEvent,
     ResizeObserver,
     customElements,
     window,
@@ -123,6 +134,122 @@ test("HACS bundle registers the same card contracts as the two manual resources"
     JSON.stringify(bundled.window.customCards),
     JSON.stringify(manual.window.customCards),
   );
+});
+
+test("room card renders real 24-hour history and caches empty results", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-room-card"))();
+  const path = { value: "", setAttribute(_name, value) { this.value = value; } };
+  const range = { textContent: "" };
+  const button = {
+    hidden: true,
+    attributes: {},
+    setAttribute(name, value) { this.attributes[name] = value; },
+    querySelector(selector) {
+      return selector.includes("range") ? range : path;
+    },
+  };
+  card.shadowRoot = { querySelector: () => button };
+  card._config = { room_temperature_entity: "sensor.bedroom" };
+  card.isConnected = true;
+  const now = Date.now();
+  let calls = 0;
+  card._hass = {
+    callApi: async (method, request) => {
+      calls++;
+      assert.equal(method, "GET");
+      assert.match(request, /filter_entity_id=sensor.bedroom/);
+      assert.match(request, /minimal_response&no_attributes/);
+      return [[
+        { state: "21.7", last_changed: new Date(now - 20_000).toISOString() },
+        { state: "unavailable", last_changed: new Date(now - 15_000).toISOString() },
+        { state: "23.5", last_changed: new Date(now - 10_000).toISOString() },
+      ]];
+    },
+  };
+
+  await card._loadRoomHistory();
+  assert.equal(calls, 1);
+  assert.equal(button.hidden, false);
+  assert.equal(range.textContent, "21,7 — 23,5 °C");
+  assert.equal((path.value.match(/M/g) || []).length, 2, "unavailable samples break the line");
+  await card._loadRoomHistory();
+  assert.equal(calls, 1, "cached history is reused");
+  card._roomHistory = [
+    { time: now - 20_000, value: 22 },
+    { time: now - 10_000, value: 22 },
+  ];
+  card._renderRoomHistory();
+  assert.doesNotMatch(path.value, /NaN|Infinity/, "flat temperatures still render finite coordinates");
+
+  const emptyCard = new (registry.get("home-room-card"))();
+  emptyCard.shadowRoot = { querySelector: () => button };
+  emptyCard._config = { room_temperature_entity: "sensor.bedroom" };
+  emptyCard.isConnected = true;
+  let emptyCalls = 0;
+  emptyCard._hass = { callApi: async () => { emptyCalls++; throw Error("offline"); } };
+  await emptyCard._loadRoomHistory();
+  await emptyCard._loadRoomHistory();
+  assert.equal(emptyCalls, 1, "failed history loads are cached for five minutes");
+  assert.equal(button.hidden, true);
+});
+
+test("room history ignores a response after disconnect", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-room-card"))();
+  const button = { hidden: true, querySelector: () => ({ textContent: "", setAttribute() {} }), setAttribute() {} };
+  card.shadowRoot = { querySelector: () => button };
+  card._config = { room_temperature_entity: "sensor.bedroom" };
+  card.isConnected = true;
+  let resolveHistory;
+  card._hass = { callApi: () => new Promise((resolve) => { resolveHistory = resolve; }) };
+  const pending = card._loadRoomHistory();
+  card.disconnectedCallback();
+  resolveHistory([[{ state: "22", last_changed: new Date().toISOString() }, { state: "23", last_changed: new Date().toISOString() }]]);
+  await pending;
+  assert.equal(card._roomHistory, null);
+  assert.equal(button.hidden, true);
+});
+
+test("room history clears and ignores the old entity after configuration changes", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-room-card"))();
+  card._config = { room_temperature_entity: "sensor.old" };
+  card._roomHistoryEntity = "sensor.old";
+  card._roomHistory = [{ time: Date.now(), value: 22 }];
+  card._roomHistoryRange = { start: Date.now() - 86400000, end: Date.now() };
+  card._hass = { states: {}, callApi: () => new Promise((resolve) => { card.resolveOldHistory = resolve; }) };
+  card.isConnected = true;
+  const pending = card._loadRoomHistory();
+  card.isConnected = false;
+  card._render = function () {
+    assert.equal(this._roomHistory, null, "old data is cleared before the new config renders");
+    this._rendered = true;
+  };
+
+  card.setConfig({ room_temperature_entity: "sensor.new" });
+  card.resolveOldHistory([[{ state: "23", last_changed: new Date().toISOString() }]]);
+  await pending;
+  assert.equal(card._roomHistory, null);
+  assert.equal(card._roomHistoryEntity, "sensor.new");
+});
+
+test("room reading and graph commands use native Home Assistant more info", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-room-card"))();
+  card._config = { room_temperature_entity: "sensor.bedroom", humidity_entity: "sensor.bedroom_humidity" };
+  let event;
+  card.dispatchEvent = (value) => { event = value; };
+  for (const entity of ["sensor.bedroom", "sensor.bedroom_humidity"]) {
+    card._click({ target: { closest: () => ({ dataset: { action: "more", entity }, disabled: false }) } });
+    assert.equal(event.type, "hass-more-info");
+    assert.equal(event.detail.entityId, entity);
+    assert.equal(event.bubbles, true);
+    assert.equal(event.composed, true);
+  }
+  const markup = card._content();
+  assert.match(markup, /data-room-more="temperature" data-action="more" data-entity="sensor\.bedroom"/);
+  assert.match(markup, /data-room-more="humidity" data-action="more" data-entity="sensor\.bedroom_humidity"/);
 });
 
 test("registers the dashboard and standalone card types", async () => {
@@ -446,9 +573,9 @@ test("standalone card markup and sizing match pre-refactor characterization", as
     ],
     [
       "home-room-card",
-      "254ba45249759a748364d16db9803c413fed25c9c8065c397436ba4cf7188465",
-      3,
-      { columns: 6, rows: 3, min_columns: 3, min_rows: 2 },
+      "dee0e3b50a4050c50355ccde2b6368f67076b06edd37bb0c6afce7ddc37cdd58",
+      4,
+      { columns: 6, rows: 4, min_columns: 3, min_rows: 2 },
     ],
     [
       "home-socket-card",
@@ -506,7 +633,7 @@ test("configured live-card markup matches pre-refactor characterization", async 
   const contracts = [
     ["home-boiler-card", "2382d7793a7e0793725711ae31e086d9508dfd6fe49c4b7125c34dd7f93e380a"],
     ["home-air-card", "2fddd0611caac77f3aee08432b90daa4d25c58104de9b01f9041be3351a82315"],
-    ["home-room-card", "b34b70a51dc259ddb5ca3ae0c8bf88e543fdc7b807dff504f99effcb4dff0f44"],
+    ["home-room-card", "8332ee31f1e1d629a76b8389f826f22fd710db1882b925af4fc833207b0c45aa"],
     ["home-socket-card", "ae9b16f9795e98d009e2fa75409ae256d26e14182f4babfc3bee5eb19200fade"],
     ["home-river-card", "e5643629beb69ba09093c07d76a6821b5c2c938545b5a4811e11eab69fd97a6c"],
     ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],

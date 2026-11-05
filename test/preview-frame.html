@@ -250,6 +250,18 @@
       themes: { darkMode: false },
       language: "uk",
       locale: { language: "uk" },
+      callApi: async (method, path) => {
+        if (method !== "GET" || !path.startsWith("history/period/"))
+          throw Error("Unexpected API request");
+        const now = Date.now();
+        return [[
+          { state: "21.7", last_changed: new Date(now - 22 * 60 * 60 * 1000).toISOString() },
+          { state: "unknown", last_changed: new Date(now - 18 * 60 * 60 * 1000).toISOString() },
+          { state: "22.2", last_changed: new Date(now - 12 * 60 * 60 * 1000).toISOString() },
+          { state: "23.5", last_changed: new Date(now - 6 * 60 * 60 * 1000).toISOString() },
+          { state: "23.1", last_changed: new Date(now - 1 * 60 * 60 * 1000).toISOString() },
+        ]];
+      },
       callService: async () => {
         serviceCalls++;
         throw Error("Real commands are disabled in fixture");
@@ -309,8 +321,8 @@
           .textContent === "3,39",
       );
       check(
-        "No room history",
-        !room.shadowRoot.querySelector('[data-action="room-history"]'),
+        "Room history opens its temperature entity",
+        room.shadowRoot.querySelector('[data-room-more="history"]')?.dataset.entity === room._config.room_temperature_entity,
       );
       const before = cards.map((c) => c.shadowRoot.querySelector("article"));
       hass.states = {

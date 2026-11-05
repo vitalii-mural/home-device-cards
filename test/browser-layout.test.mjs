@@ -117,6 +117,41 @@ test("sensor cards reflect leak, door, vibration, battery and unavailable states
   } finally { await page.close(); }
 });
 
+test("room temperature card opens native entity details and shows only real history", async () => {
+  const page = await openFixture(900);
+  try {
+    const room = page.locator("home-room-card");
+    const history = room.locator('[data-room-more="history"]');
+    await history.waitFor({ state: "visible" });
+    assert.match(await history.locator('[data-live="room-history-range"]').innerText(), /\d+,\d — \d+,\d °C/);
+    assert.match(await history.locator("path").getAttribute("d"), /M.*M/);
+    const temperature = room.locator('[data-room-more="temperature"]');
+    assert.equal(await temperature.getAttribute("data-entity"), "sensor.example_12");
+    assert.equal(await room.locator('[data-room-more="humidity"]').getAttribute("data-entity"), "sensor.example_13");
+    await temperature.evaluate((button) => {
+      button.getRootNode().host.addEventListener("hass-more-info", (event) => {
+        window.moreInfoEvent = { entityId: event.detail.entityId, bubbles: event.bubbles, composed: event.composed };
+      }, { once: true });
+    });
+    await temperature.click();
+    assert.deepEqual(await page.evaluate(() => window.moreInfoEvent), {
+      entityId: "sensor.example_12", bubbles: true, composed: true,
+    });
+    await room.evaluate((card) => {
+      delete card._hass.states["sensor.example_12"];
+      card.hass = { ...card._hass };
+    });
+    assert.equal(await temperature.isEnabled(), false);
+    await room.evaluate((card) => {
+      card._hass.states["sensor.example_12"] = { state: "unavailable", attributes: {} };
+      card.hass = { ...card._hass };
+    });
+    assert.equal(await temperature.isEnabled(), true);
+  } finally {
+    await page.close();
+  }
+});
+
 test("360px touch layout keeps controls and readings separated", async () => {
   const page = await openFixture(360, 1500, { isMobile: true, hasTouch: true });
   try {
