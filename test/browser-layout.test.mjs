@@ -168,6 +168,62 @@ test("room temperature and humidity graphs open their native entity details", as
   }
 });
 
+test("socket metrics show four compact histories and open the matching entities", async () => {
+  for (const width of [360, 500]) {
+    const page = await openFixture(width, 1200, {
+      isMobile: width === 360,
+      hasTouch: width === 360,
+    });
+    try {
+      const socket = page.locator("home-socket-card");
+      const metrics = socket.locator(".socket-metric");
+      assert.equal(await metrics.count(), 4);
+      await socket.locator('[data-socket-chart="energy"]:not([hidden])').waitFor();
+      assert.deepEqual(await socket.locator(".socket-chart").evaluateAll((charts) =>
+        charts.map((chart) => ({ height: getComputedStyle(chart).height, hidden: chart.hasAttribute("hidden") }))),
+      Array(4).fill({ height: "21px", hidden: false }));
+      assert.ok(await socket.locator('.socket-chart:not([data-socket-chart="energy"]) path')
+        .evaluateAll((paths) => paths.every((path) => /M.*M/.test(path.getAttribute("d")))));
+      const layout = await metrics.evaluateAll((items) => {
+        const card = items[0].getRootNode().host;
+        const panel = card.shadowRoot.querySelector(".socket-card");
+        return {
+          scroll: panel.scrollWidth,
+          client: panel.clientWidth,
+          items: items.map((item) => {
+            const { left, right, top, bottom } = item.getBoundingClientRect();
+            return { left, right, top, bottom };
+          }),
+        };
+      });
+      assert.ok(layout.scroll <= layout.client, "socket card fits at " + width + "px");
+      for (let i = 0; i < layout.items.length; i++) {
+        for (let j = i + 1; j < layout.items.length; j++)
+          assert.equal(intersects(layout.items[i], layout.items[j]), false, "socket metrics do not overlap at " + width + "px");
+      }
+      if (width === 500 && process.env.SOCKET_PREVIEW_PATH)
+        await socket.screenshot({ path: process.env.SOCKET_PREVIEW_PATH });
+      if (width === 360 && process.env.SOCKET_PREVIEW_MOBILE_PATH)
+        await socket.screenshot({ path: process.env.SOCKET_PREVIEW_MOBILE_PATH });
+
+      for (const button of await metrics.all()) {
+        const entity = await button.getAttribute("data-entity");
+        await button.evaluate((element) => {
+          element.getRootNode().host.addEventListener("hass-more-info", (event) => {
+            window.moreInfoEvent = event.detail.entityId;
+          }, { once: true });
+        });
+        await button.click();
+        assert.equal(await page.evaluate(() => window.moreInfoEvent), entity);
+      }
+      assert.equal(await page.evaluate(() => window.fixture.serviceCalls), 0, "metric clicks do not toggle the socket");
+      assert.equal(await socket.locator('[data-action="socket-toggle"]').count(), 1);
+    } finally {
+      await page.close();
+    }
+  }
+});
+
 test("360px touch layout keeps controls and readings separated", async () => {
   const page = await openFixture(360, 1500, { isMobile: true, hasTouch: true });
   try {

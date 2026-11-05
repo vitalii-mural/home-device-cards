@@ -14,18 +14,22 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .socket-power-button[data-pending=true] svg{visibility:hidden}
 .single-card .socket-spinner{display:none;position:absolute;width:19px;height:19px;border:2px solid var(--k-line);border-top-color:currentColor;border-radius:50%;animation:home-pending-spin .75s linear infinite}
 .single-card .socket-power-button[data-pending=true] .socket-spinner{display:block}
-.single-card .socket-reading{margin:12px 0 14px}.single-card .socket-reading .metric-value{margin-top:0}
 .single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{font-size:36px;line-height:1.2;font-weight:400;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
 .single-card .socket-reading .metric-value small,.single-card .room-reading .metric-value small{font-size:17px;margin-left:5px;letter-spacing:0;color:var(--k-muted)}
-.single-card .socket-metrics{display:grid;grid-template-columns:1fr 1fr 1.25fr;background:var(--k-soft);border-radius:14px;padding:10px 0}
-.single-card .socket-metrics>div{padding:0 12px;min-width:0}
-.single-card .socket-metrics>div+div{border-left:1px solid var(--k-line)}
-.single-card .socket-metrics .secondary{white-space:nowrap}
-.single-card .socket-metrics strong{display:block;font-size:18px;font-weight:400;margin-top:5px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.single-card .socket-metrics strong small{font-size:11px;color:var(--k-muted);margin-left:4px}
+.single-card .socket-metrics{display:grid;grid-template-columns:1fr 1fr;margin:18px 0 0}
+.single-card .socket-metric{display:block;width:100%;min-width:0;padding:0 22px 13px 0;background:transparent;text-align:left;color:inherit}
+.single-card .socket-metric:nth-child(even){padding-left:22px;padding-right:0;border-left:1px solid var(--k-line)}
+.single-card .socket-metric:nth-child(n+3){padding-top:13px;padding-bottom:0;border-top:1px solid var(--k-line)}
+.single-card .socket-metric-label{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.single-card .socket-metric-label svg{width:15px;height:15px}
+.single-card .socket-metric-value{display:block;margin-top:7px;font-size:31px;font-weight:400;line-height:1.2;letter-spacing:-1px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.single-card .socket-metric-value small{font-size:14px;color:var(--k-muted);margin-left:5px;letter-spacing:0}
+.single-card .socket-card svg.socket-chart{display:block;width:100%;height:21px;margin-top:8px;overflow:visible}
+.single-card .socket-chart path{fill:none;stroke:var(--k-cool);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.78}
+.single-card [data-socket-chart="energy"] path{fill:var(--k-cool);stroke:none;opacity:.78}
 .single-card .socket-card .socket-missing{color:var(--k-muted);font-size:17px!important;letter-spacing:0!important;font-weight:400!important}
 .single-card .socket-reading .socket-missing{font-size:23px!important;letter-spacing:0!important}
-.single-card .socket-metrics strong.socket-missing small{opacity:.6}
+.single-card .socket-metric-value.socket-missing small{opacity:.6}
 .single-card .room-battery{display:flex;align-items:center;gap:5px;color:var(--k-muted);font-size:12px;white-space:nowrap}
 .single-card .room-battery svg{width:16px;height:16px}
 .single-card .room-readings{display:grid;grid-template-columns:1fr 1fr;margin:16px 0 0}
@@ -182,7 +186,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 
 const HOME_DEVICE_CONTAINER_STYLE = `
 :host{container-type:inline-size;container-name:device-card}
-@container device-card (max-width:380px){.single-card .panel{padding:14px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:0}.single-card .heading{gap:8px}.single-card .device-icon{width:34px;height:34px}.single-card .current{font-size:47px}.single-card .adjust{gap:6px}.single-card .adjust .round{min-width:36px;width:36px;height:42px}.single-card .target{font-size:19px}.single-card .desktop-board h2{font-size:14px}.single-card .air-temperature{padding:22px 3px;gap:8px}.single-card .metric{padding:14px}.single-card .metric-value{font-size:25px}.single-card .feature,.single-card .mode{font-size:11px}.single-card .desktop-board .water-large{gap:8px}.single-card .data-row{gap:8px}.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{font-size:34px}.single-card .socket-metrics>div{padding:0 8px}.single-card .socket-metrics strong{font-size:17px}.single-card .socket-metrics strong small{font-size:11px}.single-card .room-reading+.room-reading{padding-left:16px}}
+@container device-card (max-width:380px){.single-card .panel{padding:14px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:0}.single-card .heading{gap:8px}.single-card .device-icon{width:34px;height:34px}.single-card .current{font-size:47px}.single-card .adjust{gap:6px}.single-card .adjust .round{min-width:36px;width:36px;height:42px}.single-card .target{font-size:19px}.single-card .desktop-board h2{font-size:14px}.single-card .air-temperature{padding:22px 3px;gap:8px}.single-card .metric{padding:14px}.single-card .metric-value{font-size:25px}.single-card .feature,.single-card .mode{font-size:11px}.single-card .desktop-board .water-large{gap:8px}.single-card .data-row{gap:8px}.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-metric{padding-right:14px}.single-card .socket-metric:nth-child(even){padding-left:14px}.single-card .socket-metric-value{font-size:29px}.single-card .socket-metric-value small{font-size:12px;margin-left:4px}.single-card .room-reading .metric-value{font-size:34px}.single-card .room-reading+.room-reading{padding-left:16px}}
 @container device-card (min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}
 @container device-card (max-width:400px){.single-card .desktop-board .water-large{column-gap:8px}.single-card .desktop-board .water-large .adjust{gap:5px}}
 `;

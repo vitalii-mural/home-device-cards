@@ -250,11 +250,23 @@
       themes: { darkMode: false },
       language: "uk",
       locale: { language: "uk" },
+      config: { time_zone: "Europe/Kyiv" },
       callApi: async (method, path) => {
         if (method !== "GET" || !path.startsWith("history/period/"))
           throw Error("Unexpected API request");
         const now = Date.now();
+        const entity = new URLSearchParams(path.split("?")[1]).get("filter_entity_id");
         const humidity = path.includes("filter_entity_id=sensor.example_13");
+        if (entity?.startsWith("sensor.example_1") && entity !== "sensor.example_12" && entity !== "sensor.example_13") {
+          const base = entity === "sensor.example_16" ? 0 : entity === "sensor.example_17" ? 224 : 6;
+          return [[
+            { state: String(base), last_changed: new Date(now - 22 * 60 * 60 * 1000).toISOString() },
+            { state: String(base + 1), last_changed: new Date(now - 18 * 60 * 60 * 1000).toISOString() },
+            { state: "unavailable", last_changed: new Date(now - 12 * 60 * 60 * 1000).toISOString() },
+            { state: String(base + 2), last_changed: new Date(now - 6 * 60 * 60 * 1000).toISOString() },
+            { state: String(base + 1), last_changed: new Date(now - 1 * 60 * 60 * 1000).toISOString() },
+          ]];
+        }
         return [[
           { state: humidity ? "58" : "21.7", last_changed: new Date(now - 22 * 60 * 60 * 1000).toISOString() },
           { state: "unknown", last_changed: new Date(now - 18 * 60 * 60 * 1000).toISOString() },
@@ -262,6 +274,20 @@
           { state: humidity ? "65" : "23.5", last_changed: new Date(now - 6 * 60 * 60 * 1000).toISOString() },
           { state: humidity ? "63" : "23.1", last_changed: new Date(now - 1 * 60 * 60 * 1000).toISOString() },
         ]];
+      },
+      callWS: async (request) => {
+        if (request.type !== "recorder/statistics_during_period")
+          throw Error("Unexpected WebSocket request");
+        const entity = request.statistic_ids[0];
+        const now = Date.now();
+        const changes = [0.1, 0.25, 0.7, 1.8, 0.4, 0.9, 0.2, 0.5];
+        return { [entity]: [
+          { start: now - 30 * 60 * 60 * 1000, change: 9 },
+          ...changes.map((change, hour) => ({
+            start: now - hour * 60 * 60 * 1000,
+            change,
+          })),
+        ] };
       },
       callService: async () => {
         serviceCalls++;

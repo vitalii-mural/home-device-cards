@@ -263,6 +263,126 @@ test("room reading and graph commands use native Home Assistant more info", asyn
   assert.match(markup, /data-room-more="humidity" data-action="more" data-entity="sensor\.bedroom_humidity"/);
 });
 
+test("socket metrics preserve unit conversions and open native entity details", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-socket-card"))();
+  card._config = {
+    switch_entity: "switch.plug",
+    power_entity: "sensor.power",
+    voltage_entity: "sensor.voltage",
+    current_entity: "sensor.current",
+    energy_daily_entity: "sensor.energy",
+  };
+  card._hass = { states: {
+    "switch.plug": { state: "on", attributes: {} },
+    "sensor.power": { state: "1.374", attributes: { unit_of_measurement: "kW" } },
+    "sensor.voltage": { state: "223900", attributes: { unit_of_measurement: "mV" } },
+    "sensor.current": { state: "6180", attributes: { unit_of_measurement: "mA" } },
+    "sensor.energy": { state: "3390", attributes: { unit_of_measurement: "Wh" } },
+  } };
+  assert.equal(card._socketReading("power_entity", 0, "power").replace(/\D/g, ""), "1374");
+  assert.equal(card._socketReading("voltage_entity", 1, "voltage"), "223,9");
+  assert.equal(card._socketReading("current_entity", 2, "current"), "6,18");
+  assert.equal(card._socketReading("energy_daily_entity", 2, "energy"), "3,39");
+
+  const markup = card._content();
+  const actions = [...markup.matchAll(/data-socket-metric="(power|voltage|current|energy)" data-entity="([^"]+)"/g)];
+  assert.deepEqual(actions.map(([, key, entity]) => [key, entity]), [
+    ["power", "sensor.power"],
+    ["voltage", "sensor.voltage"],
+    ["current", "sensor.current"],
+    ["energy", "sensor.energy"],
+  ]);
+  let event;
+  card.dispatchEvent = (value) => { event = value; };
+  for (const [, , entity] of actions) {
+    card._click({ target: { closest: () => ({ dataset: { action: "more", entity }, disabled: false }) } });
+    assert.equal(event.type, "hass-more-info");
+    assert.equal(event.detail.entityId, entity);
+    assert.equal(event.bubbles, true);
+    assert.equal(event.composed, true);
+  }
+});
+
+test("socket recorder chart groups hourly changes by Home Assistant timezone", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-socket-card"))();
+  const path = { value: "", setAttribute(_name, value) { this.value = value; } };
+  const chart = {
+    hidden: true,
+    toggleAttribute(_name, hidden) { this.hidden = hidden; },
+    querySelector: () => path,
+  };
+  card.shadowRoot = { querySelector: (selector) => selector.includes("energy") ? chart : null };
+  card._config = { energy_daily_entity: "sensor.energy_today" };
+  card.isConnected = true;
+  const now = Date.now();
+  const timeZone = "America/Los_Angeles";
+  const thisHour = card._socketLocalDateParts(now, timeZone).hour;
+  const previousDay = now - 30 * 60 * 60 * 1000;
+  const hourStart = Math.floor(now / 3600000) * 3600000;
+  let request, calls = 0;
+  card._hass = {
+    config: { time_zone: timeZone },
+    callWS: async (value) => {
+      request = value;
+      calls++;
+      return { "sensor.energy_today": [
+        { start: previousDay, change: 9 },
+        { start: hourStart, change: 0 },
+        { start: hourStart, change: 1.25 },
+        { start: hourStart, change: -4 },
+        { start: hourStart, change: null },
+        { start: hourStart + 60 * 60 * 1000, change: 8 },
+      ] };
+    },
+  };
+  await card._loadSocketEnergy();
+  assert.equal(request.statistic_ids.length, 1);
+  assert.equal(request.statistic_ids[0], "sensor.energy_today");
+  assert.equal(request.period, "hour");
+  assert.equal(request.units.energy, "kWh");
+  assert.equal(request.types.length, 1);
+  assert.equal(request.types[0], "change");
+  assert.ok(Date.parse(request.start_time) <= now - 26 * 60 * 60 * 1000 + 1000);
+  assert.equal(chart.hidden, false);
+  assert.equal(card._socketHistories.get("energy").values[thisHour], 1.25);
+  assert.equal(card._socketHistories.get("energy").values[(thisHour + 23) % 24], null);
+  assert.equal(path.value.match(/M/g)?.length, 1, "only the observed current-hour bar is drawn");
+  await card._loadSocketEnergy();
+  assert.equal(calls, 1, "hourly statistics are cached");
+});
+
+test("socket history hides missing statistics and invalidates per entity", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-socket-card"))();
+  const charts = new Map(["power", "voltage", "current", "energy"].map((key) => [
+    key,
+    { hidden: true, toggleAttribute(_name, hidden) { this.hidden = hidden; }, querySelector: () => ({ setAttribute() {} }) },
+  ]));
+  card.shadowRoot = { querySelector: (selector) => charts.get(selector.match(/"([^"]+)"/)?.[1]) };
+  card._config = { switch_entity: "switch.plug", power_entity: "sensor.power", voltage_entity: "sensor.voltage", current_entity: "sensor.current", energy_daily_entity: "sensor.energy" };
+  card.isConnected = true;
+  card._hass = {
+    config: { time_zone: "UTC" },
+    callApi: async () => [[{ state: "unavailable", last_changed: new Date().toISOString() }]],
+    callWS: async () => ({ "sensor.energy": [{ start: Date.now(), change: null }, { start: Date.now() + 1, change: -1 }] }),
+  };
+  await card._loadSocketHistories();
+  assert.ok([...charts.values()].every((chart) => chart.hidden), "missing or invalid history stays hidden");
+  for (const key of ["power", "voltage", "current", "energy"]) {
+    card._socketHistories.set(key, { type: "line", points: [] });
+    card._socketHistoryLoadedAt.set(key, Date.now());
+  }
+  card._render = () => {};
+  card.isConnected = false;
+  card.setConfig({ ...card._config, power_entity: "sensor.new_power", energy_daily_entity: "sensor.new_energy" });
+  assert.equal(card._socketHistories.has("power"), false);
+  assert.equal(card._socketHistories.has("energy"), false);
+  assert.equal(card._socketHistories.has("voltage"), true);
+  assert.equal(card._socketHistories.has("current"), true);
+});
+
 test("registers the dashboard and standalone card types", async () => {
   const { registry } = await loadCards();
   for (const name of [
@@ -590,7 +710,7 @@ test("standalone card markup and sizing match pre-refactor characterization", as
     ],
     [
       "home-socket-card",
-      "0fa64060e79c71755879a7455e70b1d6348899c67d788dde555ea6acc8c9342e",
+      "2836ccf00afcec767f2dd5443c709315017d2702ef7a5da6d2b534b3e3318137",
       4,
       { columns: 6, rows: 4, min_columns: 3, min_rows: 2 },
     ],
@@ -645,7 +765,7 @@ test("configured live-card markup matches pre-refactor characterization", async 
     ["home-boiler-card", "2382d7793a7e0793725711ae31e086d9508dfd6fe49c4b7125c34dd7f93e380a"],
     ["home-air-card", "2fddd0611caac77f3aee08432b90daa4d25c58104de9b01f9041be3351a82315"],
     ["home-room-card", "26cf1a038b7fcf7a8f53377ced22c86bcbebd4be5c72ed1e04db85ad173550f3"],
-    ["home-socket-card", "ae9b16f9795e98d009e2fa75409ae256d26e14182f4babfc3bee5eb19200fade"],
+    ["home-socket-card", "14c467a4f2b9067d592f01cc445f14bcce5ec2feb6c1cc1097253e30cbc0dc6b"],
     ["home-river-card", "e5643629beb69ba09093c07d76a6821b5c2c938545b5a4811e11eab69fd97a6c"],
     ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],
     ["home-battery-card", "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c"],
