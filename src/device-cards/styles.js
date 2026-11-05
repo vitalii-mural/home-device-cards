@@ -14,23 +14,23 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .socket-power-button[data-pending=true] svg{visibility:hidden}
 .single-card .socket-spinner{display:none;position:absolute;width:19px;height:19px;border:2px solid var(--k-line);border-top-color:currentColor;border-radius:50%;animation:home-pending-spin .75s linear infinite}
 .single-card .socket-power-button[data-pending=true] .socket-spinner{display:block}
-.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{font-size:36px;line-height:1.2;font-weight:400;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
-.single-card .socket-reading .metric-value small,.single-card .room-reading .metric-value small{font-size:17px;margin-left:5px;letter-spacing:0;color:var(--k-muted)}
-.single-card .socket-metrics{display:grid;grid-template-columns:1fr 1fr;margin:18px 0 0}
-.single-card .socket-metric{display:block;width:100%;min-width:0;padding:0 22px 13px 0;background:transparent;text-align:left;color:inherit}
-.single-card .socket-metric:nth-child(even){padding-left:22px;padding-right:0;border-left:1px solid var(--k-line)}
-.single-card .socket-metric:nth-child(n+3){padding-top:13px;padding-bottom:0;border-top:1px solid var(--k-line)}
-.single-card .socket-metric-label{display:flex;align-items:center;gap:6px;white-space:nowrap}
-.single-card .socket-metric-label svg{width:15px;height:15px}
-.single-card .socket-metric-value{display:block;margin-top:7px;font-size:31px;font-weight:400;line-height:1.2;letter-spacing:-1px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.single-card .socket-metric-value small{font-size:14px;color:var(--k-muted);margin-left:5px;letter-spacing:0}
-.single-card .socket-card svg.socket-chart{display:block;width:100%;height:21px;margin-top:8px;overflow:visible}
-.single-card .socket-chart path{fill:none;stroke:var(--k-cool);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.78}
-.single-card .socket-chart .socket-chart-gap{stroke-dasharray:2 3;opacity:.5}
-.single-card [data-socket-chart="energy"] path{fill:var(--k-cool);stroke:none;opacity:.78}
+.single-card .socket-energy{display:grid;width:100%;grid-template-columns:1fr 1fr;align-items:end;gap:22px;margin-top:22px;padding:0;background:transparent;text-align:left;color:inherit}
+.single-card .socket-energy-copy{display:flex;min-width:0;flex-direction:column}
+.single-card .socket-energy-value{display:block;margin-top:6px;font-size:38px;font-weight:400;line-height:1.2;letter-spacing:-1px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.single-card .socket-energy-value small{font-size:14px;color:var(--k-muted);margin-left:5px;letter-spacing:0}
+.single-card .socket-card svg.socket-energy-chart{display:block;width:100%;height:38px;margin-bottom:5px;color:var(--k-cool)}
+.single-card .socket-energy-chart path{fill:currentColor;stroke:none}
+.single-card .socket-metrics{display:grid;grid-template-columns:1.12fr 1fr 1fr;margin:21px 0 0;padding:13px 0;border-radius:14px;background:var(--k-soft)}
+.single-card .socket-reading{display:block;width:100%;min-width:0;padding:0 14px;background:transparent;text-align:left;color:inherit}
+.single-card .socket-reading+.socket-reading{border-left:1px solid var(--k-line)}
+.single-card .socket-reading-label{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.single-card .socket-reading-label svg{width:15px;height:15px}
+.single-card .socket-reading-value{display:block;margin-top:8px;font-size:21px;font-weight:400;line-height:1.2;letter-spacing:-.4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.single-card .socket-reading-value small{font-size:13px;color:var(--k-muted);margin-left:4px;letter-spacing:0}
+.single-card .room-reading .metric-value{font-size:36px;line-height:1.2;font-weight:400;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.single-card .room-reading .metric-value small{font-size:17px;margin-left:5px;letter-spacing:0;color:var(--k-muted)}
 .single-card .socket-card .socket-missing{color:var(--k-muted);font-size:17px!important;letter-spacing:0!important;font-weight:400!important}
 .single-card .socket-reading .socket-missing{font-size:23px!important;letter-spacing:0!important}
-.single-card .socket-metric-value.socket-missing small{opacity:.6}
 .single-card .room-battery{display:flex;align-items:center;gap:5px;color:var(--k-muted);font-size:12px;white-space:nowrap}
 .single-card .room-battery svg{width:16px;height:16px}
 .single-card .room-readings{display:grid;grid-template-columns:1fr 1fr;margin:16px 0 0}
@@ -50,7 +50,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 
 .single-card .socket-card .socket-missing,.single-card .room-sensor-card .room-missing,.single-card .river-card .river-missing{font-size:16px!important;color:var(--k-muted);font-weight:400!important;letter-spacing:0!important}
 .single-card .socket-missing small,.single-card .room-missing small,.single-card .river-missing small{display:none}
-.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{min-height:43px;display:flex;align-items:baseline}
+.single-card .room-reading .metric-value{min-height:43px;display:flex;align-items:baseline}
 @media(prefers-reduced-motion:reduce){.single-card .socket-spinner{animation:none}}
 
 .single-card [data-live-panel="boiler"] .adjust .round{width:40px;height:40px;min-width:40px;min-height:40px;flex:0 0 40px;padding:0;aspect-ratio:1;border-radius:50%}
@@ -140,10 +140,10 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card{font-family:var(--primary-font-family,system-ui,sans-serif)}
 .single-card .socket-card,.single-card .room-sensor-card,.single-card .river-card{font-family:inherit}
 .single-card h2,.single-card .desktop-board h2,.single-card .socket-card h2,.single-card .room-sensor-card h2,.single-card .river-heading h2{font-size:var(--card-title-size);font-weight:500;line-height:1.4;letter-spacing:0}
-.single-card .desktop-board .current,.single-card .air-value,.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value,.single-card .river-large{font-size:var(--card-value-size);font-weight:400;line-height:1.2;letter-spacing:-1px;font-variant-numeric:tabular-nums}
-.single-card .desktop-board .target,.single-card .socket-metrics strong,.single-card .river-power strong,.single-card .river-percent,.single-card .river-runtime strong{font-size:var(--card-secondary-size);font-weight:400;line-height:1.3;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.single-card .desktop-board .current,.single-card .air-value,.single-card .room-reading .metric-value,.single-card .river-large{font-size:var(--card-value-size);font-weight:400;line-height:1.2;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.single-card .desktop-board .target,.single-card .river-power strong,.single-card .river-percent,.single-card .river-runtime strong{font-size:var(--card-secondary-size);font-weight:400;line-height:1.3;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
 .single-card .secondary,.single-card .socket-card .secondary,.single-card .room-sensor-card .secondary,.single-card .river-card .secondary,.single-card .river-reading,.single-card .river-detail-row{font-size:var(--card-caption-size);line-height:1.4}
-.single-card .degree,.single-card .air-degree,.single-card .metric-value small,.single-card .target small,.single-card .socket-metrics strong small,.single-card .river-large small,.single-card .river-percent small,.single-card .river-power strong small{font-size:var(--card-caption-size);font-weight:400;line-height:1.4;letter-spacing:0;vertical-align:baseline;margin:0 0 0 4px;color:var(--k-muted)}
+.single-card .degree,.single-card .air-degree,.single-card .metric-value small,.single-card .target small,.single-card .river-large small,.single-card .river-percent small,.single-card .river-power strong small{font-size:var(--card-caption-size);font-weight:400;line-height:1.4;letter-spacing:0;vertical-align:baseline;margin:0 0 0 4px;color:var(--k-muted)}
 .single-card .desktop-board .water-large{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 48px;align-items:center;column-gap:12px;row-gap:7px;margin:24px 0 20px}
 .single-card .water-large .setpoint{display:contents}
 .single-card .water-large .setpoint>.secondary{grid-column:2;grid-row:1;text-align:center;margin:0}
@@ -187,7 +187,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 
 const HOME_DEVICE_CONTAINER_STYLE = `
 :host{container-type:inline-size;container-name:device-card}
-@container device-card (max-width:380px){.single-card .panel{padding:14px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:0}.single-card .heading{gap:8px}.single-card .device-icon{width:34px;height:34px}.single-card .current{font-size:47px}.single-card .adjust{gap:6px}.single-card .adjust .round{min-width:36px;width:36px;height:42px}.single-card .target{font-size:19px}.single-card .desktop-board h2{font-size:14px}.single-card .air-temperature{padding:22px 3px;gap:8px}.single-card .metric{padding:14px}.single-card .metric-value{font-size:25px}.single-card .feature,.single-card .mode{font-size:11px}.single-card .desktop-board .water-large{gap:8px}.single-card .data-row{gap:8px}.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-metric{padding-right:14px}.single-card .socket-metric:nth-child(even){padding-left:14px}.single-card .socket-metric-value{font-size:29px}.single-card .socket-metric-value small{font-size:12px;margin-left:4px}.single-card .room-reading .metric-value{font-size:34px}.single-card .room-reading+.room-reading{padding-left:16px}}
+@container device-card (max-width:380px){.single-card .panel{padding:14px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:0}.single-card .heading{gap:8px}.single-card .device-icon{width:34px;height:34px}.single-card .current{font-size:47px}.single-card .adjust{gap:6px}.single-card .adjust .round{min-width:36px;width:36px;height:42px}.single-card .target{font-size:19px}.single-card .desktop-board h2{font-size:14px}.single-card .air-temperature{padding:22px 3px;gap:8px}.single-card .metric{padding:14px}.single-card .metric-value{font-size:25px}.single-card .feature,.single-card .mode{font-size:11px}.single-card .desktop-board .water-large{gap:8px}.single-card .data-row{gap:8px}.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-energy{gap:14px}.single-card .socket-energy-value{font-size:34px}.single-card .socket-energy-value small{font-size:12px}.single-card .socket-reading{padding:0 9px}.single-card .socket-reading-label{font-size:11px;gap:3px}.single-card .socket-reading-label svg{width:13px;height:13px}.single-card .socket-reading-value{font-size:19px}.single-card .socket-reading-value small{font-size:11px;margin-left:3px}.single-card .room-reading .metric-value{font-size:34px}.single-card .room-reading+.room-reading{padding-left:16px}}
 @container device-card (min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}
 @container device-card (max-width:400px){.single-card .desktop-board .water-large{column-gap:8px}.single-card .desktop-board .water-large .adjust{gap:5px}}
 `;

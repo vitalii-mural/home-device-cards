@@ -288,10 +288,10 @@ test("socket metrics preserve unit conversions and open native entity details", 
   const markup = card._content();
   const actions = [...markup.matchAll(/data-socket-metric="(power|voltage|current|energy)" data-entity="([^"]+)"/g)];
   assert.deepEqual(actions.map(([, key, entity]) => [key, entity]), [
+    ["energy", "sensor.energy"],
     ["power", "sensor.power"],
     ["voltage", "sensor.voltage"],
     ["current", "sensor.current"],
-    ["energy", "sensor.energy"],
   ]);
   let event;
   card.dispatchEvent = (value) => { event = value; };
@@ -324,6 +324,7 @@ test("socket recorder chart groups hourly changes by Home Assistant timezone", a
   let request, calls = 0;
   card._hass = {
     config: { time_zone: timeZone },
+    callApi: async () => { throw Error("Socket line history must not use REST"); },
     callWS: async (value) => {
       request = value;
       calls++;
@@ -354,110 +355,44 @@ test("socket recorder chart groups hourly changes by Home Assistant timezone", a
   assert.equal(calls, 1, "hourly statistics are cached");
 });
 
-test("socket power and current step while short gaps bridge and long gaps stay open", async () => {
+test("socket keeps only energy recorder history across cache, config, and disconnect", async () => {
   const { registry } = await loadCards();
   const card = new (registry.get("home-socket-card"))();
-  const paths = new Map(["power", "voltage", "current"].map((key) => [
-    key,
-    {
-      line: { value: "", setAttribute(_name, value) { this.value = value; } },
-      gap: { value: "", setAttribute(_name, value) { this.value = value; } },
-    },
-  ]));
-  card.shadowRoot = { querySelector: (selector) => {
-    const key = selector.match(/data-socket-chart="([^"]+)"/)?.[1];
-    return key ? { toggleAttribute() {}, querySelector: (part) =>
-      part.includes("gap") ? paths.get(key).gap : paths.get(key).line } : null;
-  } };
-  const start = Date.now() - 24 * 60 * 60 * 1000;
-  const points = [
-    { time: start, value: 10 },
-    { time: start + 10 * 60 * 1000, value: null },
-    { time: start + 30 * 60 * 1000, value: 20 },
-    { time: start + 40 * 60 * 1000, value: 15 },
-  ];
-  for (const key of ["power", "current"]) {
-    card._socketHistories.set(key, { type: "line", points, start, end: start + 60 * 60 * 1000 });
-    card._renderSocketHistory(key);
-    assert.match(paths.get(key).line.value, /H.*V/);
-    assert.match(paths.get(key).gap.value, /^M.*L/);
-    card._socketHistories.set(key, {
-      type: "line",
-      points: [points[0], points[1], { time: start + 30 * 60 * 1000 + 1, value: 20 }],
-      start,
-      end: start + 60 * 60 * 1000,
-    });
-    card._renderSocketHistory(key);
-    assert.equal(paths.get(key).gap.value, "", "gaps over 30 minutes stay open");
-  }
-  card._socketHistories.set("voltage", {
-    type: "line",
-    points: [{ time: start, value: 220 }, { time: start + 60 * 60 * 1000, value: 224 }],
-    start,
-    end: start + 60 * 60 * 1000,
-  });
-  card._renderSocketHistory("voltage");
-  assert.match(paths.get("voltage").line.value, /L/);
-  assert.doesNotMatch(paths.get("voltage").line.value, /H.*V/);
-  assert.equal(paths.get("voltage").line.value, "M1.0 25.8 L199.0 2.2 ", "voltage extrema with five percent padding");
-  card._config = { voltage_entity: "sensor.voltage" };
-  card._hass = { states: { "sensor.voltage": { state: "224000", attributes: { unit_of_measurement: "mV" } } } };
-  card._socketHistories.get("voltage").points = [{ time: start, value: 220000 }, { time: start + 3600000, value: 224000 }];
-  card._renderSocketHistory("voltage");
-  assert.equal(paths.get("voltage").line.value, "M1.0 25.8 L199.0 2.2 ", "equivalent millivolt scale");
-  card._socketHistories.get("voltage").points = [{ time: start, value: 180000 }, { time: start + 3600000, value: 280000 }];
-  card._renderSocketHistory("voltage");
-  assert.equal(paths.get("voltage").line.value, "M1.0 25.8 L199.0 2.2 ", "range follows all observed extrema");
-});
-
-test("voltage downsampling preserves observed extrema, order and gaps", async () => {
-  const { registry } = await loadCards();
-  const card = new (registry.get("home-socket-card"))();
-  const points = Array.from({ length: 1200 }, (_, i) => ({ time: i * 60000, value: 230 }));
-  points[7].value = 211;
-  points[9].value = 249;
-  points[10].value = null;
-  points[11].value = 225;
-  const reduced = card._downsampleSocketHistory(points, 60, true);
-  assert.ok(reduced.length < 300);
-  assert.equal(Math.min(...reduced.filter(p => p.value !== null).map(p => p.value)), 211);
-  assert.equal(Math.max(...reduced.filter(p => p.value !== null).map(p => p.value)), 249);
-  assert.ok(reduced.every((p, i) => !i || p.time >= reduced[i - 1].time));
-  assert.ok(reduced.every(p => points.includes(p)), "uses actual samples, not averages");
-  assert.ok(reduced.includes(points[10]), "unavailable interval retained");
-  assert.ok(reduced.includes(points[9]) && reduced.includes(points[11]), "gap endpoints retained");
-});
-
-test("socket history hides missing statistics and invalidates per entity", async () => {
-  const { registry } = await loadCards();
-  const card = new (registry.get("home-socket-card"))();
-  const charts = new Map(["power", "voltage", "current", "energy"].map((key) => [
-    key,
-    { hidden: true, toggleAttribute(_name, hidden) { this.hidden = hidden; }, querySelector: () => ({ setAttribute() {} }) },
-  ]));
-  card.shadowRoot = { querySelector: (selector) => charts.get(selector.match(/"([^"]+)"/)?.[1]) };
-  card._config = { switch_entity: "switch.plug", power_entity: "sensor.power", voltage_entity: "sensor.voltage", current_entity: "sensor.current", energy_daily_entity: "sensor.energy" };
+  const path = { value: "", setAttribute(_name, value) { this.value = value; } };
+  const chart = { hidden: true, toggleAttribute(_name, hidden) { this.hidden = hidden; }, querySelector: () => path };
+  card.shadowRoot = { querySelector: (selector) => selector.includes("energy") ? chart : null };
+  card._config = { energy_daily_entity: "sensor.energy_old" };
   card.isConnected = true;
+  let resolveStats, apiCalls = 0;
   card._hass = {
     config: { time_zone: "UTC" },
-    callApi: async () => [[{ state: "unavailable", last_changed: new Date().toISOString() }]],
-    callWS: async () => ({ "sensor.energy": [{ start: Date.now(), change: null }, { start: Date.now() + 1, change: -1 }] }),
+    callApi: async () => { apiCalls++; throw Error("Socket line history must not use REST"); },
+    callWS: () => new Promise((resolve) => { resolveStats = resolve; }),
   };
-  await card._loadSocketHistories();
-  assert.ok([...charts.values()].every((chart) => chart.hidden), "missing or invalid history stays hidden");
-  for (const key of ["power", "voltage", "current", "energy"]) {
-    card._socketHistories.set(key, { type: "line", points: [] });
-    card._socketHistoryLoadedAt.set(key, Date.now());
-  }
-  card._render = () => {};
-  card.isConnected = false;
-  card.setConfig({ ...card._config, power_entity: "sensor.new_power", energy_daily_entity: "sensor.new_energy" });
-  assert.equal(card._socketHistories.has("power"), false);
-  assert.equal(card._socketHistories.has("energy"), false);
-  assert.equal(card._socketHistories.has("voltage"), true);
-  assert.equal(card._socketHistories.has("current"), true);
-});
+  const pending = card._loadSocketEnergy();
+  card.disconnectedCallback();
+  resolveStats({ "sensor.energy_old": [{ start: Date.now(), change: 1 }] });
+  await pending;
+  assert.equal(card._socketHistories.has("energy"), false, "late statistics are ignored after disconnect");
+  assert.equal(chart.hidden, true);
 
+  card._socketHistories.set("energy", { type: "bars", values: Array(24).fill(1) });
+  card._socketHistoryLoadedAt.set("energy", Date.now());
+  card._socketHistoryDay = "UTC|old-day";
+  card._render = () => {};
+  card.setConfig({ energy_daily_entity: "sensor.energy_new" });
+  assert.equal(card._socketHistories.has("energy"), false, "entity changes clear the energy chart");
+  assert.equal(card._socketHistoryDay, null);
+
+  card.isConnected = true;
+  card._hass.callWS = async () => ({ "sensor.energy_new": [
+    { start: Date.now(), change: null },
+    { start: Date.now() + 1, change: -1 },
+  ] });
+  await card._loadSocketEnergy();
+  assert.equal(chart.hidden, true, "missing valid statistics keep the energy chart hidden");
+  assert.equal(apiCalls, 0, "socket chart history uses no REST history calls");
+});
 test("registers the dashboard and standalone card types", async () => {
   const { registry } = await loadCards();
   for (const name of [
@@ -785,7 +720,7 @@ test("standalone card markup and sizing match pre-refactor characterization", as
     ],
     [
       "home-socket-card",
-      "35a15269f13b6a6a7301535569f1163b64408618808c439e92d0000448bc28d6",
+      "03a27331f4619a916d16506c24104844a382a79956325f714d09a103391533e0",
       4,
       { columns: 6, rows: 4, min_columns: 3, min_rows: 2 },
     ],
@@ -840,7 +775,7 @@ test("configured live-card markup matches pre-refactor characterization", async 
     ["home-boiler-card", "2382d7793a7e0793725711ae31e086d9508dfd6fe49c4b7125c34dd7f93e380a"],
     ["home-air-card", "2fddd0611caac77f3aee08432b90daa4d25c58104de9b01f9041be3351a82315"],
     ["home-room-card", "26cf1a038b7fcf7a8f53377ced22c86bcbebd4be5c72ed1e04db85ad173550f3"],
-    ["home-socket-card", "10813a9a6d8b4feff78c4d30082b87f4838d13d5be64600df85ed07f95de27e0"],
+    ["home-socket-card", "1341683b9d882828aed918dc3d6fb2983ec9cce7e4bd933d0945c41583b76d82"],
     ["home-river-card", "e5643629beb69ba09093c07d76a6821b5c2c938545b5a4811e11eab69fd97a6c"],
     ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],
     ["home-battery-card", "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c"],

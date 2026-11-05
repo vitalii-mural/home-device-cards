@@ -88,7 +88,7 @@
         voltage_entity: "sensor.example_17",
         current_entity: "sensor.example_18",
         energy_daily_entity: "sensor.example_19",
-        energy_label: "Енергія",
+        energy_label: "Сьогодні",
       },
       tv: {
         remote_entity: "remote.example_49",
@@ -255,27 +255,7 @@
         if (method !== "GET" || !path.startsWith("history/period/"))
           throw Error("Unexpected API request");
         const now = Date.now();
-        const entity = new URLSearchParams(path.split("?")[1]).get("filter_entity_id");
         const humidity = path.includes("filter_entity_id=sensor.example_13");
-        if (entity?.startsWith("sensor.example_1") && entity !== "sensor.example_12" && entity !== "sensor.example_13") {
-          const base = entity === "sensor.example_16" ? 0 : entity === "sensor.example_17" ? 224 : 6;
-          const samples = Array.from({ length: 17 }, (_, index) => {
-            const value = entity === "sensor.example_17"
-              ? base + Math.sin(index / 2) * 2
-              : base + (index % 4 === 0 ? (entity === "sensor.example_16" ? 200 : 1) : 0);
-            return {
-              state: String(value),
-              last_changed: new Date(now - (22 - index * 1.25) * 60 * 60 * 1000).toISOString(),
-            };
-          });
-          samples.push(
-            { state: String(base + 1), last_changed: new Date(now - 40 * 60 * 1000).toISOString() },
-            { state: "unavailable", last_changed: new Date(now - 25 * 60 * 1000).toISOString() },
-            { state: String(base + 2), last_changed: new Date(now - 10 * 60 * 1000).toISOString() },
-            { state: String(base + 1), last_changed: new Date(now).toISOString() },
-          );
-          return [samples];
-        }
         return [[
           { state: humidity ? "58" : "21.7", last_changed: new Date(now - 22 * 60 * 60 * 1000).toISOString() },
           { state: "unknown", last_changed: new Date(now - 18 * 60 * 60 * 1000).toISOString() },

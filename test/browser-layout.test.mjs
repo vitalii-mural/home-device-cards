@@ -168,7 +168,7 @@ test("room temperature and humidity graphs open their native entity details", as
   }
 });
 
-test("socket metrics show four compact histories and open the matching entities", async () => {
+test("socket energy history leads three clickable readings at phone and desktop widths", async () => {
   for (const width of [360, 500]) {
     const page = await openFixture(width, 1200, {
       isMobile: width === 360,
@@ -176,24 +176,17 @@ test("socket metrics show four compact histories and open the matching entities"
     });
     try {
       const socket = page.locator("home-socket-card");
-      const metrics = socket.locator(".socket-metric");
-      assert.equal(await metrics.count(), 4);
-      await socket.locator('[data-socket-chart="energy"]:not([hidden])').waitFor();
-      assert.deepEqual(await socket.locator(".socket-chart").evaluateAll((charts) =>
-        charts.map((chart) => ({ height: getComputedStyle(chart).height, hidden: chart.hasAttribute("hidden") }))),
-      Array(4).fill({ height: "21px", hidden: false }));
-      assert.ok(await socket.locator('.socket-chart:not([data-socket-chart="energy"]) path')
-        .evaluateAll((paths) => paths.every((path) => path.classList.contains("socket-chart-gap") || /M.*M/.test(path.getAttribute("d")))));
-      assert.match(await socket.locator('[data-socket-chart="power"] .socket-chart-line').getAttribute("d"), /H.*V/);
-      assert.match(await socket.locator('[data-socket-chart="voltage"] .socket-chart-line').getAttribute("d"), /L/);
-      assert.match(await socket.locator('[data-socket-chart="power"] .socket-chart-gap').getAttribute("d"), /^M.*L/);
-      assert.equal(await socket.locator('[data-socket-chart="power"] .socket-chart-gap')
-        .evaluate((path) => getComputedStyle(path).strokeDasharray), "2px, 3px");
-      assert.equal(await socket.locator('[data-socket-chart="energy"] .socket-chart-line')
-        .getAttribute("d").then((path) => path.match(/M/g)?.length), 24);
-      const layout = await metrics.evaluateAll((items) => {
-        const card = items[0].getRootNode().host;
-        const panel = card.shadowRoot.querySelector(".socket-card");
+      const energy = socket.locator(".socket-energy");
+      const readings = socket.locator(".socket-reading");
+      assert.equal(await energy.count(), 1);
+      assert.equal(await readings.count(), 3);
+      const chart = socket.locator(".socket-energy-chart");
+      await chart.waitFor({ state: "visible" });
+      assert.equal(await chart.evaluate((svg) => getComputedStyle(svg).height), "38px");
+      assert.equal(await socket.locator("svg.socket-energy-chart").count(), 1);
+      assert.equal(await chart.locator("path").getAttribute("d").then((path) => path.match(/M/g)?.length), 24);
+      const layout = await readings.evaluateAll((items) => {
+        const panel = items[0].parentElement;
         return {
           scroll: panel.scrollWidth,
           client: panel.clientWidth,
@@ -203,17 +196,17 @@ test("socket metrics show four compact histories and open the matching entities"
           }),
         };
       });
-      assert.ok(layout.scroll <= layout.client, "socket card fits at " + width + "px");
+      assert.ok(layout.scroll <= layout.client, "reading strip fits at " + width + "px");
       for (let i = 0; i < layout.items.length; i++) {
         for (let j = i + 1; j < layout.items.length; j++)
-          assert.equal(intersects(layout.items[i], layout.items[j]), false, "socket metrics do not overlap at " + width + "px");
+          assert.equal(intersects(layout.items[i], layout.items[j]), false, "readings do not overlap at " + width + "px");
       }
       if (width === 500 && process.env.SOCKET_PREVIEW_PATH)
         await socket.screenshot({ path: process.env.SOCKET_PREVIEW_PATH });
       if (width === 360 && process.env.SOCKET_PREVIEW_MOBILE_PATH)
         await socket.screenshot({ path: process.env.SOCKET_PREVIEW_MOBILE_PATH });
 
-      for (const button of await metrics.all()) {
+      for (const button of [energy, ...await readings.all()]) {
         const entity = await button.getAttribute("data-entity");
         await button.evaluate((element) => {
           element.getRootNode().host.addEventListener("hass-more-info", (event) => {
@@ -230,7 +223,6 @@ test("socket metrics show four compact histories and open the matching entities"
     }
   }
 });
-
 test("360px touch layout keeps controls and readings separated", async () => {
   const page = await openFixture(360, 1500, { isMobile: true, hasTouch: true });
   try {

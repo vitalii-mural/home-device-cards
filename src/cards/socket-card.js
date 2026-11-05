@@ -9,36 +9,28 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
   }
 
   setConfig(config) {
-    for (const [key, entityKey] of Object.entries({
-      power: "power_entity",
-      voltage: "voltage_entity",
-      current: "current_entity",
-      energy: "energy_daily_entity",
-    })) {
-      if (config?.[entityKey] !== this._config?.[entityKey])
-        this._clearSocketHistory(key);
-    }
+    if (config?.energy_daily_entity !== this._config?.energy_daily_entity)
+      this._clearSocketHistory("energy");
     super.setConfig(config);
-    if (this.isConnected) this._loadSocketHistories();
+    if (this.isConnected) this._loadSocketEnergy();
   }
 
   set hass(hass) {
     super.hass = hass;
-    this._loadSocketHistories();
+    this._loadSocketEnergy();
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this._loadSocketHistories();
+    this._loadSocketEnergy();
   }
 
   disconnectedCallback() {
-    for (const key of ["power", "voltage", "current", "energy"])
-      this._socketHistoryTokens.set(
-        key,
-        (this._socketHistoryTokens.get(key) || 0) + 1,
-      );
-    this._socketHistoryLoading.clear();
+    this._socketHistoryTokens.set(
+      "energy",
+      (this._socketHistoryTokens.get("energy") || 0) + 1,
+    );
+    this._socketHistoryLoading.delete("energy");
     super.disconnectedCallback();
   }
 
@@ -96,47 +88,6 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     this._socketHistories.delete(key);
   }
 
-  async _loadSocketHistories() {
-    if (!this.isConnected || !this._hass) return;
-    await Promise.all([
-      this._loadSocketLine("power", "power_entity"),
-      this._loadSocketLine("voltage", "voltage_entity"),
-      this._loadSocketLine("current", "current_entity"),
-      this._loadSocketEnergy(),
-    ]);
-  }
-
-  async _loadSocketLine(key, entityKey) {
-    const entity = this._config?.[entityKey];
-    if (!entity || typeof this._hass.callApi !== "function" ||
-      !this._canLoadSocketHistory(key)) return;
-    const token = this._beginSocketHistory(key);
-    const end = new Date(), start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
-    const path = `history/period/${encodeURIComponent(start.toISOString())}?filter_entity_id=${encodeURIComponent(entity)}&end_time=${encodeURIComponent(end.toISOString())}&minimal_response&no_attributes`;
-    try {
-      const response = await this._hass.callApi("GET", path);
-      if (!this._isCurrentSocketHistory(key, token, entityKey, entity)) return;
-      const samples = Array.isArray(response?.[0]) ? response[0] : [];
-      const points = samples.map((sample) => ({
-        time: Date.parse(sample?.last_changed || sample?.last_updated),
-        value: this._number(sample?.state),
-      })).filter((point) => Number.isFinite(point.time))
-        .sort((left, right) => left.time - right.time);
-      const reduced = this._downsampleSocketHistory(points, 60, key === "voltage");
-      this._socketHistories.set(key, reduced.filter((point) => point.value !== null).length > 1
-        ? { type: "line", points: reduced, start: start.getTime(), end: end.getTime() }
-        : null);
-      this._finishSocketHistory(key);
-      this._renderSocketHistory(key);
-    } catch {
-      if (this._isCurrentSocketHistory(key, token, entityKey, entity)) {
-        this._socketHistories.set(key, null);
-        this._finishSocketHistory(key);
-        this._renderSocketHistory(key);
-      }
-    }
-  }
-
   _canLoadSocketHistory(key) {
     if (this._socketHistoryLoading.has(key)) return false;
     const loadedAt = this._socketHistoryLoadedAt.get(key);
@@ -166,47 +117,10 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     this._socketHistoryLoading.delete(key);
   }
 
-  _downsampleSocketHistory(points, limit, preserveExtrema = false) {
-    if (points.length <= limit) return points;
-    const buckets = Array.from({ length: limit }, () => []);
-    const first = points[0].time, last = points.at(-1).time;
-    for (const point of points) {
-      const index = Math.min(limit - 1, Math.floor((point.time - first) * limit / (last - first || 1)));
-      buckets[index].push(point);
-    }
-    return buckets.flatMap((bucket) => {
-      const reduced = [];
-      let run = [];
-      const flush = () => {
-        if (!run.length) return;
-        if (preserveExtrema) {
-          const min = run.reduce((lowest, point) => point.value < lowest.value ? point : lowest);
-          const max = run.reduce((highest, point) => point.value > highest.value ? point : highest);
-          reduced.push(...[...new Set([run[0], min, max, run.at(-1)])].sort((left, right) => left.time - right.time));
-        } else {
-          reduced.push({
-            time: run.reduce((sum, point) => sum + point.time, 0) / run.length,
-            value: run.reduce((sum, point) => sum + point.value, 0) / run.length,
-          });
-        }
-        run = [];
-      };
-      for (const point of bucket) {
-        if (point.value === null) {
-          flush();
-          if (reduced.at(-1)?.value !== null) reduced.push(point);
-        } else {
-          run.push(point);
-        }
-      }
-      flush();
-      return reduced;
-    });
-  }
-
   async _loadSocketEnergy() {
     const entity = this._config?.energy_daily_entity;
-    if (!entity || typeof this._hass.callWS !== "function" ||
+    if (!this.isConnected || !this._hass || !entity ||
+      typeof this._hass.callWS !== "function" ||
       !this._canLoadSocketHistory("energy")) return;
     const token = this._beginSocketHistory("energy");
     const now = new Date();
@@ -274,52 +188,18 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     if (history.type === "bars") {
       const values = history.values;
       const max = Math.max(0, ...values.filter((value) => value !== null));
-      const slot = 200 / 24, width = slot * 0.7;
+      const slot = 192 / 24, width = slot * 0.7;
       let path = "";
       values.forEach((value, hour) => {
         const height = value === null || max === 0 || value === 0
           ? 0.8
-          : value / max * 24;
+          : value / max * 32;
         const x = hour * slot + (slot - width) / 2;
-        const y = 28 - height;
-        path += `M${x.toFixed(1)} 28 V${y.toFixed(1)} H${(x + width).toFixed(1)} V28 Z `;
+        const y = 40 - height;
+        path += `M${x.toFixed(1)} 40 V${y.toFixed(1)} H${(x + width).toFixed(1)} V40 Z `;
       });
-      chart.querySelector(".socket-chart-line")?.setAttribute("d", path);
-      return;
+      chart.querySelector("path")?.setAttribute("d", path);
     }
-    const values = history.points.filter(({ value }) => value !== null).map(({ value }) => value);
-    const min = Math.min(...values), max = Math.max(...values);
-    const width = 200, height = 28, padding = 1;
-    const voltageUnit = String(this._state(this._config?.voltage_entity)?.attributes?.unit_of_measurement || "").trim().toLowerCase();
-    const voltageScale = ["mv", "millivolt", "millivolts"].includes(voltageUnit) ? 1000 : 1;
-    const margin = key === "voltage" ? (max > min ? (max - min) * 0.05 : 0.5 * voltageScale) : min === max ? 0.5 : 0;
-    const low = min - margin;
-    const high = max + margin;
-    const x = (point) => padding + (point.time - history.start) *
-      (width - padding * 2) / (history.end - history.start);
-    const y = (value) => height - padding -
-      (Math.min(high, Math.max(low, value)) - low) * (height - padding * 2) / (high - low);
-    let path = "", gapPath = "", previous = null, hasGap = false;
-    history.points.forEach((point) => {
-      if (point.value === null) {
-        hasGap = true;
-        return;
-      }
-      const pointX = x(point), pointY = y(point.value);
-      if (!previous || hasGap) {
-        path += `M${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
-        if (previous && point.time - previous.time <= 30 * 60 * 1000)
-          gapPath += `M${x(previous).toFixed(1)} ${y(previous.value).toFixed(1)} L${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
-      } else if (key === "power" || key === "current") {
-        path += `H${pointX.toFixed(1)} V${pointY.toFixed(1)} `;
-      } else {
-        path += `L${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
-      }
-      previous = point;
-      hasGap = false;
-    });
-    chart.querySelector(".socket-chart-line")?.setAttribute("d", path);
-    chart.querySelector(".socket-chart-gap")?.setAttribute("d", gapPath);
   }
 
   _socket() {
@@ -356,28 +236,32 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
       '><span class="socket-spinner" aria-hidden="true"></span>' +
       icon("power") +
       "</button></header>" +
+      '<button class="socket-energy" type="button" data-action="more" data-socket-metric="energy" data-entity="' +
+      this._escape(c.energy_daily_entity || "") +
+      '" aria-label="Відкрити енергію сьогодні" ' +
+      this._disabled(!this._state(c.energy_daily_entity)) +
+      '><span class="socket-energy-copy"><span class="secondary">' +
+      this._escape(c.energy_label || "Енергія сьогодні") +
+      '</span><span class="socket-energy-value"><span data-live="socket-energy">' +
+      this._socketReading("energy_daily_entity", 2, "energy") +
+      '</span><small>кВт·год</small></span></span><svg class="socket-energy-chart" data-socket-chart="energy" viewBox="0 0 192 40" preserveAspectRatio="none" role="img" aria-label="Споживання енергії за годинами сьогодні" hidden><path></path></svg></button>' +
       '<div class="socket-metrics">' +
-      this._socketMetric("power", "power_entity", "Потужність", "zap", 0, "power", "socket-power", "Вт") +
-      this._socketMetric("voltage", "voltage_entity", "Напруга", "activity", 1, "voltage", "socket-voltage", "В") +
-      this._socketMetric("current", "current_entity", "Струм", "activity", 2, "current", "socket-current", "А") +
-      this._socketMetric("energy", "energy_daily_entity", c.energy_label || "Енергія сьогодні", "chart-no-axes-column", 2, "energy", "socket-energy", "кВт·год") +
+      this._socketReadingMetric("power", "power_entity", "Потужність", "zap", 0, "power", "socket-power", "Вт") +
+      this._socketReadingMetric("voltage", "voltage_entity", "Напруга", "activity", 1, "voltage", "socket-voltage", "В") +
+      this._socketReadingMetric("current", "current_entity", "Струм", "gauge", 2, "current", "socket-current", "А") +
       "</div></article>"
     );
   }
 
-  _socketMetric(key, entityKey, label, iconName, digits, conversion, liveKey, unit) {
+  _socketReadingMetric(key, entityKey, label, iconName, digits, conversion, liveKey, unit) {
     const entity = this._config[entityKey] || "";
-    return '<button class="socket-metric" type="button" data-action="more" data-socket-metric="' +
+    return '<button class="socket-reading" type="button" data-action="more" data-socket-metric="' +
       key + '" data-entity="' + this._escape(entity) + '" aria-label="Відкрити ' +
       this._escape(label) + '" ' + this._disabled(!this._state(entity)) +
-      '><span class="socket-metric-label secondary">' + this._lucideIcon(iconName) +
-      this._escape(label) + '</span><span class="socket-metric-value"><span data-live="' + liveKey + '">' +
+      '><span class="socket-reading-label secondary">' + this._lucideIcon(iconName) +
+      this._escape(label) + '</span><span class="socket-reading-value"><span data-live="' + liveKey + '">' +
       this._socketReading(entityKey, digits, conversion) + '</span><small>' + unit +
-      '</small></span><svg class="socket-chart" data-socket-chart="' + key +
-      '" viewBox="0 0 200 28" preserveAspectRatio="none" role="img" aria-label="' +
-      this._escape(label) + (key === "energy" ? " за годинами сьогодні" : " за 24 години") +
-      '" hidden>' + (key === "energy" ? "" : '<path class="socket-chart-gap"></path>') +
-      '<path class="socket-chart-line"></path></svg></button>';
+      "</small></span></button>";
   }
 
   _updateSocket() {
@@ -432,12 +316,12 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
         metric.disabled = !this._state(this._config[entityKey]);
         metric.dataset.entity = this._config[entityKey] || "";
       }
-      metric?.querySelector(".socket-metric-value")
+      metric?.querySelector(".socket-reading-value, .socket-energy-value")
         ?.classList.toggle("socket-missing", value === "—");
-      metric?.querySelector(".socket-metric-value small")
+      metric?.querySelector(".socket-reading-value small, .socket-energy-value small")
         ?.toggleAttribute("hidden", value === "—");
-      this._renderSocketHistory(key);
     }
+    this._renderSocketHistory("energy");
   }
 
   async _toggleSocket() {

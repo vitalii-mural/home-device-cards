@@ -15,23 +15,23 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .socket-power-button[data-pending=true] svg{visibility:hidden}
 .single-card .socket-spinner{display:none;position:absolute;width:19px;height:19px;border:2px solid var(--k-line);border-top-color:currentColor;border-radius:50%;animation:home-pending-spin .75s linear infinite}
 .single-card .socket-power-button[data-pending=true] .socket-spinner{display:block}
-.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{font-size:36px;line-height:1.2;font-weight:400;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
-.single-card .socket-reading .metric-value small,.single-card .room-reading .metric-value small{font-size:17px;margin-left:5px;letter-spacing:0;color:var(--k-muted)}
-.single-card .socket-metrics{display:grid;grid-template-columns:1fr 1fr;margin:18px 0 0}
-.single-card .socket-metric{display:block;width:100%;min-width:0;padding:0 22px 13px 0;background:transparent;text-align:left;color:inherit}
-.single-card .socket-metric:nth-child(even){padding-left:22px;padding-right:0;border-left:1px solid var(--k-line)}
-.single-card .socket-metric:nth-child(n+3){padding-top:13px;padding-bottom:0;border-top:1px solid var(--k-line)}
-.single-card .socket-metric-label{display:flex;align-items:center;gap:6px;white-space:nowrap}
-.single-card .socket-metric-label svg{width:15px;height:15px}
-.single-card .socket-metric-value{display:block;margin-top:7px;font-size:31px;font-weight:400;line-height:1.2;letter-spacing:-1px;white-space:nowrap;font-variant-numeric:tabular-nums}
-.single-card .socket-metric-value small{font-size:14px;color:var(--k-muted);margin-left:5px;letter-spacing:0}
-.single-card .socket-card svg.socket-chart{display:block;width:100%;height:21px;margin-top:8px;overflow:visible}
-.single-card .socket-chart path{fill:none;stroke:var(--k-cool);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.78}
-.single-card .socket-chart .socket-chart-gap{stroke-dasharray:2 3;opacity:.5}
-.single-card [data-socket-chart="energy"] path{fill:var(--k-cool);stroke:none;opacity:.78}
+.single-card .socket-energy{display:grid;width:100%;grid-template-columns:1fr 1fr;align-items:end;gap:22px;margin-top:22px;padding:0;background:transparent;text-align:left;color:inherit}
+.single-card .socket-energy-copy{display:flex;min-width:0;flex-direction:column}
+.single-card .socket-energy-value{display:block;margin-top:6px;font-size:38px;font-weight:400;line-height:1.2;letter-spacing:-1px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.single-card .socket-energy-value small{font-size:14px;color:var(--k-muted);margin-left:5px;letter-spacing:0}
+.single-card .socket-card svg.socket-energy-chart{display:block;width:100%;height:38px;margin-bottom:5px;color:var(--k-cool)}
+.single-card .socket-energy-chart path{fill:currentColor;stroke:none}
+.single-card .socket-metrics{display:grid;grid-template-columns:1.12fr 1fr 1fr;margin:21px 0 0;padding:13px 0;border-radius:14px;background:var(--k-soft)}
+.single-card .socket-reading{display:block;width:100%;min-width:0;padding:0 14px;background:transparent;text-align:left;color:inherit}
+.single-card .socket-reading+.socket-reading{border-left:1px solid var(--k-line)}
+.single-card .socket-reading-label{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.single-card .socket-reading-label svg{width:15px;height:15px}
+.single-card .socket-reading-value{display:block;margin-top:8px;font-size:21px;font-weight:400;line-height:1.2;letter-spacing:-.4px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.single-card .socket-reading-value small{font-size:13px;color:var(--k-muted);margin-left:4px;letter-spacing:0}
+.single-card .room-reading .metric-value{font-size:36px;line-height:1.2;font-weight:400;letter-spacing:-1.5px;font-variant-numeric:tabular-nums}
+.single-card .room-reading .metric-value small{font-size:17px;margin-left:5px;letter-spacing:0;color:var(--k-muted)}
 .single-card .socket-card .socket-missing{color:var(--k-muted);font-size:17px!important;letter-spacing:0!important;font-weight:400!important}
 .single-card .socket-reading .socket-missing{font-size:23px!important;letter-spacing:0!important}
-.single-card .socket-metric-value.socket-missing small{opacity:.6}
 .single-card .room-battery{display:flex;align-items:center;gap:5px;color:var(--k-muted);font-size:12px;white-space:nowrap}
 .single-card .room-battery svg{width:16px;height:16px}
 .single-card .room-readings{display:grid;grid-template-columns:1fr 1fr;margin:16px 0 0}
@@ -51,7 +51,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 
 .single-card .socket-card .socket-missing,.single-card .room-sensor-card .room-missing,.single-card .river-card .river-missing{font-size:16px!important;color:var(--k-muted);font-weight:400!important;letter-spacing:0!important}
 .single-card .socket-missing small,.single-card .room-missing small,.single-card .river-missing small{display:none}
-.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value{min-height:43px;display:flex;align-items:baseline}
+.single-card .room-reading .metric-value{min-height:43px;display:flex;align-items:baseline}
 @media(prefers-reduced-motion:reduce){.single-card .socket-spinner{animation:none}}
 
 .single-card [data-live-panel="boiler"] .adjust .round{width:40px;height:40px;min-width:40px;min-height:40px;flex:0 0 40px;padding:0;aspect-ratio:1;border-radius:50%}
@@ -141,10 +141,10 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card{font-family:var(--primary-font-family,system-ui,sans-serif)}
 .single-card .socket-card,.single-card .room-sensor-card,.single-card .river-card{font-family:inherit}
 .single-card h2,.single-card .desktop-board h2,.single-card .socket-card h2,.single-card .room-sensor-card h2,.single-card .river-heading h2{font-size:var(--card-title-size);font-weight:500;line-height:1.4;letter-spacing:0}
-.single-card .desktop-board .current,.single-card .air-value,.single-card .socket-reading .metric-value,.single-card .room-reading .metric-value,.single-card .river-large{font-size:var(--card-value-size);font-weight:400;line-height:1.2;letter-spacing:-1px;font-variant-numeric:tabular-nums}
-.single-card .desktop-board .target,.single-card .socket-metrics strong,.single-card .river-power strong,.single-card .river-percent,.single-card .river-runtime strong{font-size:var(--card-secondary-size);font-weight:400;line-height:1.3;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
+.single-card .desktop-board .current,.single-card .air-value,.single-card .room-reading .metric-value,.single-card .river-large{font-size:var(--card-value-size);font-weight:400;line-height:1.2;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.single-card .desktop-board .target,.single-card .river-power strong,.single-card .river-percent,.single-card .river-runtime strong{font-size:var(--card-secondary-size);font-weight:400;line-height:1.3;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
 .single-card .secondary,.single-card .socket-card .secondary,.single-card .room-sensor-card .secondary,.single-card .river-card .secondary,.single-card .river-reading,.single-card .river-detail-row{font-size:var(--card-caption-size);line-height:1.4}
-.single-card .degree,.single-card .air-degree,.single-card .metric-value small,.single-card .target small,.single-card .socket-metrics strong small,.single-card .river-large small,.single-card .river-percent small,.single-card .river-power strong small{font-size:var(--card-caption-size);font-weight:400;line-height:1.4;letter-spacing:0;vertical-align:baseline;margin:0 0 0 4px;color:var(--k-muted)}
+.single-card .degree,.single-card .air-degree,.single-card .metric-value small,.single-card .target small,.single-card .river-large small,.single-card .river-percent small,.single-card .river-power strong small{font-size:var(--card-caption-size);font-weight:400;line-height:1.4;letter-spacing:0;vertical-align:baseline;margin:0 0 0 4px;color:var(--k-muted)}
 .single-card .desktop-board .water-large{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto 48px;align-items:center;column-gap:12px;row-gap:7px;margin:24px 0 20px}
 .single-card .water-large .setpoint{display:contents}
 .single-card .water-large .setpoint>.secondary{grid-column:2;grid-row:1;text-align:center;margin:0}
@@ -188,7 +188,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 
 const HOME_DEVICE_CONTAINER_STYLE = `
 :host{container-type:inline-size;container-name:device-card}
-@container device-card (max-width:380px){.single-card .panel{padding:14px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:0}.single-card .heading{gap:8px}.single-card .device-icon{width:34px;height:34px}.single-card .current{font-size:47px}.single-card .adjust{gap:6px}.single-card .adjust .round{min-width:36px;width:36px;height:42px}.single-card .target{font-size:19px}.single-card .desktop-board h2{font-size:14px}.single-card .air-temperature{padding:22px 3px;gap:8px}.single-card .metric{padding:14px}.single-card .metric-value{font-size:25px}.single-card .feature,.single-card .mode{font-size:11px}.single-card .desktop-board .water-large{gap:8px}.single-card .data-row{gap:8px}.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-metric{padding-right:14px}.single-card .socket-metric:nth-child(even){padding-left:14px}.single-card .socket-metric-value{font-size:29px}.single-card .socket-metric-value small{font-size:12px;margin-left:4px}.single-card .room-reading .metric-value{font-size:34px}.single-card .room-reading+.room-reading{padding-left:16px}}
+@container device-card (max-width:380px){.single-card .panel{padding:14px}.single-card .desktop-water>.panel,.single-card .desktop-air>.panel{min-height:0}.single-card .heading{gap:8px}.single-card .device-icon{width:34px;height:34px}.single-card .current{font-size:47px}.single-card .adjust{gap:6px}.single-card .adjust .round{min-width:36px;width:36px;height:42px}.single-card .target{font-size:19px}.single-card .desktop-board h2{font-size:14px}.single-card .air-temperature{padding:22px 3px;gap:8px}.single-card .metric{padding:14px}.single-card .metric-value{font-size:25px}.single-card .feature,.single-card .mode{font-size:11px}.single-card .desktop-board .water-large{gap:8px}.single-card .data-row{gap:8px}.single-card .socket-card,.single-card .room-sensor-card{padding:16px}.single-card .socket-energy{gap:14px}.single-card .socket-energy-value{font-size:34px}.single-card .socket-energy-value small{font-size:12px}.single-card .socket-reading{padding:0 9px}.single-card .socket-reading-label{font-size:11px;gap:3px}.single-card .socket-reading-label svg{width:13px;height:13px}.single-card .socket-reading-value{font-size:19px}.single-card .socket-reading-value small{font-size:11px;margin-left:3px}.single-card .room-reading .metric-value{font-size:34px}.single-card .room-reading+.room-reading{padding-left:16px}}
 @container device-card (min-width:680px){.single-card .desktop-board .panel{padding:20px}.single-card .desktop-air>.panel{min-height:300px}.single-card .desktop-board .current{font-size:52px}.single-card .desktop-board .water-large{margin-top:30px;margin-bottom:25px}.single-card .desktop-board .heading{gap:8px}.single-card .desktop-board h2{font-size:14px}.single-card .desktop-board .target{font-size:19px}.single-card .desktop-board .adjust{gap:6px}.single-card .desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.single-card .desktop-board .metric{padding:15px}.single-card .desktop-board .metric .secondary{padding-right:14px}.single-card .desktop-board .metric-value{font-size:26px}}
 @container device-card (max-width:400px){.single-card .desktop-board .water-large{column-gap:8px}.single-card .desktop-board .water-large .adjust{gap:5px}}
 `;
@@ -2363,36 +2363,28 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
   }
 
   setConfig(config) {
-    for (const [key, entityKey] of Object.entries({
-      power: "power_entity",
-      voltage: "voltage_entity",
-      current: "current_entity",
-      energy: "energy_daily_entity",
-    })) {
-      if (config?.[entityKey] !== this._config?.[entityKey])
-        this._clearSocketHistory(key);
-    }
+    if (config?.energy_daily_entity !== this._config?.energy_daily_entity)
+      this._clearSocketHistory("energy");
     super.setConfig(config);
-    if (this.isConnected) this._loadSocketHistories();
+    if (this.isConnected) this._loadSocketEnergy();
   }
 
   set hass(hass) {
     super.hass = hass;
-    this._loadSocketHistories();
+    this._loadSocketEnergy();
   }
 
   connectedCallback() {
     super.connectedCallback();
-    this._loadSocketHistories();
+    this._loadSocketEnergy();
   }
 
   disconnectedCallback() {
-    for (const key of ["power", "voltage", "current", "energy"])
-      this._socketHistoryTokens.set(
-        key,
-        (this._socketHistoryTokens.get(key) || 0) + 1,
-      );
-    this._socketHistoryLoading.clear();
+    this._socketHistoryTokens.set(
+      "energy",
+      (this._socketHistoryTokens.get("energy") || 0) + 1,
+    );
+    this._socketHistoryLoading.delete("energy");
     super.disconnectedCallback();
   }
 
@@ -2450,47 +2442,6 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     this._socketHistories.delete(key);
   }
 
-  async _loadSocketHistories() {
-    if (!this.isConnected || !this._hass) return;
-    await Promise.all([
-      this._loadSocketLine("power", "power_entity"),
-      this._loadSocketLine("voltage", "voltage_entity"),
-      this._loadSocketLine("current", "current_entity"),
-      this._loadSocketEnergy(),
-    ]);
-  }
-
-  async _loadSocketLine(key, entityKey) {
-    const entity = this._config?.[entityKey];
-    if (!entity || typeof this._hass.callApi !== "function" ||
-      !this._canLoadSocketHistory(key)) return;
-    const token = this._beginSocketHistory(key);
-    const end = new Date(), start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
-    const path = `history/period/${encodeURIComponent(start.toISOString())}?filter_entity_id=${encodeURIComponent(entity)}&end_time=${encodeURIComponent(end.toISOString())}&minimal_response&no_attributes`;
-    try {
-      const response = await this._hass.callApi("GET", path);
-      if (!this._isCurrentSocketHistory(key, token, entityKey, entity)) return;
-      const samples = Array.isArray(response?.[0]) ? response[0] : [];
-      const points = samples.map((sample) => ({
-        time: Date.parse(sample?.last_changed || sample?.last_updated),
-        value: this._number(sample?.state),
-      })).filter((point) => Number.isFinite(point.time))
-        .sort((left, right) => left.time - right.time);
-      const reduced = this._downsampleSocketHistory(points, 60, key === "voltage");
-      this._socketHistories.set(key, reduced.filter((point) => point.value !== null).length > 1
-        ? { type: "line", points: reduced, start: start.getTime(), end: end.getTime() }
-        : null);
-      this._finishSocketHistory(key);
-      this._renderSocketHistory(key);
-    } catch {
-      if (this._isCurrentSocketHistory(key, token, entityKey, entity)) {
-        this._socketHistories.set(key, null);
-        this._finishSocketHistory(key);
-        this._renderSocketHistory(key);
-      }
-    }
-  }
-
   _canLoadSocketHistory(key) {
     if (this._socketHistoryLoading.has(key)) return false;
     const loadedAt = this._socketHistoryLoadedAt.get(key);
@@ -2520,47 +2471,10 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     this._socketHistoryLoading.delete(key);
   }
 
-  _downsampleSocketHistory(points, limit, preserveExtrema = false) {
-    if (points.length <= limit) return points;
-    const buckets = Array.from({ length: limit }, () => []);
-    const first = points[0].time, last = points.at(-1).time;
-    for (const point of points) {
-      const index = Math.min(limit - 1, Math.floor((point.time - first) * limit / (last - first || 1)));
-      buckets[index].push(point);
-    }
-    return buckets.flatMap((bucket) => {
-      const reduced = [];
-      let run = [];
-      const flush = () => {
-        if (!run.length) return;
-        if (preserveExtrema) {
-          const min = run.reduce((lowest, point) => point.value < lowest.value ? point : lowest);
-          const max = run.reduce((highest, point) => point.value > highest.value ? point : highest);
-          reduced.push(...[...new Set([run[0], min, max, run.at(-1)])].sort((left, right) => left.time - right.time));
-        } else {
-          reduced.push({
-            time: run.reduce((sum, point) => sum + point.time, 0) / run.length,
-            value: run.reduce((sum, point) => sum + point.value, 0) / run.length,
-          });
-        }
-        run = [];
-      };
-      for (const point of bucket) {
-        if (point.value === null) {
-          flush();
-          if (reduced.at(-1)?.value !== null) reduced.push(point);
-        } else {
-          run.push(point);
-        }
-      }
-      flush();
-      return reduced;
-    });
-  }
-
   async _loadSocketEnergy() {
     const entity = this._config?.energy_daily_entity;
-    if (!entity || typeof this._hass.callWS !== "function" ||
+    if (!this.isConnected || !this._hass || !entity ||
+      typeof this._hass.callWS !== "function" ||
       !this._canLoadSocketHistory("energy")) return;
     const token = this._beginSocketHistory("energy");
     const now = new Date();
@@ -2628,52 +2542,18 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     if (history.type === "bars") {
       const values = history.values;
       const max = Math.max(0, ...values.filter((value) => value !== null));
-      const slot = 200 / 24, width = slot * 0.7;
+      const slot = 192 / 24, width = slot * 0.7;
       let path = "";
       values.forEach((value, hour) => {
         const height = value === null || max === 0 || value === 0
           ? 0.8
-          : value / max * 24;
+          : value / max * 32;
         const x = hour * slot + (slot - width) / 2;
-        const y = 28 - height;
-        path += `M${x.toFixed(1)} 28 V${y.toFixed(1)} H${(x + width).toFixed(1)} V28 Z `;
+        const y = 40 - height;
+        path += `M${x.toFixed(1)} 40 V${y.toFixed(1)} H${(x + width).toFixed(1)} V40 Z `;
       });
-      chart.querySelector(".socket-chart-line")?.setAttribute("d", path);
-      return;
+      chart.querySelector("path")?.setAttribute("d", path);
     }
-    const values = history.points.filter(({ value }) => value !== null).map(({ value }) => value);
-    const min = Math.min(...values), max = Math.max(...values);
-    const width = 200, height = 28, padding = 1;
-    const voltageUnit = String(this._state(this._config?.voltage_entity)?.attributes?.unit_of_measurement || "").trim().toLowerCase();
-    const voltageScale = ["mv", "millivolt", "millivolts"].includes(voltageUnit) ? 1000 : 1;
-    const margin = key === "voltage" ? (max > min ? (max - min) * 0.05 : 0.5 * voltageScale) : min === max ? 0.5 : 0;
-    const low = min - margin;
-    const high = max + margin;
-    const x = (point) => padding + (point.time - history.start) *
-      (width - padding * 2) / (history.end - history.start);
-    const y = (value) => height - padding -
-      (Math.min(high, Math.max(low, value)) - low) * (height - padding * 2) / (high - low);
-    let path = "", gapPath = "", previous = null, hasGap = false;
-    history.points.forEach((point) => {
-      if (point.value === null) {
-        hasGap = true;
-        return;
-      }
-      const pointX = x(point), pointY = y(point.value);
-      if (!previous || hasGap) {
-        path += `M${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
-        if (previous && point.time - previous.time <= 30 * 60 * 1000)
-          gapPath += `M${x(previous).toFixed(1)} ${y(previous.value).toFixed(1)} L${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
-      } else if (key === "power" || key === "current") {
-        path += `H${pointX.toFixed(1)} V${pointY.toFixed(1)} `;
-      } else {
-        path += `L${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
-      }
-      previous = point;
-      hasGap = false;
-    });
-    chart.querySelector(".socket-chart-line")?.setAttribute("d", path);
-    chart.querySelector(".socket-chart-gap")?.setAttribute("d", gapPath);
   }
 
   _socket() {
@@ -2710,28 +2590,32 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
       '><span class="socket-spinner" aria-hidden="true"></span>' +
       icon("power") +
       "</button></header>" +
+      '<button class="socket-energy" type="button" data-action="more" data-socket-metric="energy" data-entity="' +
+      this._escape(c.energy_daily_entity || "") +
+      '" aria-label="Відкрити енергію сьогодні" ' +
+      this._disabled(!this._state(c.energy_daily_entity)) +
+      '><span class="socket-energy-copy"><span class="secondary">' +
+      this._escape(c.energy_label || "Енергія сьогодні") +
+      '</span><span class="socket-energy-value"><span data-live="socket-energy">' +
+      this._socketReading("energy_daily_entity", 2, "energy") +
+      '</span><small>кВт·год</small></span></span><svg class="socket-energy-chart" data-socket-chart="energy" viewBox="0 0 192 40" preserveAspectRatio="none" role="img" aria-label="Споживання енергії за годинами сьогодні" hidden><path></path></svg></button>' +
       '<div class="socket-metrics">' +
-      this._socketMetric("power", "power_entity", "Потужність", "zap", 0, "power", "socket-power", "Вт") +
-      this._socketMetric("voltage", "voltage_entity", "Напруга", "activity", 1, "voltage", "socket-voltage", "В") +
-      this._socketMetric("current", "current_entity", "Струм", "activity", 2, "current", "socket-current", "А") +
-      this._socketMetric("energy", "energy_daily_entity", c.energy_label || "Енергія сьогодні", "chart-no-axes-column", 2, "energy", "socket-energy", "кВт·год") +
+      this._socketReadingMetric("power", "power_entity", "Потужність", "zap", 0, "power", "socket-power", "Вт") +
+      this._socketReadingMetric("voltage", "voltage_entity", "Напруга", "activity", 1, "voltage", "socket-voltage", "В") +
+      this._socketReadingMetric("current", "current_entity", "Струм", "gauge", 2, "current", "socket-current", "А") +
       "</div></article>"
     );
   }
 
-  _socketMetric(key, entityKey, label, iconName, digits, conversion, liveKey, unit) {
+  _socketReadingMetric(key, entityKey, label, iconName, digits, conversion, liveKey, unit) {
     const entity = this._config[entityKey] || "";
-    return '<button class="socket-metric" type="button" data-action="more" data-socket-metric="' +
+    return '<button class="socket-reading" type="button" data-action="more" data-socket-metric="' +
       key + '" data-entity="' + this._escape(entity) + '" aria-label="Відкрити ' +
       this._escape(label) + '" ' + this._disabled(!this._state(entity)) +
-      '><span class="socket-metric-label secondary">' + this._lucideIcon(iconName) +
-      this._escape(label) + '</span><span class="socket-metric-value"><span data-live="' + liveKey + '">' +
+      '><span class="socket-reading-label secondary">' + this._lucideIcon(iconName) +
+      this._escape(label) + '</span><span class="socket-reading-value"><span data-live="' + liveKey + '">' +
       this._socketReading(entityKey, digits, conversion) + '</span><small>' + unit +
-      '</small></span><svg class="socket-chart" data-socket-chart="' + key +
-      '" viewBox="0 0 200 28" preserveAspectRatio="none" role="img" aria-label="' +
-      this._escape(label) + (key === "energy" ? " за годинами сьогодні" : " за 24 години") +
-      '" hidden>' + (key === "energy" ? "" : '<path class="socket-chart-gap"></path>') +
-      '<path class="socket-chart-line"></path></svg></button>';
+      "</small></span></button>";
   }
 
   _updateSocket() {
@@ -2786,12 +2670,12 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
         metric.disabled = !this._state(this._config[entityKey]);
         metric.dataset.entity = this._config[entityKey] || "";
       }
-      metric?.querySelector(".socket-metric-value")
+      metric?.querySelector(".socket-reading-value, .socket-energy-value")
         ?.classList.toggle("socket-missing", value === "—");
-      metric?.querySelector(".socket-metric-value small")
+      metric?.querySelector(".socket-reading-value small, .socket-energy-value small")
         ?.toggleAttribute("hidden", value === "—");
-      this._renderSocketHistory(key);
     }
+    this._renderSocketHistory("energy");
   }
 
   async _toggleSocket() {
