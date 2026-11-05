@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.4 — bundled base and standalone cards.
+// Home Device Cards v1.1.5 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -3164,12 +3164,14 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
     const values = history.points.filter(({ value }) => value !== null).map(({ value }) => value);
     const min = Math.min(...values), max = Math.max(...values);
     const width = 200, height = 28, padding = 1;
-    const low = min === max ? min - 0.5 : min;
-    const high = min === max ? max + 0.5 : max;
+    const voltageUnit = String(this._state(this._config?.voltage_entity)?.attributes?.unit_of_measurement || "").trim().toLowerCase();
+    const voltageScale = ["mv", "millivolt", "millivolts"].includes(voltageUnit) ? 1000 : 1;
+    const low = key === "voltage" ? 190 * voltageScale : min === max ? min - 0.5 : min;
+    const high = key === "voltage" ? 270 * voltageScale : min === max ? max + 0.5 : max;
     const x = (point) => padding + (point.time - history.start) *
       (width - padding * 2) / (history.end - history.start);
     const y = (value) => height - padding -
-      (value - low) * (height - padding * 2) / (high - low);
+      (Math.min(high, Math.max(low, value)) - low) * (height - padding * 2) / (high - low);
     let path = "", gapPath = "", previous = null, hasGap = false;
     history.points.forEach((point) => {
       if (point.value === null) {

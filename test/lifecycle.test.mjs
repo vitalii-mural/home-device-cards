@@ -399,6 +399,15 @@ test("socket power and current step while short gaps bridge and long gaps stay o
   card._renderSocketHistory("voltage");
   assert.match(paths.get("voltage").line.value, /L/);
   assert.doesNotMatch(paths.get("voltage").line.value, /H.*V/);
+  assert.equal(paths.get("voltage").line.value, "M1.0 17.3 L199.0 15.9 ", "fixed voltage scale");
+  card._config = { voltage_entity: "sensor.voltage" };
+  card._hass = { states: { "sensor.voltage": { state: "224000", attributes: { unit_of_measurement: "mV" } } } };
+  card._socketHistories.get("voltage").points = [{ time: start, value: 220000 }, { time: start + 3600000, value: 224000 }];
+  card._renderSocketHistory("voltage");
+  assert.equal(paths.get("voltage").line.value, "M1.0 17.3 L199.0 15.9 ", "equivalent millivolt scale");
+  card._socketHistories.get("voltage").points = [{ time: start, value: 180000 }, { time: start + 3600000, value: 280000 }];
+  card._renderSocketHistory("voltage");
+  assert.equal(paths.get("voltage").line.value, "M1.0 27.0 L199.0 1.0 ", "outliers stay inside chart");
 });
 
 test("socket history hides missing statistics and invalidates per entity", async () => {
