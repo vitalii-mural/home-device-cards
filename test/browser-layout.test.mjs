@@ -183,7 +183,14 @@ test("socket metrics show four compact histories and open the matching entities"
         charts.map((chart) => ({ height: getComputedStyle(chart).height, hidden: chart.hasAttribute("hidden") }))),
       Array(4).fill({ height: "21px", hidden: false }));
       assert.ok(await socket.locator('.socket-chart:not([data-socket-chart="energy"]) path')
-        .evaluateAll((paths) => paths.every((path) => /M.*M/.test(path.getAttribute("d")))));
+        .evaluateAll((paths) => paths.every((path) => path.classList.contains("socket-chart-gap") || /M.*M/.test(path.getAttribute("d")))));
+      assert.match(await socket.locator('[data-socket-chart="power"] .socket-chart-line').getAttribute("d"), /H.*V/);
+      assert.match(await socket.locator('[data-socket-chart="voltage"] .socket-chart-line').getAttribute("d"), /L/);
+      assert.match(await socket.locator('[data-socket-chart="power"] .socket-chart-gap').getAttribute("d"), /^M.*L/);
+      assert.equal(await socket.locator('[data-socket-chart="power"] .socket-chart-gap')
+        .evaluate((path) => getComputedStyle(path).strokeDasharray), "2px, 3px");
+      assert.equal(await socket.locator('[data-socket-chart="energy"] .socket-chart-line')
+        .getAttribute("d").then((path) => path.match(/M/g)?.length), 24);
       const layout = await metrics.evaluateAll((items) => {
         const card = items[0].getRootNode().host;
         const panel = card.shadowRoot.querySelector(".socket-card");

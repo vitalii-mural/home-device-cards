@@ -27,6 +27,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .socket-metric-value small{font-size:14px;color:var(--k-muted);margin-left:5px;letter-spacing:0}
 .single-card .socket-card svg.socket-chart{display:block;width:100%;height:21px;margin-top:8px;overflow:visible}
 .single-card .socket-chart path{fill:none;stroke:var(--k-cool);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.78}
+.single-card .socket-chart .socket-chart-gap{stroke-dasharray:2 3;opacity:.5}
 .single-card [data-socket-chart="energy"] path{fill:var(--k-cool);stroke:none;opacity:.78}
 .single-card .socket-card .socket-missing{color:var(--k-muted);font-size:17px!important;letter-spacing:0!important;font-weight:400!important}
 .single-card .socket-reading .socket-missing{font-size:23px!important;letter-spacing:0!important}
@@ -2624,13 +2625,14 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
       const slot = 200 / 24, width = slot * 0.7;
       let path = "";
       values.forEach((value, hour) => {
-        if (value === null) return;
-        const height = max === 0 ? 0.8 : value === 0 ? 0.8 : value / max * 24;
+        const height = value === null || max === 0 || value === 0
+          ? 0.8
+          : value / max * 24;
         const x = hour * slot + (slot - width) / 2;
         const y = 28 - height;
         path += `M${x.toFixed(1)} 28 V${y.toFixed(1)} H${(x + width).toFixed(1)} V28 Z `;
       });
-      chart.querySelector("path")?.setAttribute("d", path);
+      chart.querySelector(".socket-chart-line")?.setAttribute("d", path);
       return;
     }
     const values = history.points.filter(({ value }) => value !== null).map(({ value }) => value);
@@ -2642,16 +2644,27 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
       (width - padding * 2) / (history.end - history.start);
     const y = (value) => height - padding -
       (value - low) * (height - padding * 2) / (high - low);
-    let path = "", previousWasValid = false;
+    let path = "", gapPath = "", previous = null, hasGap = false;
     history.points.forEach((point) => {
       if (point.value === null) {
-        previousWasValid = false;
+        hasGap = true;
         return;
       }
-      path += `${previousWasValid ? "L" : "M"}${x(point).toFixed(1)} ${y(point.value).toFixed(1)} `;
-      previousWasValid = true;
+      const pointX = x(point), pointY = y(point.value);
+      if (!previous || hasGap) {
+        path += `M${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
+        if (previous && point.time - previous.time <= 30 * 60 * 1000)
+          gapPath += `M${x(previous).toFixed(1)} ${y(previous.value).toFixed(1)} L${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
+      } else if (key === "power" || key === "current") {
+        path += `H${pointX.toFixed(1)} V${pointY.toFixed(1)} `;
+      } else {
+        path += `L${pointX.toFixed(1)} ${pointY.toFixed(1)} `;
+      }
+      previous = point;
+      hasGap = false;
     });
-    chart.querySelector("path")?.setAttribute("d", path);
+    chart.querySelector(".socket-chart-line")?.setAttribute("d", path);
+    chart.querySelector(".socket-chart-gap")?.setAttribute("d", gapPath);
   }
 
   _socket() {
@@ -2708,7 +2721,8 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
       '</small></span><svg class="socket-chart" data-socket-chart="' + key +
       '" viewBox="0 0 200 28" preserveAspectRatio="none" role="img" aria-label="' +
       this._escape(label) + (key === "energy" ? " за годинами сьогодні" : " за 24 години") +
-      '" hidden><path></path></svg></button>';
+      '" hidden>' + (key === "energy" ? "" : '<path class="socket-chart-gap"></path>') +
+      '<path class="socket-chart-line"></path></svg></button>';
   }
 
   _updateSocket() {

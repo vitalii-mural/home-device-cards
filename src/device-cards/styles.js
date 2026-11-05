@@ -26,6 +26,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .socket-metric-value small{font-size:14px;color:var(--k-muted);margin-left:5px;letter-spacing:0}
 .single-card .socket-card svg.socket-chart{display:block;width:100%;height:21px;margin-top:8px;overflow:visible}
 .single-card .socket-chart path{fill:none;stroke:var(--k-cool);stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.78}
+.single-card .socket-chart .socket-chart-gap{stroke-dasharray:2 3;opacity:.5}
 .single-card [data-socket-chart="energy"] path{fill:var(--k-cool);stroke:none;opacity:.78}
 .single-card .socket-card .socket-missing{color:var(--k-muted);font-size:17px!important;letter-spacing:0!important;font-weight:400!important}
 .single-card .socket-reading .socket-missing{font-size:23px!important;letter-spacing:0!important}

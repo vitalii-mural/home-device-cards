@@ -348,9 +348,57 @@ test("socket recorder chart groups hourly changes by Home Assistant timezone", a
   assert.equal(chart.hidden, false);
   assert.equal(card._socketHistories.get("energy").values[thisHour], 1.25);
   assert.equal(card._socketHistories.get("energy").values[(thisHour + 23) % 24], null);
-  assert.equal(path.value.match(/M/g)?.length, 1, "only the observed current-hour bar is drawn");
+  assert.equal(path.value.match(/M/g)?.length, 24, "today has one observed bar and baseline marks for missing and future hours");
+  assert.equal(card._socketHistories.get("energy").values.filter((value) => value === null).length, 23);
   await card._loadSocketEnergy();
   assert.equal(calls, 1, "hourly statistics are cached");
+});
+
+test("socket power and current step while short gaps bridge and long gaps stay open", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-socket-card"))();
+  const paths = new Map(["power", "voltage", "current"].map((key) => [
+    key,
+    {
+      line: { value: "", setAttribute(_name, value) { this.value = value; } },
+      gap: { value: "", setAttribute(_name, value) { this.value = value; } },
+    },
+  ]));
+  card.shadowRoot = { querySelector: (selector) => {
+    const key = selector.match(/data-socket-chart="([^"]+)"/)?.[1];
+    return key ? { toggleAttribute() {}, querySelector: (part) =>
+      part.includes("gap") ? paths.get(key).gap : paths.get(key).line } : null;
+  } };
+  const start = Date.now() - 24 * 60 * 60 * 1000;
+  const points = [
+    { time: start, value: 10 },
+    { time: start + 10 * 60 * 1000, value: null },
+    { time: start + 30 * 60 * 1000, value: 20 },
+    { time: start + 40 * 60 * 1000, value: 15 },
+  ];
+  for (const key of ["power", "current"]) {
+    card._socketHistories.set(key, { type: "line", points, start, end: start + 60 * 60 * 1000 });
+    card._renderSocketHistory(key);
+    assert.match(paths.get(key).line.value, /H.*V/);
+    assert.match(paths.get(key).gap.value, /^M.*L/);
+    card._socketHistories.set(key, {
+      type: "line",
+      points: [points[0], points[1], { time: start + 30 * 60 * 1000 + 1, value: 20 }],
+      start,
+      end: start + 60 * 60 * 1000,
+    });
+    card._renderSocketHistory(key);
+    assert.equal(paths.get(key).gap.value, "", "gaps over 30 minutes stay open");
+  }
+  card._socketHistories.set("voltage", {
+    type: "line",
+    points: [{ time: start, value: 220 }, { time: start + 60 * 60 * 1000, value: 224 }],
+    start,
+    end: start + 60 * 60 * 1000,
+  });
+  card._renderSocketHistory("voltage");
+  assert.match(paths.get("voltage").line.value, /L/);
+  assert.doesNotMatch(paths.get("voltage").line.value, /H.*V/);
 });
 
 test("socket history hides missing statistics and invalidates per entity", async () => {
@@ -710,7 +758,7 @@ test("standalone card markup and sizing match pre-refactor characterization", as
     ],
     [
       "home-socket-card",
-      "2836ccf00afcec767f2dd5443c709315017d2702ef7a5da6d2b534b3e3318137",
+      "35a15269f13b6a6a7301535569f1163b64408618808c439e92d0000448bc28d6",
       4,
       { columns: 6, rows: 4, min_columns: 3, min_rows: 2 },
     ],
@@ -765,7 +813,7 @@ test("configured live-card markup matches pre-refactor characterization", async 
     ["home-boiler-card", "2382d7793a7e0793725711ae31e086d9508dfd6fe49c4b7125c34dd7f93e380a"],
     ["home-air-card", "2fddd0611caac77f3aee08432b90daa4d25c58104de9b01f9041be3351a82315"],
     ["home-room-card", "26cf1a038b7fcf7a8f53377ced22c86bcbebd4be5c72ed1e04db85ad173550f3"],
-    ["home-socket-card", "14c467a4f2b9067d592f01cc445f14bcce5ec2feb6c1cc1097253e30cbc0dc6b"],
+    ["home-socket-card", "10813a9a6d8b4feff78c4d30082b87f4838d13d5be64600df85ed07f95de27e0"],
     ["home-river-card", "e5643629beb69ba09093c07d76a6821b5c2c938545b5a4811e11eab69fd97a6c"],
     ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],
     ["home-battery-card", "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c"],
