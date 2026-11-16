@@ -213,6 +213,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
   background:var(--k-accent-bg);
   color:var(--k-accent);
 }
+.single-card .sensor-list-icon ha-icon {--mdc-icon-size:16px}
 .single-card .sensor-list-icon svg {width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .single-card .sensor-list-row {
   display:grid;
@@ -231,7 +232,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
   .single-card .sensor-list-icon {flex-basis:25px;height:25px;border-radius:8px}
 }
 .single-card .sensor-list-name {display:flex;align-items:center;gap:7px;min-width:0;overflow-wrap:anywhere}
-.single-card .sensor-list-name ha-icon {
+.single-card .sensor-list-name :is(ha-icon,ha-state-icon) {
   display:grid;
   place-items:center;
   flex:0 0 25px;

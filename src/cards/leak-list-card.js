@@ -1,11 +1,11 @@
-class HomeLeakListCard extends HomeDeviceStandaloneCard {
+class HomeLeakListCard extends HomeNamedSensorListCard {
   static get cardType() {
     return "leak_list";
   }
 
   static getConfigForm() {
     return homeRepeatableCardForm("sensors", "Датчики", {
-      name: { label: "Назва датчика", required: true, selector: { text: {} } },
+      name: HOME_SENSOR_LIST_NAME_FIELD,
       entity: {
         label: "Датчик протікання",
         required: true,
@@ -19,7 +19,7 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
     if (!Array.isArray(sensors)) throw new Error('Configuration option "sensors" must be a list.');
     super.setConfig({
       ...this._validatedConfig(config, [], ["title"]),
-      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"], ["name"])),
+      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"])),
     });
   }
 
@@ -38,11 +38,11 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
   _content() {
     const { sensors, title } = this._config;
     const rows = sensors.map(({ name, entity }) => {
-      const label = name?.trim() || "Датчик протікання";
+      const label = this._sensorListName(entity, name, "Датчик протікання");
       const state = this._state(entity);
       const status = homeBinarySensorStatus(state, "Виявлено воду", "Сухо");
       return `<div class="sensor-list-row" role="listitem">
-        <span class="sensor-list-name">${this._icon("water-outline")}${this._escape(label)}</span>
+        <span class="sensor-list-name">${this._sensorListIcon(entity, "mdi:water-outline")}${this._escape(label)}</span>
         <button type="button" class="sensor-list-reading leak-list-status" data-action="more"
           data-entity="${this._escape(entity)}" data-state="${status.state}" data-label="${this._escape(label)}"
           aria-label="${this._escape(label)}: ${status.label}" ${this._disabled(!state)}>${status.label}</button>
@@ -51,7 +51,7 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
     return `<article class="sensor-list leak-list">
       <div class="sensor-list-row sensor-list-heading">
         <div class="sensor-list-title">
-          <span class="sensor-list-icon">${this._lucideIcon("droplets")}</span>
+          <span class="sensor-list-icon">${this._icon("waves")}</span>
           <h2>${this._escape(title?.trim() || "Протікання води")}</h2>
         </div>
       </div>
@@ -60,6 +60,7 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
   }
 
   _updateCardDynamic({ all, has }) {
+    this._updateSensorListIcons({ all, has });
     for (const button of this.shadowRoot.querySelectorAll(".leak-list-status")) {
       const { entity, label } = button.dataset;
       if (!all && !has(entity)) continue;

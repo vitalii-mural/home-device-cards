@@ -1,11 +1,11 @@
-class HomeRoomsCard extends HomeDeviceStandaloneCard {
+class HomeRoomsCard extends HomeNamedSensorListCard {
   static get cardType() {
     return "rooms";
   }
 
   static getConfigForm() {
     return homeRepeatableCardForm("rooms", "Кімнати", {
-      name: { label: "Назва кімнати", required: true, selector: { text: {} } },
+      name: HOME_SENSOR_LIST_NAME_FIELD,
       icon: { label: "Іконка", selector: { icon: {} } },
       temperature_entity: { label: "Температура", selector: { entity: { domain: ["sensor"] } } },
       humidity_entity: { label: "Вологість", selector: { entity: { domain: ["sensor"] } } },
@@ -20,7 +20,7 @@ class HomeRoomsCard extends HomeDeviceStandaloneCard {
       rooms: rooms.map(room => this._validatedConfig(
         room,
         ["temperature_entity", "humidity_entity"],
-        ["name", "icon"],
+        ["icon"],
       )),
     });
   }
@@ -59,9 +59,11 @@ class HomeRoomsCard extends HomeDeviceStandaloneCard {
   _content() {
     const { rooms, title } = this._config;
     const rows = rooms.map(room => {
-      const name = room.name?.trim() || "Кімната";
+      const entity = room.temperature_entity || room.humidity_entity;
+      const name = this._sensorListName(entity, room.name, "Кімната");
+      const icon = room.icon ? `<ha-icon icon="${this._escape(room.icon)}" aria-hidden="true"></ha-icon>` : this._sensorListIcon(entity, "mdi:home-outline");
       return `<div class="sensor-list-row" role="listitem">
-        <span class="sensor-list-name"><ha-icon icon="${this._escape(room.icon || "mdi:home-outline")}" aria-hidden="true"></ha-icon>${this._escape(name)}</span>
+        <span class="sensor-list-name">${icon}${this._escape(name)}</span>
         ${this._roomReadingButton(room.temperature_entity, "temperature", name)}
         ${this._roomReadingButton(room.humidity_entity, "humidity", name)}
       </div>`;
@@ -80,6 +82,7 @@ class HomeRoomsCard extends HomeDeviceStandaloneCard {
   }
 
   _updateCardDynamic({ all, has }) {
+    this._updateSensorListIcons({ all, has });
     for (const button of this.shadowRoot.querySelectorAll("[data-rooms-metric]")) {
       const { entity, roomsMetric, label } = button.dataset;
       if (!all && !has(entity)) continue;

@@ -387,3 +387,47 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     this._mountGraphs(generation);
   }
 }
+
+const HOME_SENSOR_LIST_NAME_FIELD = {
+  label: "Назва рядка",
+  selector: { entity_name: { allow_custom: true, default_name: { type: "area" } } },
+};
+
+class HomeNamedSensorListCard extends HomeDeviceStandaloneCard {
+  set hass(hass) {
+    const previous = this._hass;
+    if (this._rendered && previous && (
+      previous.areas !== hass.areas ||
+      previous.devices !== hass.devices ||
+      previous.entities !== hass.entities ||
+      this._entityIds().some(id => Boolean(previous.states[id]) !== Boolean(hass.states[id]))
+    )) {
+      this._rendered = false;
+    }
+    super.hass = hass;
+  }
+
+  _sensorListName(entity, value, fallback) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+
+    const state = this._state(entity);
+    if (!state) return fallback;
+    const name = value && typeof value === "object" ? value : { type: "area" };
+    return this._hass.formatEntityName?.(state, name) || state.attributes?.friendly_name || fallback;
+  }
+
+  _sensorListIcon(entity, fallback) {
+    return `<ha-state-icon data-list-entity="${this._escape(entity)}"
+      data-list-fallback="${fallback}" aria-hidden="true"></ha-state-icon>`;
+  }
+
+  _updateSensorListIcons({ all, has }) {
+    for (const icon of this.shadowRoot.querySelectorAll("[data-list-entity]")) {
+      const { listEntity, listFallback } = icon.dataset;
+      if (!all && !has(listEntity)) continue;
+      const state = this._state(listEntity);
+      icon.stateObj = state;
+      icon.icon = state ? undefined : listFallback;
+    }
+  }
+}

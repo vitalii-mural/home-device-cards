@@ -289,6 +289,51 @@ test("leak list renders dynamic statuses and opens the selected sensor history",
   }
 });
 
+test("sensor lists use native area and composed names with entity icons", async () => {
+  const page = await openFixture(390);
+  try {
+    const nameFields = await page.evaluate(() => {
+      const { hass } = window.fixture;
+      const temperature = "sensor.example_12";
+      const water = "binary_sensor.example_51";
+      hass.states[temperature].attributes.icon = "mdi:thermometer";
+      hass.states[water].attributes.icon = "mdi:washing-machine";
+      hass.areas = { bedroom: { name: "Спальня" }, bathroom: { name: "Ванна" } };
+      hass.formatEntityName = function(state, name) {
+        const area = state === this.states[water] ? "bathroom" : "bedroom";
+        return (Array.isArray(name) ? name : [name]).map(part =>
+          part.type === "area" ? this.areas[area].name : part.text).join(" · ");
+      };
+      const climate = document.createElement("home-rooms-card");
+      climate.setConfig({ rooms: [{ temperature_entity: temperature }] });
+      const leaks = document.createElement("home-leak-list-card");
+      leaks.setConfig({ sensors: [
+        { entity: water, name: [{ type: "area" }, { type: "text", text: "Біля пралки" }] },
+        { entity: water, name: "Своя назва" },
+      ] });
+      climate.hass = leaks.hass = hass;
+      document.querySelector("main").prepend(climate, leaks);
+      return [climate, leaks].map(card => card.constructor.getConfigForm().schema[1].selector.object.fields.name.selector);
+    });
+    assert.deepEqual(nameFields, [0, 1].map(() => ({
+      entity_name: { allow_custom: true, default_name: { type: "area" } },
+    })));
+    const climate = page.locator("home-rooms-card");
+    const leaks = page.locator("home-leak-list-card");
+    assert.deepEqual(await climate.locator(".sensor-list-name").allInnerTexts(), ["Спальня"]);
+    assert.deepEqual(await leaks.locator(".sensor-list-name").allInnerTexts(), ["Ванна · Біля пралки", "Своя назва"]);
+    assert.equal(await leaks.locator("ha-state-icon").first().evaluate(icon => icon.stateObj.attributes.icon), "mdi:washing-machine");
+    await leaks.evaluate(card => {
+      const hass = window.fixture.hass;
+      card.hass = { ...hass, areas: { ...hass.areas, bathroom: { name: "Ванна кімната" } } };
+    });
+    assert.deepEqual(await leaks.locator(".sensor-list-name").allInnerTexts(), ["Ванна кімната · Біля пралки", "Своя назва"]);
+  } finally {
+    await page.close();
+  }
+});
+
+
 test("sensor list headers align and separate from the first row at phone widths", async () => {
   const page = await openFixture(320);
   try {

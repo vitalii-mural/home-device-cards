@@ -214,6 +214,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
   background:var(--k-accent-bg);
   color:var(--k-accent);
 }
+.single-card .sensor-list-icon ha-icon {--mdc-icon-size:16px}
 .single-card .sensor-list-icon svg {width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .single-card .sensor-list-row {
   display:grid;
@@ -232,7 +233,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
   .single-card .sensor-list-icon {flex-basis:25px;height:25px;border-radius:8px}
 }
 .single-card .sensor-list-name {display:flex;align-items:center;gap:7px;min-width:0;overflow-wrap:anywhere}
-.single-card .sensor-list-name ha-icon {
+.single-card .sensor-list-name :is(ha-icon,ha-state-icon) {
   display:grid;
   place-items:center;
   flex:0 0 25px;
@@ -993,6 +994,50 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     this._updateDynamic();
     const generation = ++this._generation;
     this._mountGraphs(generation);
+  }
+}
+
+const HOME_SENSOR_LIST_NAME_FIELD = {
+  label: "Назва рядка",
+  selector: { entity_name: { allow_custom: true, default_name: { type: "area" } } },
+};
+
+class HomeNamedSensorListCard extends HomeDeviceStandaloneCard {
+  set hass(hass) {
+    const previous = this._hass;
+    if (this._rendered && previous && (
+      previous.areas !== hass.areas ||
+      previous.devices !== hass.devices ||
+      previous.entities !== hass.entities ||
+      this._entityIds().some(id => Boolean(previous.states[id]) !== Boolean(hass.states[id]))
+    )) {
+      this._rendered = false;
+    }
+    super.hass = hass;
+  }
+
+  _sensorListName(entity, value, fallback) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+
+    const state = this._state(entity);
+    if (!state) return fallback;
+    const name = value && typeof value === "object" ? value : { type: "area" };
+    return this._hass.formatEntityName?.(state, name) || state.attributes?.friendly_name || fallback;
+  }
+
+  _sensorListIcon(entity, fallback) {
+    return `<ha-state-icon data-list-entity="${this._escape(entity)}"
+      data-list-fallback="${fallback}" aria-hidden="true"></ha-state-icon>`;
+  }
+
+  _updateSensorListIcons({ all, has }) {
+    for (const icon of this.shadowRoot.querySelectorAll("[data-list-entity]")) {
+      const { listEntity, listFallback } = icon.dataset;
+      if (!all && !has(listEntity)) continue;
+      const state = this._state(listEntity);
+      icon.stateObj = state;
+      icon.icon = state ? undefined : listFallback;
+    }
   }
 }
 const HOME_MIDEA_ENTITY_REGISTRIES = new WeakMap();
@@ -2212,14 +2257,14 @@ class HomeDoorCard extends HomeSensorStatusCard {
 
 if (!customElements.get('home-leak-card')) customElements.define('home-leak-card', HomeLeakCard);
 if (!customElements.get('home-door-card')) customElements.define('home-door-card', HomeDoorCard);
-class HomeLeakListCard extends HomeDeviceStandaloneCard {
+class HomeLeakListCard extends HomeNamedSensorListCard {
   static get cardType() {
     return "leak_list";
   }
 
   static getConfigForm() {
     return homeRepeatableCardForm("sensors", "Датчики", {
-      name: { label: "Назва датчика", required: true, selector: { text: {} } },
+      name: HOME_SENSOR_LIST_NAME_FIELD,
       entity: {
         label: "Датчик протікання",
         required: true,
@@ -2233,7 +2278,7 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
     if (!Array.isArray(sensors)) throw new Error('Configuration option "sensors" must be a list.');
     super.setConfig({
       ...this._validatedConfig(config, [], ["title"]),
-      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"], ["name"])),
+      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"])),
     });
   }
 
@@ -2252,11 +2297,11 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
   _content() {
     const { sensors, title } = this._config;
     const rows = sensors.map(({ name, entity }) => {
-      const label = name?.trim() || "Датчик протікання";
+      const label = this._sensorListName(entity, name, "Датчик протікання");
       const state = this._state(entity);
       const status = homeBinarySensorStatus(state, "Виявлено воду", "Сухо");
       return `<div class="sensor-list-row" role="listitem">
-        <span class="sensor-list-name">${this._icon("water-outline")}${this._escape(label)}</span>
+        <span class="sensor-list-name">${this._sensorListIcon(entity, "mdi:water-outline")}${this._escape(label)}</span>
         <button type="button" class="sensor-list-reading leak-list-status" data-action="more"
           data-entity="${this._escape(entity)}" data-state="${status.state}" data-label="${this._escape(label)}"
           aria-label="${this._escape(label)}: ${status.label}" ${this._disabled(!state)}>${status.label}</button>
@@ -2265,7 +2310,7 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
     return `<article class="sensor-list leak-list">
       <div class="sensor-list-row sensor-list-heading">
         <div class="sensor-list-title">
-          <span class="sensor-list-icon">${this._lucideIcon("droplets")}</span>
+          <span class="sensor-list-icon">${this._icon("waves")}</span>
           <h2>${this._escape(title?.trim() || "Протікання води")}</h2>
         </div>
       </div>
@@ -2274,6 +2319,7 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
   }
 
   _updateCardDynamic({ all, has }) {
+    this._updateSensorListIcons({ all, has });
     for (const button of this.shadowRoot.querySelectorAll(".leak-list-status")) {
       const { entity, label } = button.dataset;
       if (!all && !has(entity)) continue;
@@ -2289,14 +2335,14 @@ class HomeLeakListCard extends HomeDeviceStandaloneCard {
 
 if (!customElements.get("home-leak-list-card"))
   customElements.define("home-leak-list-card", HomeLeakListCard);
-class HomeRoomsCard extends HomeDeviceStandaloneCard {
+class HomeRoomsCard extends HomeNamedSensorListCard {
   static get cardType() {
     return "rooms";
   }
 
   static getConfigForm() {
     return homeRepeatableCardForm("rooms", "Кімнати", {
-      name: { label: "Назва кімнати", required: true, selector: { text: {} } },
+      name: HOME_SENSOR_LIST_NAME_FIELD,
       icon: { label: "Іконка", selector: { icon: {} } },
       temperature_entity: { label: "Температура", selector: { entity: { domain: ["sensor"] } } },
       humidity_entity: { label: "Вологість", selector: { entity: { domain: ["sensor"] } } },
@@ -2311,7 +2357,7 @@ class HomeRoomsCard extends HomeDeviceStandaloneCard {
       rooms: rooms.map(room => this._validatedConfig(
         room,
         ["temperature_entity", "humidity_entity"],
-        ["name", "icon"],
+        ["icon"],
       )),
     });
   }
@@ -2350,9 +2396,11 @@ class HomeRoomsCard extends HomeDeviceStandaloneCard {
   _content() {
     const { rooms, title } = this._config;
     const rows = rooms.map(room => {
-      const name = room.name?.trim() || "Кімната";
+      const entity = room.temperature_entity || room.humidity_entity;
+      const name = this._sensorListName(entity, room.name, "Кімната");
+      const icon = room.icon ? `<ha-icon icon="${this._escape(room.icon)}" aria-hidden="true"></ha-icon>` : this._sensorListIcon(entity, "mdi:home-outline");
       return `<div class="sensor-list-row" role="listitem">
-        <span class="sensor-list-name"><ha-icon icon="${this._escape(room.icon || "mdi:home-outline")}" aria-hidden="true"></ha-icon>${this._escape(name)}</span>
+        <span class="sensor-list-name">${icon}${this._escape(name)}</span>
         ${this._roomReadingButton(room.temperature_entity, "temperature", name)}
         ${this._roomReadingButton(room.humidity_entity, "humidity", name)}
       </div>`;
@@ -2371,6 +2419,7 @@ class HomeRoomsCard extends HomeDeviceStandaloneCard {
   }
 
   _updateCardDynamic({ all, has }) {
+    this._updateSensorListIcons({ all, has });
     for (const button of this.shadowRoot.querySelectorAll("[data-rooms-metric]")) {
       const { entity, roomsMetric, label } = button.dataset;
       if (!all && !has(entity)) continue;
