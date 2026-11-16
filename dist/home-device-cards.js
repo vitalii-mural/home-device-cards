@@ -722,6 +722,49 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
   .single-card .sensor-status{font-size:13px}
   .single-card .sensor-extra{flex-wrap:wrap;gap:4px}
 }
+.single-card .rooms-list {
+  --rooms-columns: minmax(0, 1fr) minmax(73px, 19%) minmax(61px, 16%);
+  padding:12px;
+  border-radius:17px;
+  background:var(--k-card);
+  color:var(--k-text);
+}
+.single-card .rooms-list h2 {margin:0 0 8px;font-size:16px}
+.single-card .rooms-row {
+  display:grid;
+  grid-template-columns:var(--rooms-columns);
+  align-items:center;
+  gap:4px;
+  min-height:47px;
+  border-bottom:1px solid var(--k-line);
+}
+.single-card .rooms-row:last-child {border-bottom:0}
+.single-card .rooms-heading {min-height:27px;font-size:11px;text-align:end;color:var(--k-muted)}
+.single-card .rooms-name {display:flex;align-items:center;gap:7px;min-width:0;overflow-wrap:anywhere}
+.single-card .rooms-name ha-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 25px;
+  height:25px;
+  border-radius:8px;
+  background:var(--k-accent-bg);
+  color:var(--k-accent);
+  --mdc-icon-size:14px;
+}
+.single-card .rooms-reading {
+  min-width:0;
+  min-height:44px;
+  padding:0 2px;
+  background:transparent;
+  text-align:end;
+  color:inherit;
+  font-size:14px;
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;
+}
+.single-card .rooms-temperature {font-weight:600}
+.single-card .rooms-humidity {color:var(--k-cool)}
+.single-card .rooms-reading:focus-visible {outline-offset:-2px;border-radius:5px}
 @container device-card (max-width:230px){
   .single-card .room-sensor-card{--room-side-width:43px;padding:9px 10px;border-radius:16px}
   .single-card .room-header{gap:5px}
@@ -847,6 +890,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     battery_entity: null,
     linkquality_entity: null,
   },
+  rooms: { rooms: [] },
   room: {
     room_temperature_entity: null,
     humidity_entity: null,
@@ -967,6 +1011,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї', 'sensor'],
     ['linkquality_entity', 'Якість зв’язку Zigbee (LQI)', 'sensor'],
   ],
+  rooms: [],
   room: [
     ['room_temperature_entity', 'Температура кімнати', 'sensor'],
     ['humidity_entity', 'Вологість кімнати', 'sensor'],
@@ -1043,6 +1088,7 @@ const HOME_DEVICE_CARD_META = {
   air: ['home-air-card', 'Кондиціонер', 'Картка керування кондиціонером.'],
   leak: ['home-leak-card', 'Датчик протікання', 'Стан датчика води й заряд батареї.'],
   door: ['home-door-card', 'Датчик дверей', 'Стан дверей, вібрація та заряд батареї.'],
+  rooms: ['home-rooms-card', 'Кімнати', 'Список температури та вологості по кімнатах.'],
   room: ['home-room-card', 'Температура й вологість', 'Показує температуру, вологість і заряд батареї датчика.'],
   socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
@@ -2649,6 +2695,117 @@ class HomeDoorCard extends HomeSensorStatusCard {
 
 if (!customElements.get('home-leak-card')) customElements.define('home-leak-card', HomeLeakCard);
 if (!customElements.get('home-door-card')) customElements.define('home-door-card', HomeDoorCard);
+class HomeRoomsCard extends HomeDeviceStandaloneCard {
+  static get cardType() {
+    return "rooms";
+  }
+
+  static getConfigForm() {
+    return {
+      schema: [
+        { name: "title", selector: { text: {} } },
+        {
+          name: "rooms",
+          selector: {
+            object: {
+              multiple: true,
+              label_field: "name",
+              fields: {
+                name: { label: "Назва кімнати", required: true, selector: { text: {} } },
+                icon: { label: "Іконка", selector: { icon: {} } },
+                temperature_entity: {
+                  label: "Температура",
+                  selector: { entity: { domain: ["sensor"] } },
+                },
+                humidity_entity: {
+                  label: "Вологість",
+                  selector: { entity: { domain: ["sensor"] } },
+                },
+              },
+            },
+          },
+        },
+      ],
+      computeLabel: ({ name }) => name === "title" ? "Назва картки" : "Кімнати",
+    };
+  }
+
+  setConfig(config) {
+    const rooms = config?.rooms ?? [];
+    if (!Array.isArray(rooms)) throw new Error('Configuration option "rooms" must be a list.');
+    super.setConfig({
+      ...this._validatedConfig(config, [], ["title"]),
+      rooms: rooms.map(room => this._validatedConfig(
+        room,
+        ["temperature_entity", "humidity_entity"],
+        ["name", "icon"],
+      )),
+    });
+  }
+
+  getCardSize() {
+    return 1 + (this._config?.rooms.length ?? 0);
+  }
+
+  getGridOptions() {
+    return { columns: 12, rows: "auto", min_columns: 6 };
+  }
+
+  _entityIds() {
+    return (this._config?.rooms ?? [])
+      .flatMap(({ temperature_entity, humidity_entity }) => [temperature_entity, humidity_entity])
+      .filter(Boolean);
+  }
+
+  _roomReading(entity, metric) {
+    const temperature = metric === "temperature";
+    const state = this._state(entity);
+    const value = this._value(entity);
+    const unit = state?.attributes?.unit_of_measurement || (temperature ? "°C" : "%");
+    return value === null ? "—" : this._format(value, temperature ? 1 : 0) + (unit === "%" ? "" : " ") + unit;
+  }
+
+  _roomReadingButton(entity, metric, room) {
+    const id = this._escape(entity);
+    const label = this._escape((metric === "temperature" ? "Температура" : "Вологість") + " · " + room);
+    const reading = this._escape(this._roomReading(entity, metric));
+    return `<button type="button" class="rooms-reading rooms-${metric}" data-rooms-metric="${metric}"
+      data-action="more" data-entity="${id}" aria-label="${label}: ${reading}" data-label="${label}"
+      ${this._disabled(!this._state(entity))}>${reading}</button>`;
+  }
+
+  _content() {
+    const { rooms, title } = this._config;
+    const rows = rooms.map(room => {
+      const name = room.name?.trim() || "Кімната";
+      return `<div class="rooms-row" role="listitem">
+        <span class="rooms-name"><ha-icon icon="${this._escape(room.icon || "mdi:home-outline")}" aria-hidden="true"></ha-icon>${this._escape(name)}</span>
+        ${this._roomReadingButton(room.temperature_entity, "temperature", name)}
+        ${this._roomReadingButton(room.humidity_entity, "humidity", name)}
+      </div>`;
+    }).join("");
+    return `<article class="rooms-list">
+      <h2>${this._escape(title?.trim() || "Кімнати")}</h2>
+      ${rows ? `<div class="rooms-row rooms-heading" aria-hidden="true">
+        <span></span><span>Температура</span><span>Вологість</span>
+      </div><div role="list">${rows}</div>` : '<p class="secondary">Додай кімнати в редакторі картки.</p>'}
+    </article>`;
+  }
+
+  _updateCardDynamic({ all, has }) {
+    for (const button of this.shadowRoot.querySelectorAll("[data-rooms-metric]")) {
+      const { entity, roomsMetric, label } = button.dataset;
+      if (!all && !has(entity)) continue;
+      const reading = this._roomReading(entity, roomsMetric);
+      if (button.textContent !== reading) button.textContent = reading;
+      button.setAttribute("aria-label", `${label}: ${reading}`);
+      button.disabled = !this._state(entity);
+    }
+  }
+}
+
+if (!customElements.get("home-rooms-card"))
+  customElements.define("home-rooms-card", HomeRoomsCard);
 class HomeRoomCard extends HomeDeviceStandaloneCard {
   constructor() {
     super();

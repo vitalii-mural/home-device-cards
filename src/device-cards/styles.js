@@ -195,6 +195,49 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
   .single-card .sensor-status{font-size:13px}
   .single-card .sensor-extra{flex-wrap:wrap;gap:4px}
 }
+.single-card .rooms-list {
+  --rooms-columns: minmax(0, 1fr) minmax(73px, 19%) minmax(61px, 16%);
+  padding:12px;
+  border-radius:17px;
+  background:var(--k-card);
+  color:var(--k-text);
+}
+.single-card .rooms-list h2 {margin:0 0 8px;font-size:16px}
+.single-card .rooms-row {
+  display:grid;
+  grid-template-columns:var(--rooms-columns);
+  align-items:center;
+  gap:4px;
+  min-height:47px;
+  border-bottom:1px solid var(--k-line);
+}
+.single-card .rooms-row:last-child {border-bottom:0}
+.single-card .rooms-heading {min-height:27px;font-size:11px;text-align:end;color:var(--k-muted)}
+.single-card .rooms-name {display:flex;align-items:center;gap:7px;min-width:0;overflow-wrap:anywhere}
+.single-card .rooms-name ha-icon {
+  display:grid;
+  place-items:center;
+  flex:0 0 25px;
+  height:25px;
+  border-radius:8px;
+  background:var(--k-accent-bg);
+  color:var(--k-accent);
+  --mdc-icon-size:14px;
+}
+.single-card .rooms-reading {
+  min-width:0;
+  min-height:44px;
+  padding:0 2px;
+  background:transparent;
+  text-align:end;
+  color:inherit;
+  font-size:14px;
+  font-variant-numeric:tabular-nums;
+  overflow-wrap:anywhere;
+}
+.single-card .rooms-temperature {font-weight:600}
+.single-card .rooms-humidity {color:var(--k-cool)}
+.single-card .rooms-reading:focus-visible {outline-offset:-2px;border-radius:5px}
 @container device-card (max-width:230px){
   .single-card .room-sensor-card{--room-side-width:43px;padding:9px 10px;border-radius:16px}
   .single-card .room-header{gap:5px}

@@ -193,6 +193,59 @@ test("two room cards align without overflow on a phone", async () => {
   }
 });
 
+test("rooms list uses Home Assistant's repeatable editor and opens each reading", async () => {
+  const page = await openFixture(320);
+  try {
+    const config = await page.evaluate(() => {
+      const RoomList = customElements.get("home-rooms-card");
+      const selector = RoomList.getConfigForm().schema.find(field => field.name === "rooms").selector.object;
+      const card = document.createElement("home-rooms-card");
+      const { hass } = window.fixture;
+      const bedroom = { name: "Спальня", icon: "mdi:bed", temperature_entity: "sensor.example_12", humidity_entity: "sensor.example_13" };
+      const rooms = [bedroom, ...Array.from({ length: 12 }, (_, index) => ({
+        name: `Кімната ${index + 2}`,
+        temperature_entity: `sensor.room_${index + 2}_temperature`,
+      }))];
+      card.setConfig({ ...RoomList.getStubConfig(), rooms });
+      card.hass = hass;
+      card.addEventListener("hass-more-info", event => {
+        (window.roomHistoryEvents ??= []).push(event.detail.entityId);
+      });
+      document.querySelector("main").prepend(card);
+      return { multiple: selector.multiple, fields: Object.keys(selector.fields), grid: card.getGridOptions() };
+    });
+    assert.deepEqual(config, {
+      multiple: true,
+      fields: ["name", "icon", "temperature_entity", "humidity_entity"],
+      grid: { columns: 12, rows: "auto", min_columns: 6 },
+    });
+    const card = page.locator("home-rooms-card");
+    const rows = card.getByRole("listitem");
+    assert.equal(await rows.count(), 13);
+    const bedroom = rows.first();
+    const temperature = bedroom.getByRole("button", {name: /^Температура/});
+    const humidity = bedroom.getByRole("button", {name: /^Вологість/});
+    assert.ok(await temperature.isEnabled());
+    assert.ok(await humidity.isEnabled());
+    assert.equal(await rows.last().getByRole("button", {name: /^Вологість/}).innerText(), "—");
+    assert.equal(await rows.last().getByRole("button", {name: /^Вологість/}).isEnabled(), false);
+    assert.equal(await card.locator(".rooms-list").evaluate(panel => panel.scrollWidth <= panel.clientWidth), true);
+    await temperature.click();
+    await humidity.click();
+    assert.deepEqual(await page.evaluate(() => window.roomHistoryEvents), ["sensor.example_12", "sensor.example_13"]);
+    await card.evaluate(element => {
+      const { hass } = window.fixture;
+      hass.states["sensor.example_12"] = { state: "18.4", attributes: { unit_of_measurement: "°C" } };
+      hass.states["sensor.example_13"].state = "unavailable";
+      element.hass = { ...hass };
+    });
+    assert.equal(await temperature.innerText(), "18,4 °C");
+    assert.equal(await humidity.innerText(), "—");
+    assert.ok(await humidity.isEnabled(), "history remains available for an unavailable reading");
+  } finally {
+    await page.close();
+  }
+});
 test("room temperature and humidity graphs open their native entity details", async () => {
   const page = await openFixture(900);
   try {
