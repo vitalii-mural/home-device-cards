@@ -142,6 +142,57 @@ test("sensor cards reflect leak, door, vibration, battery and unavailable states
   } finally { await page.close(); }
 });
 
+test("two room cards align without overflow on a phone", async () => {
+  const page = await openFixture(320);
+  try {
+    await page.evaluate(() => {
+      const main = document.querySelector("main");
+      const kitchen = main.querySelector("home-room-card");
+      const balcony = document.createElement("home-room-card");
+      const grid = document.createElement("div");
+      grid.style.cssText = "display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px";
+      kitchen.setConfig({ ...kitchen._config, title: "Кухня" });
+      balcony.setConfig({ ...kitchen._config, title: "Балкон" });
+      balcony.hass = window.fixture.hass;
+      main.prepend(grid);
+      grid.append(kitchen, balcony);
+    });
+    for (const width of [320, 360, 390, 430]) {
+      await page.setViewportSize({ width, height: 1500 });
+      const cards = await page.locator("home-room-card").evaluateAll(elements => elements.map(card => {
+        const panel = card.shadowRoot.querySelector(".room-sensor-card");
+        const bounds = panel.getBoundingClientRect();
+        const rect = selector => panel.querySelector(selector).getBoundingClientRect();
+        const title = panel.querySelector("h2");
+        const temperature = rect('[data-room-more="temperature"]');
+        const humidity = rect('[data-room-more="humidity"]');
+        return {
+          top: bounds.top, left: bounds.left, right: bounds.right, height: bounds.height,
+          fits: panel.scrollWidth <= panel.clientWidth && title.scrollWidth <= title.clientWidth,
+          columnsAlign: rect(".room-battery").left === humidity.left &&
+            rect(".room-icon").left === temperature.left && temperature.top === humidity.top,
+          graphsHidden: getComputedStyle(panel.querySelector(".room-history")).display === "none",
+        };
+      }));
+      const [left, right] = cards;
+      assert.equal(left.top, right.top);
+      assert.equal(left.height, right.height);
+      assert.ok(left.right <= right.left && right.right <= width);
+      assert.ok(cards.every(card => card.fits && card.columnsAlign && card.graphsHidden), JSON.stringify({ width, cards }));
+    }
+    const humidity = page.locator("home-room-card").first().locator('[data-room-more="humidity"]');
+    await humidity.evaluate(button => {
+      button.getRootNode().host.addEventListener("hass-more-info", event => {
+        window.moreInfoEvent = event.detail.entityId;
+      }, { once: true });
+    });
+    await humidity.click();
+    assert.equal(await page.evaluate(() => window.moreInfoEvent), "sensor.example_13");
+  } finally {
+    await page.close();
+  }
+});
+
 test("room temperature and humidity graphs open their native entity details", async () => {
   const page = await openFixture(900);
   try {

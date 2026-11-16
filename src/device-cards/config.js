@@ -26,14 +26,12 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     leak_entity: null,
     battery_entity: null,
     linkquality_entity: null,
-    location: '',
   },
   door: {
     door_entity: null,
     vibration_entity: null,
     battery_entity: null,
     linkquality_entity: null,
-    location: '',
   },
   room: {
     room_temperature_entity: null,
@@ -148,14 +146,12 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['leak_entity', 'Датчик протікання', 'binary_sensor'],
     ['battery_entity', 'Заряд батареї', 'sensor'],
     ['linkquality_entity', 'Якість зв’язку Zigbee (LQI)', 'sensor'],
-    ['location', 'Місце', 'text'],
   ],
   door: [
     ['door_entity', 'Датчик дверей', 'binary_sensor'],
     ['vibration_entity', 'Датчик вібрації', 'binary_sensor'],
     ['battery_entity', 'Заряд батареї', 'sensor'],
     ['linkquality_entity', 'Якість зв’язку Zigbee (LQI)', 'sensor'],
-    ['location', 'Місце', 'text'],
   ],
   room: [
     ['room_temperature_entity', 'Температура кімнати', 'sensor'],
@@ -229,12 +225,12 @@ const HOME_DEVICE_CARD_FIELDS = {
 };
 
 const HOME_DEVICE_CARD_META = {
-  boiler: ['home-boiler-card', 'Бойлер', 'Картка керування бойлером Midea.'],
+  boiler: ['home-boiler-card', 'Керування нагрівом води', 'Керує водонагрівачем і показує температуру води та стан нагріву.'],
   air: ['home-air-card', 'Кондиціонер', 'Картка керування кондиціонером.'],
   leak: ['home-leak-card', 'Датчик протікання', 'Стан датчика води й заряд батареї.'],
   door: ['home-door-card', 'Датчик дверей', 'Стан дверей, вібрація та заряд батареї.'],
-  room: ['home-room-card', 'Кімната', 'Температура та вологість датчика.'],
-  socket: ['home-socket-card', 'Розетка', 'Керування та електричні показники розетки.'],
+  room: ['home-room-card', 'Температура й вологість', 'Показує температуру, вологість і заряд батареї датчика.'],
+  socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
   energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],

@@ -195,6 +195,29 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
   .single-card .sensor-status{font-size:13px}
   .single-card .sensor-extra{flex-wrap:wrap;gap:4px}
 }
+@container device-card (max-width:230px){
+  .single-card .room-sensor-card{--room-side-width:43px;padding:9px 10px;border-radius:16px}
+  .single-card .room-header{gap:5px}
+  .single-card .room-icon{width:24px;height:24px;flex-basis:24px;border-radius:9px;background:var(--k-accent-bg)}
+  .single-card .room-icon svg{width:15px;height:15px}
+  .single-card .room-sensor-card h2{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .single-card .room-heading .secondary,.single-card .room-reading .secondary,.single-card .room-history{display:none}
+  .single-card .room-battery{flex:0 0 var(--room-side-width);justify-content:space-between;gap:3px;font-size:11px;font-variant-numeric:tabular-nums}
+  .single-card .room-battery svg,.single-card .room-reading+.room-reading .secondary svg{width:12px;height:12px}
+  .single-card .room-readings{grid-template-columns:minmax(0,1fr) var(--room-side-width);gap:4px;margin-top:2px}
+  .single-card .room-reading:first-child,.single-card .room-reading+.room-reading{border:0;padding:0}
+  .single-card .room-reading+.room-reading{position:relative}
+  .single-card .room-reading+.room-reading .secondary{position:absolute;top:50%;left:0;display:block;width:12px;height:12px;margin:0;transform:translateY(-50%);font-size:0;pointer-events:none}
+  .single-card .room-reading .metric-value{align-items:center;min-height:44px;margin:0;font-size:clamp(17px,12cqi,23px);font-weight:500;letter-spacing:-.5px;white-space:nowrap}
+  .single-card .room-reading .metric-value small{font-size:11px;margin-left:2px}
+  .single-card .room-reading+.room-reading .metric-value{justify-content:flex-end;padding-left:12px;color:var(--k-muted);font-size:12px;letter-spacing:0}
+  .single-card .room-reading+.room-reading .metric-value small{font-size:inherit;margin:0}
+}
+@container device-card (max-width:148px){
+  .single-card .room-sensor-card{padding-inline:7px}
+  .single-card .room-header{gap:4px}
+  .single-card .room-icon{width:22px;height:22px;flex-basis:22px}
+}
 `;
 
 const HOME_DEVICE_CONTAINER_STYLE = `

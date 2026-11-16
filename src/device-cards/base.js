@@ -84,6 +84,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     const stringKeys = [
       "energy_path",
       "battery_path",
+      ...(kind === "leak" || kind === "door" ? ["location"] : []),
       ...fields.filter(([, , type]) => type === "text").map(([name]) => name),
     ];
     const normalized = this._validatedConfig(config, entityKeys, stringKeys);
