@@ -225,8 +225,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 }
 .single-card .sensor-list [role=list] .sensor-list-row:last-child {border-bottom:0}
 .single-card .sensor-list-heading {min-height:47px;padding-bottom:6px}
-.single-card .sensor-list-heading > span {padding-inline-end:2px;text-align:end;font-size:11px;color:var(--k-muted)}
-.single-card .leak-list .sensor-list-title {grid-column:1 / -1}
+.single-card .sensor-list-heading .sensor-list-title {grid-column:1 / -1}
 @container device-card (max-width:340px){
   .single-card .sensor-list-title h2 {font-size:14px}
   .single-card .sensor-list-icon {flex-basis:25px;height:25px;border-radius:8px}

@@ -266,7 +266,7 @@ test("leak list renders dynamic statuses and opens the selected sensor history",
       const selector = Card.getConfigForm().schema.find(field => field.name === "sensors").selector.object;
       return { multiple: selector.multiple, fields: Object.keys(selector.fields), filter: selector.fields.entity.selector.entity.filter };
     });
-    assert.deepEqual(options, { multiple: true, fields: ["name", "entity"], filter: { domain: "binary_sensor", device_class: "moisture" } });
+    assert.deepEqual(options, { multiple: true, fields: ["name", "icon", "entity"], filter: { domain: "binary_sensor", device_class: "moisture" } });
     const card = page.locator("home-leak-list-card");
     const rows = card.getByRole("listitem");
     assert.equal(await card.getByRole("heading").innerText(), "Протікання води");
@@ -333,16 +333,29 @@ test("sensor lists use native area and composed names with entity icons", async 
       card.hass = { ...hass, areas: { ...hass.areas, bathroom: { name: "Ванна кімната" } } };
     });
     assert.deepEqual(await leaks.locator(".sensor-list-name").allInnerTexts(), ["Ванна кімната · Біля пралки", "Своя назва"]);
-    await leaks.evaluate(card => {
+    await page.evaluate(() => {
       const hass = window.fixture.hass;
-      card.hass = {
+      const climate = document.querySelector("home-rooms-card");
+      const leaks = document.querySelector("home-leak-list-card");
+      const temperature = "sensor.example_12";
+      const water = "binary_sensor.example_51";
+      const next = {
         ...hass,
-        entities: { "binary_sensor.example_51": { device_id: "washer" } },
-        devices: { washer: { area_id: "bathroom" } },
-        areas: { ...hass.areas, bathroom: { name: "Ванна", icon: "mdi:bathtub-outline" } },
+        entities: { [temperature]: { area_id: "bedroom", device_id: "shared" }, [water]: { device_id: "shared" } },
+        devices: { shared: { area_id: "bathroom" } },
+        areas: {
+          bedroom: { name: "Спальня", icon: "mdi:bed" },
+          bathroom: { name: "Ванна", icon: "mdi:bathtub-outline" },
+        },
       };
+      climate.setConfig({ rooms: [{ temperature_entity: temperature }, { temperature_entity: temperature, icon: "mdi:home" }] });
+      leaks.setConfig({ sensors: [{ entity: water }, { entity: water, icon: "mdi:washing-machine" }] });
+      climate.hass = leaks.hass = next;
     });
-    assert.equal(await leaks.locator(".sensor-list-name ha-icon").first().getAttribute("icon"), "mdi:bathtub-outline");
+    assert.deepEqual(await climate.locator(".sensor-list-name ha-icon").evaluateAll(icons =>
+      icons.map(icon => icon.getAttribute("icon"))), ["mdi:bed", "mdi:home"]);
+    assert.deepEqual(await leaks.locator(".sensor-list-name ha-icon").evaluateAll(icons =>
+      icons.map(icon => icon.getAttribute("icon"))), ["mdi:bathtub-outline", "mdi:washing-machine"]);
   } finally {
     await page.close();
   }
@@ -376,9 +389,8 @@ test("sensor list headers align and separate from the first row at phone widths"
             nameLeft: rect(row.firstElementChild).left - headerBox.left,
             rowHeight: rect(row).height,
             headerIconHeight: rect(title.firstElementChild).height,
-            columnLabelsAligned: [...header.querySelectorAll(":scope > span")].every((label, index) =>
-              rect(label).right === rect(row.querySelectorAll("button")[index]).right &&
-              rect(label).top >= headerBox.top && rect(label).bottom <= headerBox.bottom),
+            titleFillsRow: rect(title).right === headerBox.right,
+            onlyTitle: header.childElementCount === 1,
             fits: panel.scrollWidth <= panel.clientWidth,
           };
         }));
@@ -386,7 +398,7 @@ test("sensor list headers align and separate from the first row at phone widths"
       assert.deepEqual(bounds[0], bounds[1]);
       assert.equal(bounds[0].border, "1px");
       assert.equal(bounds[0].titleLeft, bounds[0].nameLeft);
-      assert.ok(bounds[0].columnLabelsAligned && bounds[0].fits);
+      assert.ok(bounds[0].titleFillsRow && bounds[0].onlyTitle && bounds[0].fits);
     }
   } finally {
     await page.close();

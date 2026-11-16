@@ -416,7 +416,11 @@ class HomeNamedSensorListCard extends HomeDeviceStandaloneCard {
     return this._hass.formatEntityName?.(state, name) || state.attributes?.friendly_name || fallback;
   }
 
-  _sensorListIcon(entity, fallback) {
+  _sensorListIcon(entity, fallback, configuredIcon) {
+    const entry = this._hass.entities?.[entity];
+    const areaId = entry?.area_id ?? this._hass.devices?.[entry?.device_id]?.area_id;
+    const icon = configuredIcon || this._hass.areas?.[areaId]?.icon;
+    if (icon) return `<ha-icon icon="${this._escape(icon)}" aria-hidden="true"></ha-icon>`;
     return `<ha-state-icon data-list-entity="${this._escape(entity)}"
       data-list-fallback="${fallback}" aria-hidden="true"></ha-state-icon>`;
   }

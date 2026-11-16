@@ -61,7 +61,7 @@ class HomeRoomsCard extends HomeNamedSensorListCard {
     const rows = rooms.map(room => {
       const entity = room.temperature_entity || room.humidity_entity;
       const name = this._sensorListName(entity, room.name, "Кімната");
-      const icon = room.icon ? `<ha-icon icon="${this._escape(room.icon)}" aria-hidden="true"></ha-icon>` : this._sensorListIcon(entity, "mdi:home-outline");
+      const icon = this._sensorListIcon(entity, "mdi:home-outline", room.icon);
       return `<div class="sensor-list-row" role="listitem">
         <span class="sensor-list-name">${icon}${this._escape(name)}</span>
         ${this._roomReadingButton(room.temperature_entity, "temperature", name)}
@@ -74,8 +74,6 @@ class HomeRoomsCard extends HomeNamedSensorListCard {
           <span class="sensor-list-icon">${this._lucideIcon("thermometer")}</span>
           <h2>${this._escape(title?.trim() || "Мікроклімат")}</h2>
         </div>
-        <span aria-hidden="true">Температура</span>
-        <span aria-hidden="true">Вологість</span>
       </div>
       ${rows ? `<div role="list">${rows}</div>` : '<p class="secondary">Додай кімнати в редакторі картки.</p>'}
     </article>`;

@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.13 — bundled base and standalone cards.
+// Home Device Cards v1.1.14 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -752,8 +752,7 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 }
 .single-card .sensor-list [role=list] .sensor-list-row:last-child {border-bottom:0}
 .single-card .sensor-list-heading {min-height:47px;padding-bottom:6px}
-.single-card .sensor-list-heading > span {padding-inline-end:2px;text-align:end;font-size:11px;color:var(--k-muted)}
-.single-card .leak-list .sensor-list-title {grid-column:1 / -1}
+.single-card .sensor-list-heading .sensor-list-title {grid-column:1 / -1}
 @container device-card (max-width:340px){
   .single-card .sensor-list-title h2 {font-size:14px}
   .single-card .sensor-list-icon {flex-basis:25px;height:25px;border-radius:8px}
@@ -1551,7 +1550,11 @@ class HomeNamedSensorListCard extends HomeDeviceStandaloneCard {
     return this._hass.formatEntityName?.(state, name) || state.attributes?.friendly_name || fallback;
   }
 
-  _sensorListIcon(entity, fallback) {
+  _sensorListIcon(entity, fallback, configuredIcon) {
+    const entry = this._hass.entities?.[entity];
+    const areaId = entry?.area_id ?? this._hass.devices?.[entry?.device_id]?.area_id;
+    const icon = configuredIcon || this._hass.areas?.[areaId]?.icon;
+    if (icon) return `<ha-icon icon="${this._escape(icon)}" aria-hidden="true"></ha-icon>`;
     return `<ha-state-icon data-list-entity="${this._escape(entity)}"
       data-list-fallback="${fallback}" aria-hidden="true"></ha-state-icon>`;
   }
@@ -2791,6 +2794,7 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
   static getConfigForm() {
     return homeRepeatableCardForm("sensors", "Датчики", {
       name: HOME_SENSOR_LIST_NAME_FIELD,
+      icon: { label: "Іконка", selector: { icon: {} } },
       entity: {
         label: "Датчик протікання",
         required: true,
@@ -2804,7 +2808,7 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
     if (!Array.isArray(sensors)) throw new Error('Configuration option "sensors" must be a list.');
     super.setConfig({
       ...this._validatedConfig(config, [], ["title"]),
-      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"])),
+      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"], ["icon"])),
     });
   }
 
@@ -2822,13 +2826,8 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
 
   _content() {
     const { sensors, title } = this._config;
-    const rows = sensors.map(({ name, entity }) => {
-      const entry = this._hass.entities?.[entity];
-      const area = entry?.area_id ?? this._hass.devices?.[entry?.device_id]?.area_id;
-      const areaIcon = this._hass.areas?.[area]?.icon;
-      const icon = areaIcon
-        ? `<ha-icon icon="${this._escape(areaIcon)}" aria-hidden="true"></ha-icon>`
-        : this._sensorListIcon(entity, "mdi:water-outline");
+    const rows = sensors.map(({ name, entity, icon: configuredIcon }) => {
+      const icon = this._sensorListIcon(entity, "mdi:water-outline", configuredIcon);
       const label = this._sensorListName(entity, name, "Датчик протікання");
       const state = this._state(entity);
       const status = homeBinarySensorStatus(state, "Виявлено воду", "Сухо");
@@ -2930,7 +2929,7 @@ class HomeRoomsCard extends HomeNamedSensorListCard {
     const rows = rooms.map(room => {
       const entity = room.temperature_entity || room.humidity_entity;
       const name = this._sensorListName(entity, room.name, "Кімната");
-      const icon = room.icon ? `<ha-icon icon="${this._escape(room.icon)}" aria-hidden="true"></ha-icon>` : this._sensorListIcon(entity, "mdi:home-outline");
+      const icon = this._sensorListIcon(entity, "mdi:home-outline", room.icon);
       return `<div class="sensor-list-row" role="listitem">
         <span class="sensor-list-name">${icon}${this._escape(name)}</span>
         ${this._roomReadingButton(room.temperature_entity, "temperature", name)}
@@ -2943,8 +2942,6 @@ class HomeRoomsCard extends HomeNamedSensorListCard {
           <span class="sensor-list-icon">${this._lucideIcon("thermometer")}</span>
           <h2>${this._escape(title?.trim() || "Мікроклімат")}</h2>
         </div>
-        <span aria-hidden="true">Температура</span>
-        <span aria-hidden="true">Вологість</span>
       </div>
       ${rows ? `<div role="list">${rows}</div>` : '<p class="secondary">Додай кімнати в редакторі картки.</p>'}
     </article>`;

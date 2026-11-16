@@ -6,6 +6,7 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
   static getConfigForm() {
     return homeRepeatableCardForm("sensors", "Датчики", {
       name: HOME_SENSOR_LIST_NAME_FIELD,
+      icon: { label: "Іконка", selector: { icon: {} } },
       entity: {
         label: "Датчик протікання",
         required: true,
@@ -19,7 +20,7 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
     if (!Array.isArray(sensors)) throw new Error('Configuration option "sensors" must be a list.');
     super.setConfig({
       ...this._validatedConfig(config, [], ["title"]),
-      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"])),
+      sensors: sensors.map(sensor => this._validatedConfig(sensor, ["entity"], ["icon"])),
     });
   }
 
@@ -37,13 +38,8 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
 
   _content() {
     const { sensors, title } = this._config;
-    const rows = sensors.map(({ name, entity }) => {
-      const entry = this._hass.entities?.[entity];
-      const area = entry?.area_id ?? this._hass.devices?.[entry?.device_id]?.area_id;
-      const areaIcon = this._hass.areas?.[area]?.icon;
-      const icon = areaIcon
-        ? `<ha-icon icon="${this._escape(areaIcon)}" aria-hidden="true"></ha-icon>`
-        : this._sensorListIcon(entity, "mdi:water-outline");
+    const rows = sensors.map(({ name, entity, icon: configuredIcon }) => {
+      const icon = this._sensorListIcon(entity, "mdi:water-outline", configuredIcon);
       const label = this._sensorListName(entity, name, "Датчик протікання");
       const state = this._state(entity);
       const status = homeBinarySensorStatus(state, "Виявлено воду", "Сухо");
