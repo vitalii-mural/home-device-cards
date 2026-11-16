@@ -67,32 +67,41 @@ test("sensor cards reflect leak, door, vibration, battery and unavailable states
     const leak = page.locator("home-leak-card"), door = page.locator("home-door-card");
     const text = (card, selector) => card.locator(selector).innerText();
     assert.equal(await text(leak, ".sensor-status"), "Сухо");
+    assert.equal(await text(leak, "h2"), "Туалет");
     assert.equal(await text(door, ".sensor-status"), "Зачинено");
     assert.equal(await text(door, '[data-live="vibration-value"]'), "Без вібрації");
     assert.equal(await text(leak, '[data-live="sensor-battery-value"]'), "65");
+    assert.equal(await text(leak, '[data-live="sensor-lqi-value"]'), "142");
+    assert.equal(await door.locator('[data-live="sensor-lqi"]').count(), 0);
     assert.ok(await leak.locator(".sensor-status-card").textContent().then(value => value.includes("Туалет")));
     await page.evaluate(() => {
       const { hass, refresh } = window.fixture;
       hass.states["binary_sensor.example_51"].state = "on";
       hass.states["binary_sensor.example_53"].state = "on";
       hass.states["binary_sensor.example_54"].state = "on";
+      hass.states["sensor.example_linkquality"].state = "0";
       refresh();
     });
     assert.equal(await text(leak, ".sensor-status"), "Виявлено воду");
+    assert.equal(await text(leak, "h2"), "Туалет");
     assert.equal(await text(door, ".sensor-status"), "Відчинено");
     assert.equal(await text(door, '[data-live="vibration-value"]'), "Вібрація");
+    assert.equal(await text(leak, '[data-live="sensor-lqi-value"]'), "0");
+    assert.ok(await leak.locator('[data-live="sensor-lqi"]').isVisible());
     const leakActiveBackground = await leak.locator(".sensor-icon").evaluate(el => getComputedStyle(el).backgroundColor);
     assert.notEqual(leakActiveBackground, "rgba(0, 0, 0, 0)");
     await page.evaluate(() => {
       const { hass, refresh } = window.fixture;
       hass.states["binary_sensor.example_51"].state = "unavailable";
       hass.states["binary_sensor.example_54"].state = "unknown";
+      hass.states["sensor.example_linkquality"].state = "unavailable";
       hass.themes = { darkMode: true };
       refresh();
     });
     assert.equal(await text(leak, ".sensor-status"), "Немає зв’язку");
     assert.equal(await text(door, '[data-live="vibration-value"]'), "Стан невідомий");
     assert.equal(await leak.locator('[data-live="sensor-battery"]').evaluate(el => el.hidden), false);
+    assert.equal(await leak.locator('[data-live="sensor-lqi"]').isVisible(), false);
     assert.equal(await leak.evaluate(el => el.hasAttribute("dark")), true);
     const darkAppearance = await leak.locator(".sensor-status-card").evaluate(el => ({ background: getComputedStyle(el).backgroundColor, padding: getComputedStyle(el).padding }));
     assert.equal(darkAppearance.background, "rgb(36, 40, 43)");
@@ -100,19 +109,35 @@ test("sensor cards reflect leak, door, vibration, battery and unavailable states
     await page.evaluate(() => {
       const { hass, refresh } = window.fixture;
       hass.states["binary_sensor.example_54"].state = "unavailable";
+      hass.states["sensor.example_linkquality"].state = "255";
       refresh();
     });
     assert.equal(await door.locator('[data-live="vibration-missing"]').innerText(), "Вібрація: немає зв’язку");
+    assert.equal(await text(leak, '[data-live="sensor-lqi-value"]'), "255");
     await page.evaluate(() => {
       const { hass, refresh } = window.fixture;
       hass.states["binary_sensor.example_51"].state = "unknown";
       refresh();
     });
     assert.equal(await text(leak, ".sensor-status"), "Стан невідомий");
-    for (const width of [360, 900]) {
+    await page.evaluate(() => {
+      const main = document.querySelector("main");
+      const grid = document.createElement("div");
+      grid.style.cssText = "display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px";
+      main.prepend(grid);
+      grid.append(main.querySelector("home-leak-card"), main.querySelector("home-door-card"));
+    });
+    for (const width of [320, 360, 900]) {
       await page.setViewportSize({ width, height: 1500 });
-      const bounds = await page.evaluate(() => [...document.querySelectorAll("home-leak-card,home-door-card")].map(card => ({width:card.getBoundingClientRect().width,scroll:card.shadowRoot.querySelector(".sensor-status-card").scrollWidth,client:card.shadowRoot.querySelector(".sensor-status-card").clientWidth})));
-      assert.ok(bounds.every(item => item.scroll <= item.client && item.width <= width));
+      const bounds = await page.evaluate(() => [...document.querySelectorAll("home-leak-card,home-door-card")].map(card => {
+        const panel = card.shadowRoot.querySelector(".sensor-status-card");
+        const { left, right, top } = panel.getBoundingClientRect();
+        const heading = panel.querySelector(".sensor-heading");
+        return { left, right, top, scroll: panel.scrollWidth, client: panel.clientWidth, headingFits: heading.scrollWidth <= heading.clientWidth };
+      }));
+      assert.equal(bounds[0].top, bounds[1].top);
+      assert.ok(bounds[0].right <= bounds[1].left && bounds[1].right <= width);
+      assert.ok(bounds.every(item => item.scroll <= item.client && item.headingFits));
     }
   } finally { await page.close(); }
 });

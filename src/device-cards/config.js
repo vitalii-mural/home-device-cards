@@ -25,12 +25,14 @@ const HOME_DEVICE_CARD_DEFAULTS = {
   leak: {
     leak_entity: null,
     battery_entity: null,
+    linkquality_entity: null,
     location: '',
   },
   door: {
     door_entity: null,
     vibration_entity: null,
     battery_entity: null,
+    linkquality_entity: null,
     location: '',
   },
   room: {
@@ -145,12 +147,14 @@ const HOME_DEVICE_CARD_FIELDS = {
   leak: [
     ['leak_entity', 'Датчик протікання', 'binary_sensor'],
     ['battery_entity', 'Заряд батареї', 'sensor'],
+    ['linkquality_entity', 'Якість зв’язку Zigbee (LQI)', 'sensor'],
     ['location', 'Місце', 'text'],
   ],
   door: [
     ['door_entity', 'Датчик дверей', 'binary_sensor'],
     ['vibration_entity', 'Датчик вібрації', 'binary_sensor'],
     ['battery_entity', 'Заряд батареї', 'sensor'],
+    ['linkquality_entity', 'Якість зв’язку Zigbee (LQI)', 'sensor'],
     ['location', 'Місце', 'text'],
   ],
   room: [

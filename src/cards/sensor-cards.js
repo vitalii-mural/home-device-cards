@@ -1,10 +1,19 @@
 class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
-  _battery() {
-    const id = this._config.battery_entity, state = this._state(id);
-    const visible = !!id && this._available(id);
-    const value = visible ? this._number(state.state) : null;
-    this._setHidden('[data-live="sensor-battery"]', !visible);
-    this._setText('[data-live="sensor-battery-value"]', value === null ? '—' : this._format(value, 0));
+  _sensorName() {
+    const [entity, fallback] = this.constructor.cardTitle;
+    return this._displayName(entity, this._config.title, fallback);
+  }
+
+  _updateCardName() {
+    const name = this._sensorName();
+    this._setText('[data-live="sensor-name"]', name);
+    this._setHidden('.sensor-heading p', name === this._config.location);
+  }
+
+  _reading(key, name) {
+    const value = this._value(this._config[key]);
+    this._setHidden(`[data-live="sensor-${name}"]`, value === null);
+    this._setText(`[data-live="sensor-${name}-value"]`, value === null ? '' : this._format(value, 0));
   }
 
   _status(entity) {
@@ -21,7 +30,8 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
     this._setText('[data-live="sensor-status"]', primary.label);
     const article = this.shadowRoot.querySelector('[data-live-panel="sensor"]');
     article?.setAttribute('data-state', primary.state);
-    this._battery();
+    this._reading('battery_entity', 'battery');
+    this._reading('linkquality_entity', 'lqi');
     if (this._cardType !== 'door') return;
 
     const vibrationId = this._config.vibration_entity,
@@ -34,19 +44,33 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
 
   _content() {
     const leak = this._cardType === 'leak',
-      title = this._displayName(leak ? 'leak_entity' : 'door_entity', this._config.title, leak ? 'Протікання води' : 'Вхідні двері'),
+      title = this._sensorName(),
       location = this._config.location,
       state = this._status(leak ? 'leak_entity' : 'door_entity'),
       icon = leak ? 'droplets' : 'door-closed',
-      vibrationId = this._config.vibration_entity,
-      batteryId = this._config.battery_entity;
-    const battery = batteryId ? `<span class="sensor-battery" data-live="sensor-battery"><span class="sensor-inline-icon">${this._lucideIcon('battery-medium')}</span><span data-live="sensor-battery-value"></span>%</span>` : '';
+      vibrationId = this._config.vibration_entity;
+    const battery = this._config.battery_entity ? `<span class="sensor-reading" data-live="sensor-battery" hidden><span class="sensor-inline-icon">${this._lucideIcon('battery-medium')}</span><span class="sensor-reading-label">Заряд батареї </span><span><span data-live="sensor-battery-value"></span>%</span></span>` : '';
+    const lqi = this._config.linkquality_entity ? `<span class="sensor-reading" data-live="sensor-lqi" hidden><span class="sensor-inline-icon">${this._lucideIcon('chart-no-axes-column')}</span><span class="sensor-reading-label">Якість зв’язку Zigbee (LQI) </span><span data-live="sensor-lqi-value"></span></span>` : '';
     const vibration = !leak && vibrationId ? `<div class="sensor-extra" data-live="vibration" hidden><span class="sensor-caption">${this._lucideIcon('activity')}Вібрація</span><span class="sensor-extra-value" data-live="vibration-value"></span></div><div class="sensor-extra sensor-extra-missing" data-live="vibration-missing" hidden>Вібрація: немає зв’язку</div>` : '';
-    return `<article class="sensor-status-card" data-live-panel="sensor" data-kind="${leak ? 'leak' : 'door'}" data-state="${state.state}"><header class="sensor-header"><span class="sensor-icon">${this._lucideIcon(icon)}</span><div class="sensor-heading"><h2>${this._escape(title)}</h2>${location ? `<span class="sensor-location">${this._escape(location)}</span>` : ''}</div>${battery}</header><div class="sensor-main"><span class="sensor-dot" aria-hidden="true"></span><span class="sensor-status" data-live="sensor-status" aria-live="polite">${this._escape(state.label)}</span></div>${vibration}</article>`;
+    return `<article class="sensor-status-card" data-live-panel="sensor" data-kind="${leak ? 'leak' : 'door'}" data-state="${state.state}">
+      <header class="sensor-header">
+        <span class="sensor-icon">${this._lucideIcon(icon)}</span>
+        <div class="sensor-meta">${battery}${lqi}</div>
+      </header>
+      <div class="sensor-heading">
+        ${location
+          ? `<h2>${this._escape(location)}</h2><p data-live="sensor-name"${location === title ? ' hidden' : ''}>${this._escape(title)}</p>`
+          : `<h2 data-live="sensor-name">${this._escape(title)}</h2>`}
+      </div>
+      <div class="sensor-main"><span class="sensor-dot" aria-hidden="true"></span><span class="sensor-status" data-live="sensor-status" aria-live="polite">${this._escape(state.label)}</span></div>
+      ${vibration}
+    </article>`;
   }
 
   _updateCardDynamic({ all, has }) {
-    const entities = this._cardType === 'leak' ? ['leak_entity', 'battery_entity'] : ['door_entity', 'vibration_entity', 'battery_entity'];
+    const entities = this._cardType === 'leak'
+      ? ['leak_entity', 'battery_entity', 'linkquality_entity']
+      : ['door_entity', 'vibration_entity', 'battery_entity', 'linkquality_entity'];
     if (all || entities.some(key => has(this._config[key]))) this._updateStatus();
   }
 }

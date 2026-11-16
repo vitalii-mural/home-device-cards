@@ -416,19 +416,19 @@ test("registers the dashboard and standalone card types", async () => {
   }
 });
 
-test("sensor cards expose only explicit state, battery, location, and vibration bindings", async () => {
+test("sensor cards expose explicit state, battery, LQI, location, and vibration bindings", async () => {
   const { registry } = await loadCards();
   const Leak = registry.get("home-leak-card"), Door = registry.get("home-door-card");
   assert.deepEqual(JSON.parse(JSON.stringify(Leak.getStubConfig())), {
-    type: "custom:home-leak-card", leak_entity: null, battery_entity: null, location: "",
+    type: "custom:home-leak-card", leak_entity: null, battery_entity: null, linkquality_entity: null, location: "",
   });
   assert.deepEqual(JSON.parse(JSON.stringify(Door.getStubConfig())), {
     type: "custom:home-door-card", door_entity: null, vibration_entity: null,
-    battery_entity: null, location: "",
+    battery_entity: null, linkquality_entity: null, location: "",
   });
   const doorFields = Door.getConfigForm().schema;
   assert.deepEqual(Array.from(doorFields.filter(field => field.name !== "title"), field => field.name),
-    ["door_entity", "vibration_entity", "battery_entity", "location"]);
+    ["door_entity", "vibration_entity", "battery_entity", "linkquality_entity", "location"]);
   assert.equal(doorFields.find(field => field.name === "door_entity").required, false);
   assert.equal(doorFields.find(field => field.name === "vibration_entity").required, false);
   assert.equal(new Leak().getCardSize(), 3);
@@ -436,6 +436,7 @@ test("sensor cards expose only explicit state, battery, location, and vibration 
   for (const [Card, key] of [[Leak, "leak_entity"], [Door, "door_entity"]]) {
     const card = new Card();
     assert.throws(() => card.setConfig({ [key]: 42 }), /entity ID or empty/);
+    assert.throws(() => card.setConfig({ linkquality_entity: 42 }), /entity ID or empty/);
     assert.throws(() => card.setConfig({ location: 42 }), /must be text/);
   }
 });
