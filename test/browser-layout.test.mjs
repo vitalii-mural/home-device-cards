@@ -362,6 +362,58 @@ test("sensor lists use native area and composed names with entity icons", async 
 });
 
 
+test("native sensor list editor summarizes rows without saving editor-only labels", async () => {
+  const page = await openFixture(390);
+  try {
+    const result = await page.evaluate(async () => {
+      if (!customElements.get("ha-form")) customElements.define("ha-form", class extends HTMLElement {});
+      const { hass } = window.fixture;
+      const temperature = "sensor.example_12";
+      const humidity = "sensor.example_13";
+      const leak = "binary_sensor.example_51";
+      const areas = { [temperature]: "Спальня", [humidity]: "Балкон", [leak]: "Ванна" };
+      const context = {
+        ...hass,
+        formatEntityName(state, name) {
+          const id = Object.keys(areas).find(key => hass.states[key] === state);
+          return (Array.isArray(name) ? name : [name]).map(part =>
+            part.type === "area" ? areas[id] : part.text).join(" · ");
+        },
+      };
+      const climate = await customElements.get("home-rooms-card").getConfigElement();
+      const leaks = await customElements.get("home-leak-list-card").getConfigElement();
+      climate.hass = leaks.hass = context;
+      const roomConfig = {
+        type: "custom:home-rooms-card",
+        grid_options: { columns: 12 },
+        rooms: [
+          { temperature_entity: temperature, name: { type: "area" } },
+          { humidity_entity: humidity },
+          { temperature_entity: temperature, name: "Власна назва" },
+        ],
+      };
+      const leakConfig = { sensors: [{ entity: leak, name: [{ type: "area" }, { type: "text", text: "Біля пралки" }] }] };
+      climate.setConfig(roomConfig);
+      leaks.setConfig(leakConfig);
+      const labelKey = climate.schema[1].selector.object.label_field;
+      const climateLabels = climate.data.rooms.map(row => row[labelKey]);
+      const leakLabels = leaks.data.sensors.map(row => row[labelKey]);
+      let saved;
+      climate.addEventListener("config-changed", event => { saved = event.detail.config; });
+      climate.dispatchEvent(new CustomEvent("value-changed", {
+        detail: { value: { ...climate.data, rooms: [...climate.data.rooms].reverse() } },
+      }));
+      return { climateLabels, leakLabels, saved, expected: { ...roomConfig, rooms: [...roomConfig.rooms].reverse() } };
+    });
+    assert.deepEqual(result.climateLabels, ["Спальня", "Балкон", "Власна назва"]);
+    assert.deepEqual(result.leakLabels, ["Ванна · Біля пралки"]);
+    assert.deepEqual(result.saved, result.expected);
+  } finally {
+    await page.close();
+  }
+});
+
+
 test("sensor list headers align and separate from the first row at phone widths", async () => {
   const page = await openFixture(320);
   try {

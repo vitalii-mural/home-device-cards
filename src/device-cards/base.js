@@ -394,6 +394,66 @@ const HOME_SENSOR_LIST_NAME_FIELD = {
 };
 
 class HomeNamedSensorListCard extends HomeDeviceStandaloneCard {
+  static async getConfigElement() {
+    if (!customElements.get("ha-form")) {
+      try {
+        const helpers = await window.loadCardHelpers?.();
+        const card = await helpers?.createCardElement({ type: "entities", entities: [] });
+        await card?.constructor.getConfigElement?.();
+      } catch {
+        // Home Assistant can still build a visual editor from getConfigForm().
+      }
+    }
+    if (!customElements.get("ha-form")) return undefined;
+
+    const { schema: [title, list], computeLabel } = this.getConfigForm();
+    const { label_field: entityField, description_field: alternateEntityField, ...object } = list.selector.object;
+    const summary = "_home_device_cards_summary";
+    const form = document.createElement("ha-form");
+    form.schema = [
+      title,
+      {
+        ...list,
+        selector: {
+          object: {
+            ...object,
+            label_field: summary,
+            fields: { ...object.fields, [summary]: { selector: { constant: { value: "" } } } },
+          },
+        },
+      },
+    ];
+    form.computeLabel = computeLabel;
+
+    form.setConfig = config => {
+      const rows = config[list.name];
+      form.data = Array.isArray(rows) ? {
+        ...config,
+        [list.name]: rows.map(row => {
+          const entity = row[entityField] || (alternateEntityField && row[alternateEntityField]);
+          const fallback = entity || (list.name === "rooms" ? "Кімната" : "Датчик протікання");
+          return { ...row, [summary]: this._resolveSensorListName(form.hass, entity, row.name, fallback) };
+        }),
+      } : config;
+    };
+
+    form.addEventListener("value-changed", event => {
+      event.stopPropagation();
+      const config = { ...event.detail.value };
+      if (Array.isArray(config[list.name])) {
+        config[list.name] = config[list.name].map(row => {
+          const value = { ...row };
+          delete value[summary];
+          return value;
+        });
+      }
+      form.setConfig(config);
+      form.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
+    });
+    return form;
+  }
+
+
   set hass(hass) {
     const previous = this._hass;
     if (this._rendered && previous && (
@@ -407,13 +467,17 @@ class HomeNamedSensorListCard extends HomeDeviceStandaloneCard {
     super.hass = hass;
   }
 
-  _sensorListName(entity, value, fallback) {
+  static _resolveSensorListName(hass, entity, value, fallback) {
     if (typeof value === "string" && value.trim()) return value.trim();
 
-    const state = this._state(entity);
+    const state = hass?.states?.[entity];
     if (!state) return fallback;
     const name = value && typeof value === "object" ? value : { type: "area" };
-    return this._hass.formatEntityName?.(state, name) || state.attributes?.friendly_name || fallback;
+    return hass.formatEntityName?.(state, name) || state.attributes?.friendly_name || fallback;
+  }
+
+  _sensorListName(entity, value, fallback) {
+    return this.constructor._resolveSensorListName(this._hass, entity, value, fallback);
   }
 
   _sensorListIcon(entity, fallback, configuredIcon) {
