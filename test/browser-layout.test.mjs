@@ -220,6 +220,7 @@ test("rooms list uses Home Assistant's repeatable editor and opens each reading"
       grid: { columns: 12, rows: "auto", min_columns: 6 },
     });
     const card = page.locator("home-rooms-card");
+    assert.equal(await card.getByRole("heading").innerText(), "Мікроклімат");
     const rows = card.getByRole("listitem");
     assert.equal(await rows.count(), 13);
     const bedroom = rows.first();
@@ -229,7 +230,7 @@ test("rooms list uses Home Assistant's repeatable editor and opens each reading"
     assert.ok(await humidity.isEnabled());
     assert.equal(await rows.last().getByRole("button", {name: /^Вологість/}).innerText(), "—");
     assert.equal(await rows.last().getByRole("button", {name: /^Вологість/}).isEnabled(), false);
-    assert.equal(await card.locator(".rooms-list").evaluate(panel => panel.scrollWidth <= panel.clientWidth), true);
+    assert.equal(await card.locator(".sensor-list").evaluate(panel => panel.scrollWidth <= panel.clientWidth), true);
     await temperature.click();
     await humidity.click();
     assert.deepEqual(await page.evaluate(() => window.roomHistoryEvents), ["sensor.example_12", "sensor.example_13"]);
@@ -246,6 +247,93 @@ test("rooms list uses Home Assistant's repeatable editor and opens each reading"
     await page.close();
   }
 });
+test("leak list renders dynamic statuses and opens the selected sensor history", async () => {
+  const page = await openFixture(320);
+  try {
+    const options = await page.evaluate(() => {
+      const Card = customElements.get("home-leak-list-card");
+      const card = document.createElement("home-leak-list-card");
+      const { hass } = window.fixture;
+      const ids = ["binary_sensor.example_51", "binary_sensor.test_wet", "binary_sensor.test_unavailable", "binary_sensor.test_unknown"];
+      hass.states[ids[1]] = { state: "on" };
+      hass.states[ids[2]] = { state: "unavailable" };
+      hass.states[ids[3]] = { state: "unknown" };
+      const sensors = ["Туалет", "Біля пральної машини", "Ванна", "Комора"].map((name, index) => ({ name, entity: ids[index] }));
+      card.setConfig({ ...Card.getStubConfig(), sensors });
+      card.hass = hass;
+      card.addEventListener("hass-more-info", event => { window.leakHistoryEntity = event.detail.entityId; });
+      document.querySelector("main").prepend(card);
+      const selector = Card.getConfigForm().schema.find(field => field.name === "sensors").selector.object;
+      return { multiple: selector.multiple, fields: Object.keys(selector.fields), filter: selector.fields.entity.selector.entity.filter };
+    });
+    assert.deepEqual(options, { multiple: true, fields: ["name", "entity"], filter: { domain: "binary_sensor", device_class: "moisture" } });
+    const card = page.locator("home-leak-list-card");
+    const rows = card.getByRole("listitem");
+    assert.equal(await card.getByRole("heading").innerText(), "Протікання води");
+    assert.deepEqual(await rows.getByRole("button").allInnerTexts(),
+      ["Сухо", "Виявлено воду", "Немає зв’язку", "Стан невідомий"]);
+    assert.equal(await card.locator(".sensor-list").evaluate(panel => panel.scrollWidth <= panel.clientWidth), true);
+    const water = card.getByRole("button", { name: /^Біля пральної машини/ });
+    assert.equal(await water.getAttribute("data-state"), "active");
+    await water.click();
+    assert.equal(await page.evaluate(() => window.leakHistoryEntity), "binary_sensor.test_wet");
+    await card.evaluate(element => {
+      const { hass } = window.fixture;
+      hass.states["binary_sensor.test_wet"].state = "off";
+      element.hass = { ...hass };
+    });
+    assert.equal(await water.innerText(), "Сухо");
+    assert.equal(await water.getAttribute("data-state"), "normal");
+  } finally {
+    await page.close();
+  }
+});
+
+test("sensor list headers align and separate from the first row at phone widths", async () => {
+  const page = await openFixture(320);
+  try {
+    await page.evaluate(() => {
+      const climate = document.createElement("home-rooms-card");
+      climate.setConfig({ rooms: [{ name: "Спальня", temperature_entity: "sensor.example_12", humidity_entity: "sensor.example_13" }] });
+      const leaks = document.createElement("home-leak-list-card");
+      leaks.setConfig({ sensors: [{ name: "Біля пралки", entity: "binary_sensor.example_51" }] });
+      climate.hass = leaks.hass = window.fixture.hass;
+      document.querySelector("main").prepend(climate, leaks);
+    });
+    for (const width of [320, 390]) {
+      await page.setViewportSize({ width, height: 1500 });
+      const bounds = await page.locator("home-rooms-card .sensor-list, home-leak-list-card .sensor-list").evaluateAll(panels =>
+        panels.map(panel => {
+          const header = panel.querySelector(".sensor-list-heading");
+          const title = header.querySelector(".sensor-list-title");
+          const row = panel.querySelector("[role=listitem]");
+          const rect = element => element.getBoundingClientRect();
+          const headerBox = rect(header);
+          return {
+            height: headerBox.height,
+            border: getComputedStyle(header).borderBottomWidth,
+            titleLeft: rect(title).left - headerBox.left,
+            nameLeft: rect(row.firstElementChild).left - headerBox.left,
+            rowHeight: rect(row).height,
+            headerIconHeight: rect(title.firstElementChild).height,
+            columnLabelsAligned: [...header.querySelectorAll(":scope > span")].every((label, index) =>
+              rect(label).right === rect(row.querySelectorAll("button")[index]).right &&
+              rect(label).top >= headerBox.top && rect(label).bottom <= headerBox.bottom),
+            fits: panel.scrollWidth <= panel.clientWidth,
+          };
+        }));
+      assert.equal(bounds.length, 2);
+      assert.deepEqual(bounds[0], bounds[1]);
+      assert.equal(bounds[0].border, "1px");
+      assert.equal(bounds[0].titleLeft, bounds[0].nameLeft);
+      assert.ok(bounds[0].columnLabelsAligned && bounds[0].fits);
+    }
+  } finally {
+    await page.close();
+  }
+});
+
+
 test("room temperature and humidity graphs open their native entity details", async () => {
   const page = await openFixture(900);
   try {

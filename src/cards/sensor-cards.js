@@ -1,3 +1,11 @@
+function homeBinarySensorStatus(state, activeLabel, normalLabel) {
+  if (!state || state.state === "unavailable") return { label: "Немає зв’язку", state: "offline" };
+  if (state.state === "unknown") return { label: "Стан невідомий", state: "offline" };
+  if (state.state === "on") return { label: activeLabel, state: "active" };
+  if (state.state === "off") return { label: normalLabel, state: "normal" };
+  return { label: "Невідомий стан", state: "offline" };
+}
+
 class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
   _sensorName() {
     const [entity, fallback] = this.constructor.cardTitle;
@@ -17,12 +25,12 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
   }
 
   _status(entity) {
-    const state = this._state(this._config[entity]);
-    if (!state || state.state === 'unavailable') return { label: 'Немає зв’язку', state: 'offline' };
-    if (state.state === 'unknown') return { label: 'Стан невідомий', state: 'offline' };
-    if (state.state === 'on') return { label: this._cardType === 'leak' ? 'Виявлено воду' : 'Відчинено', state: 'active' };
-    if (state.state === 'off') return { label: this._cardType === 'leak' ? 'Сухо' : 'Зачинено', state: 'normal' };
-    return { label: 'Невідомий стан', state: 'offline' };
+    const leak = this._cardType === 'leak';
+    return homeBinarySensorStatus(
+      this._state(this._config[entity]),
+      leak ? 'Виявлено воду' : 'Відчинено',
+      leak ? 'Сухо' : 'Зачинено',
+    );
   }
 
   _updateStatus() {

@@ -33,6 +33,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     battery_entity: null,
     linkquality_entity: null,
   },
+  leak_list: { sensors: [] },
   rooms: { rooms: [] },
   room: {
     room_temperature_entity: null,
@@ -154,6 +155,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї', 'sensor'],
     ['linkquality_entity', 'Якість зв’язку Zigbee (LQI)', 'sensor'],
   ],
+  leak_list: [],
   rooms: [],
   room: [
     ['room_temperature_entity', 'Температура кімнати', 'sensor'],
@@ -226,12 +228,23 @@ const HOME_DEVICE_CARD_FIELDS = {
   ],
 };
 
+function homeRepeatableCardForm(name, label, fields) {
+  return {
+    schema: [
+      { name: "title", selector: { text: {} } },
+      { name, selector: { object: { multiple: true, label_field: "name", fields } } },
+    ],
+    computeLabel: field => field.name === "title" ? "Назва картки" : label,
+  };
+}
+
 const HOME_DEVICE_CARD_META = {
   boiler: ['home-boiler-card', 'Керування нагрівом води', 'Керує водонагрівачем і показує температуру води та стан нагріву.'],
   air: ['home-air-card', 'Кондиціонер', 'Картка керування кондиціонером.'],
   leak: ['home-leak-card', 'Датчик протікання', 'Стан датчика води й заряд батареї.'],
   door: ['home-door-card', 'Датчик дверей', 'Стан дверей, вібрація та заряд батареї.'],
-  rooms: ['home-rooms-card', 'Кімнати', 'Список температури та вологості по кімнатах.'],
+  leak_list: ['home-leak-list-card', 'Протікання води', 'Список станів датчиків протікання.'],
+  rooms: ['home-rooms-card', 'Мікроклімат', 'Список температури та вологості по кімнатах.'],
   room: ['home-room-card', 'Температура й вологість', 'Показує температуру, вологість і заряд батареї датчика.'],
   socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
