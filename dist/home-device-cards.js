@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.12 — bundled base and standalone cards.
+// Home Device Cards v1.1.13 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -1108,11 +1108,11 @@ const HOME_DEVICE_CARD_FIELDS = {
   ],
 };
 
-function homeRepeatableCardForm(name, label, fields) {
+function homeRepeatableCardForm(name, label, fields, summary) {
   return {
     schema: [
       { name: "title", selector: { text: {} } },
-      { name, selector: { object: { multiple: true, label_field: "name", fields } } },
+      { name, selector: { object: { multiple: true, ...summary, fields } } },
     ],
     computeLabel: field => field.name === "title" ? "Назва картки" : label,
   };
@@ -2796,7 +2796,7 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
         required: true,
         selector: { entity: { filter: { domain: "binary_sensor", device_class: "moisture" } } },
       },
-    });
+    }, { label_field: "entity" });
   }
 
   setConfig(config) {
@@ -2823,11 +2823,17 @@ class HomeLeakListCard extends HomeNamedSensorListCard {
   _content() {
     const { sensors, title } = this._config;
     const rows = sensors.map(({ name, entity }) => {
+      const entry = this._hass.entities?.[entity];
+      const area = entry?.area_id ?? this._hass.devices?.[entry?.device_id]?.area_id;
+      const areaIcon = this._hass.areas?.[area]?.icon;
+      const icon = areaIcon
+        ? `<ha-icon icon="${this._escape(areaIcon)}" aria-hidden="true"></ha-icon>`
+        : this._sensorListIcon(entity, "mdi:water-outline");
       const label = this._sensorListName(entity, name, "Датчик протікання");
       const state = this._state(entity);
       const status = homeBinarySensorStatus(state, "Виявлено воду", "Сухо");
       return `<div class="sensor-list-row" role="listitem">
-        <span class="sensor-list-name">${this._sensorListIcon(entity, "mdi:water-outline")}${this._escape(label)}</span>
+        <span class="sensor-list-name">${icon}${this._escape(label)}</span>
         <button type="button" class="sensor-list-reading leak-list-status" data-action="more"
           data-entity="${this._escape(entity)}" data-state="${status.state}" data-label="${this._escape(label)}"
           aria-label="${this._escape(label)}: ${status.label}" ${this._disabled(!state)}>${status.label}</button>
@@ -2872,7 +2878,7 @@ class HomeRoomsCard extends HomeNamedSensorListCard {
       icon: { label: "Іконка", selector: { icon: {} } },
       temperature_entity: { label: "Температура", selector: { entity: { domain: ["sensor"] } } },
       humidity_entity: { label: "Вологість", selector: { entity: { domain: ["sensor"] } } },
-    });
+    }, { label_field: "temperature_entity", description_field: "humidity_entity" });
   }
 
   setConfig(config) {

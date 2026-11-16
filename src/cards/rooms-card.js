@@ -9,7 +9,7 @@ class HomeRoomsCard extends HomeNamedSensorListCard {
       icon: { label: "Іконка", selector: { icon: {} } },
       temperature_entity: { label: "Температура", selector: { entity: { domain: ["sensor"] } } },
       humidity_entity: { label: "Вологість", selector: { entity: { domain: ["sensor"] } } },
-    });
+    }, { label_field: "temperature_entity", description_field: "humidity_entity" });
   }
 
   setConfig(config) {

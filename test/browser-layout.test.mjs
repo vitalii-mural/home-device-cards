@@ -313,11 +313,16 @@ test("sensor lists use native area and composed names with entity icons", async 
       ] });
       climate.hass = leaks.hass = hass;
       document.querySelector("main").prepend(climate, leaks);
-      return [climate, leaks].map(card => card.constructor.getConfigForm().schema[1].selector.object.fields.name.selector);
+      return [climate, leaks].map(card => {
+        const { label_field, description_field, fields } = card.constructor.getConfigForm().schema[1].selector.object;
+        return { label_field, description_field, selector: fields.name.selector };
+      });
     });
-    assert.deepEqual(nameFields, [0, 1].map(() => ({
-      entity_name: { allow_custom: true, default_name: { type: "area" } },
-    })));
+    const selector = { entity_name: { allow_custom: true, default_name: { type: "area" } } };
+    assert.deepEqual(nameFields, [
+      { label_field: "temperature_entity", description_field: "humidity_entity", selector },
+      { label_field: "entity", description_field: undefined, selector },
+    ]);
     const climate = page.locator("home-rooms-card");
     const leaks = page.locator("home-leak-list-card");
     assert.deepEqual(await climate.locator(".sensor-list-name").allInnerTexts(), ["Спальня"]);
@@ -328,6 +333,16 @@ test("sensor lists use native area and composed names with entity icons", async 
       card.hass = { ...hass, areas: { ...hass.areas, bathroom: { name: "Ванна кімната" } } };
     });
     assert.deepEqual(await leaks.locator(".sensor-list-name").allInnerTexts(), ["Ванна кімната · Біля пралки", "Своя назва"]);
+    await leaks.evaluate(card => {
+      const hass = window.fixture.hass;
+      card.hass = {
+        ...hass,
+        entities: { "binary_sensor.example_51": { device_id: "washer" } },
+        devices: { washer: { area_id: "bathroom" } },
+        areas: { ...hass.areas, bathroom: { name: "Ванна", icon: "mdi:bathtub-outline" } },
+      };
+    });
+    assert.equal(await leaks.locator(".sensor-list-name ha-icon").first().getAttribute("icon"), "mdi:bathtub-outline");
   } finally {
     await page.close();
   }

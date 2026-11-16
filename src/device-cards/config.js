@@ -228,11 +228,11 @@ const HOME_DEVICE_CARD_FIELDS = {
   ],
 };
 
-function homeRepeatableCardForm(name, label, fields) {
+function homeRepeatableCardForm(name, label, fields, summary) {
   return {
     schema: [
       { name: "title", selector: { text: {} } },
-      { name, selector: { object: { multiple: true, label_field: "name", fields } } },
+      { name, selector: { object: { multiple: true, ...summary, fields } } },
     ],
     computeLabel: field => field.name === "title" ? "Назва картки" : label,
   };
