@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.15 — bundled base and standalone cards.
+// Home Device Cards v1.1.16 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -528,6 +528,43 @@ customElements.whenDefined('home-dashboard').then(() => {
 const HOME_DEVICE_CARD_STYLE = ":host{display:block;color-scheme:light;--k-bg:#f4f3ef;--k-card:#fff;--k-text:#26322e;--k-muted:#64716b;--k-line:#e5e8e1;--k-soft:#edf0eb;--k-warm:#a46135;--k-warm-bg:#fbefe3;--k-cool:#386d7b;--k-cool-bg:#e9f2f3;--k-accent:#55765f;--k-accent-bg:#e8f0e7;--k-danger:#a53333}\n:host([dark]){color-scheme:dark;--k-bg:#171a1c;--k-card:#24282b;--k-text:#eef1ed;--k-muted:#abb6af;--k-line:#363d3b;--k-soft:#303735;--k-warm:#efb185;--k-warm-bg:#3b3028;--k-cool:#94cbd3;--k-cool-bg:#26373c;--k-accent:#a5cfaf;--k-accent-bg:#2d3e32;--k-danger:#ffb4ab}\n*{box-sizing:border-box}ha-card{display:block;background:transparent;box-shadow:none;border:0;border-radius:0;color:var(--k-text);font-family:var(--primary-font-family,system-ui,sans-serif)}\n.screen{max-width:440px;width:100%;margin:0 auto;background:var(--k-bg);border-radius:28px;padding:24px 17px 12px;min-height:360px}\nheader{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 6px 19px}.eyebrow{font-size:11px;letter-spacing:2px;color:var(--k-muted)}h1{font-size:31px;line-height:1.2;letter-spacing:-1px;font-weight:500;margin:4px 0 0}h2{font-size:15px;line-height:1.4;font-weight:500;letter-spacing:-.2px;margin:0}h3{font-size:14px;font-weight:500;margin:0 0 12px}.header-icon{color:var(--k-accent);--mdc-icon-size:23px}\nmain{display:grid;gap:13px}.panel{padding:17px;border-radius:23px;background:var(--k-card)}.panel-top{display:flex;align-items:center;justify-content:space-between;gap:9px}.heading{display:flex;align-items:center;gap:10px;min-width:0}.device-icon{height:39px;width:39px;flex-shrink:0;border-radius:14px;display:grid;place-items:center;--mdc-icon-size:21px}.warm{background:var(--k-warm-bg);color:var(--k-warm)}.cool{background:var(--k-cool-bg);color:var(--k-cool)}.neutral{background:var(--k-soft);color:var(--k-muted)}\n.secondary{display:block;color:var(--k-muted);font-size:11px;line-height:1.5;margin-top:2px}.heating{color:var(--k-warm)}button,select{font:inherit;font-size:12px;color:inherit}button{border:0;cursor:pointer}button:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--k-accent);outline-offset:3px}button:disabled,select:disabled{cursor:default;opacity:.42}button[disabled] ha-icon{opacity:.7}.icon-button,.round{display:grid;place-items:center;width:44px;height:44px;min-width:44px;border-radius:50%;background:var(--k-soft);--mdc-icon-size:19px}.icon-button.active-warm{background:var(--k-warm-bg);color:var(--k-warm)}.icon-button.active-cool{background:var(--k-cool-bg);color:var(--k-cool)}\n.water-large{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:25px 1px 20px}.current{font-size:54px;line-height:1;letter-spacing:-2px;font-weight:400;white-space:nowrap;font-variant-numeric:tabular-nums}.degree{font-size:18px;letter-spacing:0;vertical-align:top;display:inline-block;margin:4px 0 0 3px}.setpoint{text-align:center}.adjust{display:flex;align-items:center;gap:9px;margin-top:8px}.adjust .round{width:40px;height:40px;min-width:40px}.target{font-size:20px;font-variant-numeric:tabular-nums;white-space:nowrap}.progress{height:6px;background:var(--k-soft);border-radius:5px;overflow:hidden}.progress>span{display:block;height:100%;background:var(--k-warm);border-radius:5px}.waiting.progress>span{background:var(--k-muted)}.time{display:flex;align-items:center;gap:6px;color:var(--k-muted);font-size:11px;margin-top:12px;--mdc-icon-size:14px}\n.features,.modes{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:4px;padding:4px;background:var(--k-soft);border-radius:14px;margin-top:14px}.feature,.mode{min-height:42px;border-radius:10px;font-size:11px;background:transparent;padding:6px 3px;white-space:nowrap}.feature[aria-pressed=true]{background:var(--k-card);color:var(--k-warm)}.mode{display:flex;align-items:center;justify-content:center;gap:4px;--mdc-icon-size:15px}.mode[aria-pressed=true]{background:var(--k-card);color:var(--k-cool)}\n.air-temperature{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:23px 11px;text-align:center}.air-value{font-size:43px;line-height:1;letter-spacing:-1.8px;font-variant-numeric:tabular-nums}.air-degree{font-size:17px;vertical-align:top}.fan{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;font-size:11px;color:var(--k-muted)}.fan-label{display:flex;align-items:center;gap:7px;--mdc-icon-size:16px}.fan select{max-width:145px;min-height:36px;background:transparent;border:0;border-radius:8px;padding:7px 6px;font-size:11px}.fan option{background:var(--k-card);color:var(--k-text)}\n.small-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.metric{position:relative;border-radius:21px;background:var(--k-card);padding:17px;min-width:0}.metric>ha-icon{position:absolute;right:14px;top:17px;color:var(--k-muted);--mdc-icon-size:17px}.metric-value{display:block;margin-top:10px;font-size:27px;font-variant-numeric:tabular-nums;letter-spacing:-.8px}.metric-value small{font-size:13px;letter-spacing:0;color:var(--k-muted)}.metric .secondary{padding-right:15px}.empty-caption{display:block;color:var(--k-muted);font-size:11px;margin-top:4px}\n.status-dot{width:7px;height:7px;border-radius:50%;background:var(--k-muted);margin-right:5px}.status-dot.online{background:var(--k-accent)}.river-values{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:18px}.river-value{font-size:29px;line-height:1.2;font-variant-numeric:tabular-nums}.river-value small{font-size:14px}.power-values{font-size:16px;margin-top:5px;font-variant-numeric:tabular-nums}.text-button{display:flex;align-items:center;justify-content:space-between;width:100%;padding:15px 0 0;color:var(--k-muted);background:transparent;font-size:11px;min-height:38px;--mdc-icon-size:16px}\n.links{display:grid;gap:8px}.link{display:flex;align-items:center;gap:12px;width:100%;padding:14px 17px;border-radius:18px;background:var(--k-card);text-align:left;color:var(--k-text);text-decoration:none;--mdc-icon-size:20px;min-height:67px}.link>ha-icon{flex-shrink:0;color:var(--k-muted)}.link .chevron{margin-left:auto;--mdc-icon-size:17px}.link strong{font-size:12px;font-weight:500}.link small{display:block;font-size:11px;font-weight:400;color:var(--k-muted);margin-top:3px}\nnav{display:flex;justify-content:space-around;gap:5px;border-top:1px solid var(--k-line);margin-top:17px;padding-top:12px}.nav-button{display:flex;flex-direction:column;align-items:center;gap:5px;background:transparent;color:var(--k-muted);border-radius:14px;padding:8px 17px;font-size:11px;min-width:75px;--mdc-icon-size:20px}.nav-button[aria-pressed=true]{background:var(--k-accent-bg);color:var(--k-accent)}\n.data-row{display:flex;justify-content:space-between;align-items:center;gap:15px;border-bottom:1px solid var(--k-line);padding:12px 0;font-size:12px;line-height:1.5}.data-row:last-child{border:0}.data-row>span:last-child{text-align:right;font-variant-numeric:tabular-nums}.subheading{font-size:11px;color:var(--k-muted);margin:6px 0 3px}.notice{font-size:12px;line-height:1.6;color:var(--k-muted);margin:0}.error{padding:12px 15px;border-radius:15px;background:var(--k-card);color:var(--k-danger);font-size:12px;line-height:1.5}.graph-slot{min-height:120px}.graph-slot>*{display:block}.button-row{display:flex;gap:8px;flex-wrap:wrap}.flat-button{background:var(--k-soft);border-radius:12px;min-height:44px;padding:10px 14px;font-size:12px}.wide-button{width:100%;text-align:left}.powered-note{font-size:11px;color:var(--k-muted);line-height:1.5}.screen [hidden]{display:none!important}\n\n@media(pointer:coarse){.feature,.mode,.fan select,.round,.adjust .round{min-height:44px}.adjust .round{min-width:40px;width:40px}}\n.screen[data-layout=desktop]{max-width:none;min-height:calc(100vh - 56px);padding:28px;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr;gap:22px;border-radius:0}\n.screen[data-layout=desktop] header{padding:0}.screen[data-layout=desktop] .header-icon{display:none}.desktop-caption{font-size:12px;color:var(--k-muted);margin:8px 0 0}\n.screen[data-layout=desktop] nav{grid-column:2;grid-row:1;margin:0;padding:0;border:0;align-self:center}.screen[data-layout=desktop] main{grid-column:1/-1;min-width:0;align-content:start}\n.desktop-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:'water air overview' 'energy energy energy';gap:16px;align-items:start}\n.desktop-water{grid-area:water}.desktop-air{grid-area:air}.desktop-overview{grid-area:overview;display:grid;gap:14px;min-width:0}.desktop-energy{grid-area:energy;min-width:0}.desktop-media{grid-area:media;min-width:0}\n.desktop-water>.panel,.desktop-air>.panel{min-height:300px}.desktop-board .panel{padding:20px}.desktop-board .current{font-size:52px}.desktop-board .water-large{margin-top:30px;margin-bottom:25px}.desktop-board .heading{gap:8px}.desktop-board h2{font-size:14px}.desktop-board .target{font-size:19px}.desktop-board .adjust{gap:6px}.desktop-board .adjust .round{width:34px;min-width:34px;height:38px}.desktop-board .metric{padding:15px}.desktop-board .metric .secondary{padding-right:14px}.desktop-board .metric-value{font-size:26px}\n.energy-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.power-now{font-size:20px;white-space:nowrap;font-variant-numeric:tabular-nums}.power-now small{font-size:11px;color:var(--k-muted)}.energy-stats{display:flex;gap:34px;margin:16px 0 10px}.energy-stats strong{display:block;font-size:24px;font-weight:400;margin-top:4px;font-variant-numeric:tabular-nums}.energy-stats strong small{font-size:11px;color:var(--k-muted)}.desktop-energy .graph-slot{min-height:180px}.desktop-energy .text-button{border-top:1px solid var(--k-line)}.desktop-media>.device-icon{margin-bottom:16px}.desktop-media .link{background:var(--k-soft);margin-top:22px;padding:12px}.desktop-media .notice{margin-top:14px}\n.screen[data-columns=two] .desktop-board{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-areas:'water air' 'overview overview' 'energy energy'}.screen[data-columns=two] .desktop-overview{grid-template-columns:1fr 1fr;align-items:stretch}.screen[data-columns=two] .desktop-overview>.small-grid{align-content:stretch}.screen[data-columns=two] .energy-heading{align-items:start;flex-direction:column}.screen[data-columns=two] .energy-stats{gap:16px;flex-wrap:wrap}.screen[data-columns=two]{padding:20px}";
 
 const HOME_DEVICE_FEEDBACK_STYLE = `
+.single-card .outage-card{padding:18px;border-radius:23px}
+.single-card .outage-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 14px}
+.single-card .outage-header h2{font-size:16px;font-weight:500}
+.single-card .outage-group{padding:6px 10px;border-radius:12px;background:var(--k-soft);font-size:16px;font-variant-numeric:tabular-nums}
+.single-card .outage-status{padding:12px 13px;border-radius:15px;background:var(--k-accent-bg);color:var(--k-accent);font-size:13px;font-weight:500}
+.single-card .outage-status[data-status=outage]{background:var(--k-warm-bg);color:var(--k-warm)}
+.single-card .outage-status[data-status=unknown]{background:var(--k-soft);color:var(--k-muted)}
+.single-card .outage-countdown{margin-top:6px;font-variant-numeric:tabular-nums}
+.single-card .outage-change{display:grid;grid-template-columns:1fr;gap:7px;margin-top:11px;padding:12px 13px;border-left:3px solid var(--k-warm);border-radius:13px;background:var(--k-warm-bg);color:var(--k-warm);font-size:13px}
+.single-card .outage-change-date{font-size:12px}
+.single-card .outage-comparison{display:grid;grid-template-columns:minmax(66px,auto) 1fr;gap:5px 9px;border-top:1px solid color-mix(in srgb,var(--k-warm) 24%,transparent);padding-top:8px;font-size:12px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.single-card .outage-change-label{color:var(--k-muted)}
+.single-card .outage-change-values{font-weight:500}
+.single-card .outage-source-warning{margin-top:10px;padding:10px 12px;border-radius:13px;background:var(--k-soft);color:var(--k-muted);font-size:11px;line-height:1.45}
+.single-card .outage-tabs{display:flex;gap:5px;margin:13px 0 9px;padding:4px;border-radius:12px;background:var(--k-soft)}
+.single-card .outage-tabs button{flex:1;min-height:38px;border-radius:9px;background:transparent;color:var(--k-muted);font-size:12px}
+.single-card .outage-tabs button[aria-selected=true]{background:var(--k-card);color:var(--k-text)}
+.single-card .outage-date{font-size:11px;color:var(--k-muted);margin:0 0 6px;text-transform:capitalize}
+.single-card .outage-ticks{display:flex;justify-content:space-between;margin-bottom:4px;color:var(--k-muted);font-size:11px;font-variant-numeric:tabular-nums}
+.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px;height:24px}
+.single-card .outage-cell{min-width:0;border-radius:3px;background:var(--k-accent-bg)}
+.single-card .outage-cell.is-off{background:var(--k-muted)}
+.single-card .outage-cell.is-possible{background:repeating-linear-gradient(135deg,var(--k-warm-bg) 0 3px,var(--k-warm) 3px 4px)}
+.single-card .outage-cell.is-changed{background:var(--k-warm)}
+.single-card .outage-cell.is-possible.is-changed{background:repeating-linear-gradient(135deg,var(--k-warm) 0 3px,var(--k-warm-bg) 3px 5px)}
+.single-card .outage-cell.is-unknown{background:var(--k-soft)}
+.single-card .outage-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:9px;color:var(--k-muted);font-size:11px}
+.single-card .outage-key{display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:2px;background:var(--k-muted)}
+.single-card .outage-key-possible{background:var(--k-warm-bg);box-shadow:inset 0 0 0 1px var(--k-warm)}
+.single-card .outage-key-changed{background:var(--k-warm)}
+.single-card .outage-intervals{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.single-card .outage-interval{padding:5px 8px;border-radius:8px;background:var(--k-soft);font-size:11px;font-variant-numeric:tabular-nums}
+.single-card .outage-interval.is-possible{background:var(--k-warm-bg);color:var(--k-warm)}
+.single-card .outage-interval.is-changed{box-shadow:inset 0 0 0 1px var(--k-warm)}
+.single-card .outage-footer{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--k-line);font-size:11px;color:var(--k-muted)}
+.single-card .outage-card [hidden]{display:none!important}
+@media(max-width:360px){.single-card .outage-card{padding:15px}.single-card .outage-track{gap:1px}}
 .single-card .socket-card,.single-card .room-sensor-card{width:100%;margin:0;padding:20px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
 .single-card .socket-card *,.single-card .room-sensor-card *{box-sizing:border-box}
 .single-card .socket-card svg,.single-card .room-sensor-card svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
@@ -973,6 +1010,14 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     energy_total: null,
     energy_path: '/home-cards/energy',
   },
+  outage: {
+    outage_entity: null,
+    schedule_event: null,
+    source_entity: null,
+    next_outage_entity: null,
+    power_back_entity: null,
+    updated_entity: null,
+  },
   battery: {
     river_status: null,
     battery_path: '/home-cards/battery',
@@ -1089,6 +1134,14 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_total', 'Енергія від початку обліку', 'sensor'],
     ['energy_path', 'Шлях до деталей енергії', 'text'],
   ],
+  outage: [
+    ['outage_entity', 'Графік відключення', 'binary_sensor'],
+    ['schedule_event', 'Подія зміни графіка · необов’язково', 'event'],
+    ['source_entity', 'Доступність джерела · необов’язково', 'binary_sensor'],
+    ['next_outage_entity', 'Початок наступного відключення · необов’язково', 'sensor'],
+    ['power_back_entity', 'Повернення світла · необов’язково', 'sensor'],
+    ['updated_entity', 'Оновлення графіка · необов’язково', 'sensor'],
+  ],
   battery: [
     ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ...[
@@ -1129,6 +1182,7 @@ const HOME_DEVICE_CARD_META = {
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
   energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],
+  outage: ['home-outage-card', 'Графік відключень', 'Показує графік відключень і зміни для групи.'],
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],
 };
 
@@ -1161,6 +1215,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       tv: "remote_entity",
       river: "river_status",
       energy: "power_entity",
+      outage: "outage_entity",
     }[kind];
     const fieldSchema = ([name, , type]) => ({
       name,
@@ -1168,7 +1223,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
         (kind === "boiler" && name === "boiler_entity") ||
         (kind === "air" && name === "air_entity") ||
         (kind === "socket" && name === "switch_entity") ||
-        (kind === "tv" && name === "remote_entity"),
+        (kind === "tv" && name === "remote_entity") ||
+        (kind === "outage" && name === "outage_entity"),
       default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
       selector:
         type === "text"
@@ -4013,6 +4069,296 @@ class HomeEnergyCard extends HomeDeviceStandaloneCard {
 }
 if (!customElements.get("home-energy-card"))
   customElements.define("home-energy-card", HomeEnergyCard);
+class HomeOutageCard extends HomeDeviceStandaloneCard {
+  constructor() {
+    super();
+    this._outageDay = "today";
+    this._outageTimer = null;
+  }
+
+  static get cardType() {
+    return "outage";
+  }
+
+  static get cardTitle() {
+    return ["outage_entity", "Графік відключень"];
+  }
+
+  getCardSize() {
+    return 5;
+  }
+
+  _content() {
+    return `<article class="panel outage-card" aria-label="Графік відключень">
+      <header class="outage-header"><h2>Графік відключень</h2><span class="outage-group" data-live="outage-group">—</span></header>
+      <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite">Виберіть сутність графіка</div>
+      <p class="secondary outage-countdown" data-live="outage-countdown" hidden></p>
+      <div class="outage-change" data-live="outage-change" aria-live="polite" hidden><strong data-live="change-title">Графік змінився</strong><span class="outage-change-date" data-live="change-date"></span><div class="outage-comparison" data-live="change-comparison"></div></div>
+      <div class="outage-source-warning" data-live="source-warning" role="status" hidden>Джерело графіка зараз не відповідає. Показано останній відомий графік.</div>
+      <div class="outage-tabs" role="group" aria-label="День графіка"><button type="button" aria-pressed="true" data-action="outage-day" data-day="today">Сьогодні</button><button type="button" aria-pressed="false" data-action="outage-day" data-day="tomorrow">Завтра</button></div>
+      <p class="outage-date" data-live="outage-date"></p>
+      <div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div>
+      <div class="outage-legend"><span><i class="outage-key outage-key-off"></i>За графіком без світла</span><span><i class="outage-key outage-key-possible"></i>Можливе відключення</span><span><i class="outage-key outage-key-changed"></i>Зміни</span></div>
+      <div class="outage-intervals" data-live="outage-intervals" aria-live="polite"></div>
+      <footer class="outage-footer"><span data-live="outage-updated"></span></footer>
+    </article>`;
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    if (this._hass && !this._outageTimer) {
+      this._outageTimer = setInterval(() => this._tickOutageClock(), 30000);
+    }
+  }
+
+  disconnectedCallback() {
+    if (this._outageTimer) clearInterval(this._outageTimer);
+    this._outageTimer = null;
+    super.disconnectedCallback?.();
+  }
+
+  setConfig(config) {
+    if (this._config) {
+      const keys = HOME_DEVICE_CARD_FIELDS.outage.map(([name]) => name);
+      if (keys.some((name) => config?.[name] !== this._config[name])) {
+        const eventId = config?.schedule_event;
+        const eventState = eventId ? this._hass?.states?.[eventId] : null;
+        this._ignoredScheduleEvent = `${eventId || ""}|${JSON.stringify(eventState)}`;
+      }
+      if (config?.outage_entity !== this._config.outage_entity) this._outageDay = "today";
+    }
+    super.setConfig(config);
+  }
+
+  _scheduleEventState() {
+    const eventId = this._config?.schedule_event;
+    const eventState = this._state(eventId);
+    const signature = `${eventId || ""}|${JSON.stringify(eventState)}`;
+    if (this._ignoredScheduleEvent === signature) return null;
+    this._ignoredScheduleEvent = null;
+    return eventState;
+  }
+
+  _click(event) {
+    const button = event.target.closest('button[data-action="outage-day"]');
+    if (button) {
+      this._outageDay = button.dataset.day === "tomorrow" ? "tomorrow" : "today";
+      this._updateOutageView();
+      return;
+    }
+    super._click(event);
+  }
+
+  _updateCardDynamic() {
+    this._updateOutageView();
+    if (this.isConnected && !this._outageTimer) {
+      this._outageTimer = setInterval(() => this._tickOutageClock(), 30000);
+    }
+  }
+
+  _kyivDate(date = new Date()) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Kyiv",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date);
+    const value = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    return `${value.year}-${value.month}-${value.day}`;
+  }
+
+  _dayOffset(date, offset) {
+    const [year, month, day] = date.split("-").map(Number);
+    return new Date(Date.UTC(year, month - 1, day + offset)).toISOString().slice(0, 10);
+  }
+
+  _intervals(value) {
+    return Array.isArray(value) ? value.filter((item) => typeof item === "string" && /^\d{2}:\d{2}–\d{2}:\d{2}$/.test(item)) : null;
+  }
+
+  _formatDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return "";
+    const [year, month, day] = value.split("-").map(Number);
+    return new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, day)));
+  }
+
+  _renderIntervals(intervals, possible, changed, previous, previousPossible, published = true) {
+    const regular = intervals || [];
+    const uncertain = possible || [];
+    const changedSet = new Set(changed || []);
+    const all = [...regular.map((value) => ({ value, possible: false })), ...uncertain.map((value) => ({ value, possible: true }))];
+    const list = this.shadowRoot.querySelector('[data-live="outage-intervals"]');
+    const track = this.shadowRoot.querySelector('[data-live="outage-track"]');
+    if (!list || !track) return;
+    list.replaceChildren();
+    const slots = Array.from({ length: 48 }, () => ({ current: "none", previous: "none" }));
+    const fill = (values, kind, key) => {
+      for (const value of values || []) {
+        const [from, to] = value.split("–").map((time) => {
+          const [hours, minutes] = time.split(":").map(Number);
+          return hours * 60 + minutes;
+        });
+        const start = Math.max(0, Math.min(48, Math.floor(from / 30)));
+        const end = Math.max(start, Math.min(48, Math.ceil(to / 30)));
+        for (let i = start; i < end; i++) {
+          if (slots[i][key] === "none" || kind === "off") slots[i][key] = kind;
+        }
+      }
+    };
+    fill(regular, "off", "current");
+    fill(uncertain, "possible", "current");
+    fill(previous, "off", "previous");
+    fill(previousPossible, "possible", "previous");
+    if (!published) slots.forEach((slot) => { slot.current = "unknown"; slot.previous = "unknown"; });
+    for (const { value, possible: maybe } of all) {
+      const row = document.createElement("span");
+      row.className = `outage-interval${maybe ? " is-possible" : ""}${changedSet.has(value) ? " is-changed" : ""}`;
+      row.textContent = `${maybe ? "Можливе · " : ""}${value}${changedSet.has(value) ? " · зміна" : ""}`;
+      list.append(row);
+    }
+    if (track.children.length !== 48) {
+      track.replaceChildren(...Array.from({ length: 48 }, () => {
+        const cell = document.createElement("span");
+        cell.className = "outage-cell";
+        cell.setAttribute("aria-hidden", "true");
+        return cell;
+      }));
+    }
+    for (const [index, slot] of slots.entries()) {
+      const cell = track.children[index];
+      const changed = slot.current !== slot.previous;
+      cell.className = `outage-cell${slot.current === "none" ? "" : ` is-${slot.current}`}${changed ? " is-changed" : ""}`;
+    }
+    const summary = all.length ? all.map(({ value, possible: maybe }) => `${maybe ? "можливе відключення" : "відключення"} ${value}`).join(", ") : "За графіком відключень немає";
+    track.setAttribute("aria-label", summary);
+  }
+
+  _renderChange(eventState, date, today) {
+    const panel = this.shadowRoot.querySelector('[data-live="outage-change"]');
+    if (!panel) return;
+    const attrs = eventState?.attributes || {};
+    const type = attrs.event_type;
+    const eventDate = attrs.date;
+    const relevantDate = eventDate === date;
+    const fresh = eventDate === today || eventDate === this._dayOffset(today, 1);
+    const previous = this._intervals(attrs.previous);
+    const current = this._intervals(attrs.outages);
+    const previousPossible = this._intervals(attrs.previous_possible);
+    const currentPossible = this._intervals(attrs.possible);
+    const changedForGroup = type === "schedule_changed" && (
+      (previous && current && JSON.stringify(previous) !== JSON.stringify(current)) ||
+      (previousPossible && currentPossible && JSON.stringify(previousPossible) !== JSON.stringify(currentPossible))
+    );
+    panel.hidden = !relevantDate || !fresh || !changedForGroup;
+    if (panel.hidden) return;
+    this._setText('[data-live="change-title"]', "Графік змінився для цієї групи");
+    this._setText('[data-live="change-date"]', this._formatDate(eventDate));
+    const comparison = this.shadowRoot.querySelector('[data-live="change-comparison"]');
+    comparison.replaceChildren();
+    const regularChanged = previous && current && JSON.stringify(previous) !== JSON.stringify(current);
+    const possibleChanged = previousPossible && currentPossible && JSON.stringify(previousPossible) !== JSON.stringify(currentPossible);
+    const rows = [
+      ...(regularChanged ? [{ label: "Було", values: previous }, { label: "Стало", values: current }] : []),
+      ...(possibleChanged ? [{ label: "Можливі · було", values: previousPossible }, { label: "Можливі · стало", values: currentPossible }] : []),
+    ];
+    for (const row of rows) {
+      const label = document.createElement("span"); label.className = "outage-change-label"; label.textContent = row.label;
+      const values = document.createElement("strong"); values.className = "outage-change-values"; values.textContent = row.values.length ? row.values.join(", ") : "Немає";
+      comparison.append(label, values);
+    }
+  }
+
+  _updateOutageView() {
+    if (!this.shadowRoot || !this._config) return;
+    const today = this._kyivDate();
+    this._outageRenderedDate = today;
+    const date = this._outageDay === "tomorrow" ? this._dayOffset(today, 1) : today;
+    const state = this._state(this._config.outage_entity);
+    const attrs = state?.attributes || {};
+    const schedule = this._intervals(attrs[this._outageDay]);
+    const possible = this._intervals(attrs[`${this._outageDay}_possible`]) || [];
+    const group = attrs.group;
+    this._setText('[data-live="outage-group"]', group ? `Група ${group}` : "Група —");
+    const todaySchedule = this._intervals(attrs.today);
+    const outageStatus = !state || ["unknown", "unavailable"].includes(state.state) || !["on", "off"].includes(state.state) || todaySchedule === null
+      ? "unknown" : state.state === "on" ? "outage" : "available";
+    this.shadowRoot.querySelector('[data-live="outage-status"]')?.setAttribute("data-status", outageStatus);
+    this._setText('[data-live="outage-status"]', outageStatus === "unknown"
+      ? "Немає даних про графік"
+      : outageStatus === "outage" ? "За графіком зараз відключення" : "За графіком зараз світло має бути");
+    this._setText('[data-live="outage-date"]', this._formatDate(date));
+    for (const button of this.shadowRoot.querySelectorAll('[data-action="outage-day"]')) {
+      const selected = button.dataset.day === this._outageDay;
+      button.setAttribute("aria-selected", String(selected));
+      button.setAttribute("aria-pressed", String(selected));
+    }
+    const intervals = schedule || [];
+    const eventState = this._scheduleEventState();
+    const eventMatchesDay = eventState?.attributes?.date === date;
+    const validChange = eventMatchesDay && eventState.attributes.event_type === "schedule_changed";
+    const previousRegular = validChange ? this._intervals(eventState.attributes.previous) : null;
+    const previousPossible = validChange ? this._intervals(eventState.attributes.previous_possible) : null;
+    const currentRegular = this._intervals(eventState?.attributes?.outages);
+    const currentPossible = this._intervals(eventState?.attributes?.possible);
+    const changedRegular = validChange && previousRegular && currentRegular && JSON.stringify(previousRegular) !== JSON.stringify(currentRegular)
+      ? currentRegular : [];
+    const changedPossible = validChange && previousPossible && currentPossible && JSON.stringify(previousPossible) !== JSON.stringify(currentPossible)
+      ? currentPossible : [];
+    const changed = [...changedRegular, ...changedPossible];
+    const outageUpdated = this._state(this._config.outage_entity)?.last_reported || this._state(this._config.outage_entity)?.last_updated;
+    const outageUpdatedDate = outageUpdated ? this._kyivDate(new Date(outageUpdated)) : today;
+    const staleSchedule = !!state && outageUpdatedDate !== today;
+    const scheduleForView = staleSchedule ? null : schedule;
+    const displayedIntervals = scheduleForView || [];
+    const displayedPossible = staleSchedule || scheduleForView === null ? [] : possible;
+    this._renderIntervals(displayedIntervals, displayedPossible, changed, previousRegular || displayedIntervals, previousPossible || displayedPossible, scheduleForView !== null && !staleSchedule);
+    const intervalList = this.shadowRoot.querySelector('[data-live="outage-intervals"]');
+    if (intervalList && scheduleForView === null) {
+      intervalList.textContent = staleSchedule ? "Графік на сьогодні ще не оновився" : "Графік на цей день ще не опубліковано";
+      this.shadowRoot.querySelector('[data-live="outage-track"]')?.setAttribute("aria-label", staleSchedule ? "Графік на сьогодні ще не оновився" : "Графік ще не опубліковано");
+    } else if (intervalList && !intervals.length && !possible.length) {
+      intervalList.textContent = "За графіком відключень немає";
+    }
+    this._renderChange(eventState, date, today);
+    const source = this._state(this._config.source_entity);
+    const sourceUnavailable = !!this._config.source_entity && (!source || source.state !== "on" || ["unknown", "unavailable"].includes(source.state));
+    this._setHidden('[data-live="source-warning"]', !sourceUnavailable);
+    const updated = this._state(this._config.updated_entity)?.state;
+    const updatedDate = updated && updated !== "unknown" && updated !== "unavailable" ? new Date(updated) : null;
+    this._setText('[data-live="outage-updated"]', updatedDate && Number.isFinite(updatedDate.getTime())
+      ? `Графік оновлено · ${new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(updatedDate)}`
+      : "Оновлення графіка невідоме");
+    this._updateOutageCountdown();
+  }
+
+  _updateOutageCountdown() {
+    if (!this._config || !this.shadowRoot) return;
+    const countdown = this.shadowRoot.querySelector('[data-live="outage-countdown"]');
+    if (!countdown) return;
+    const outage = this._state(this._config.outage_entity);
+    const status = outage?.state;
+    if (!outage || ["unknown", "unavailable"].includes(status) || !["on", "off"].includes(status) || this._intervals(outage.attributes?.today) === null) { countdown.hidden = true; return; }
+    const targetId = status === "on" ? this._config.power_back_entity : this._config.next_outage_entity;
+    const target = this._state(targetId)?.state;
+    const timestamp = target && !["unknown", "unavailable"].includes(target) ? Date.parse(target) : NaN;
+    if (!Number.isFinite(timestamp)) { countdown.hidden = true; return; }
+    const minutes = Math.max(0, Math.ceil((timestamp - Date.now()) / 60000));
+    if (minutes === 0) { countdown.hidden = true; return; }
+    const hours = Math.floor(minutes / 60), remainder = minutes % 60;
+    const label = status === "on" ? "До повернення світла за графіком" : "До відключення за графіком";
+    const time = new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(timestamp);
+    countdown.textContent = `${label} · ${hours ? `${hours} год ` : ""}${remainder} хв · о ${time}`;
+    countdown.hidden = false;
+  }
+
+  _tickOutageClock() {
+    if (!this.isConnected) return;
+    if (this._outageRenderedDate !== this._kyivDate()) this._updateOutageView();
+    else this._updateOutageCountdown();
+  }
+}
+
+if (!customElements.get("home-outage-card")) customElements.define("home-outage-card", HomeOutageCard);
 class HomeBatteryCard extends HomeDeviceStandaloneCard {
   static get cardType() {
     return "battery";

@@ -94,6 +94,14 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     energy_total: null,
     energy_path: '/home-cards/energy',
   },
+  outage: {
+    outage_entity: null,
+    schedule_event: null,
+    source_entity: null,
+    next_outage_entity: null,
+    power_back_entity: null,
+    updated_entity: null,
+  },
   battery: {
     river_status: null,
     battery_path: '/home-cards/battery',
@@ -210,6 +218,14 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['energy_total', 'Енергія від початку обліку', 'sensor'],
     ['energy_path', 'Шлях до деталей енергії', 'text'],
   ],
+  outage: [
+    ['outage_entity', 'Графік відключення', 'binary_sensor'],
+    ['schedule_event', 'Подія зміни графіка · необов’язково', 'event'],
+    ['source_entity', 'Доступність джерела · необов’язково', 'binary_sensor'],
+    ['next_outage_entity', 'Початок наступного відключення · необов’язково', 'sensor'],
+    ['power_back_entity', 'Повернення світла · необов’язково', 'sensor'],
+    ['updated_entity', 'Оновлення графіка · необов’язково', 'sensor'],
+  ],
   battery: [
     ['river_status', 'Статус станції', 'sensor,binary_sensor'],
     ...[
@@ -250,6 +266,7 @@ const HOME_DEVICE_CARD_META = {
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
   energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],
+  outage: ['home-outage-card', 'Графік відключень', 'Показує графік відключень і зміни для групи.'],
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],
 };
 

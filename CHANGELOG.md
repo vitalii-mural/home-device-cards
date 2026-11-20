@@ -1,3 +1,7 @@
+## 1.1.16
+
+- Add a compact outage schedule card with group-specific schedule changes and source status.
+
 ## 1.1.0
 
 - Add compact water leak and door sensor cards with visual editors.

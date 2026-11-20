@@ -27,6 +27,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       tv: "remote_entity",
       river: "river_status",
       energy: "power_entity",
+      outage: "outage_entity",
     }[kind];
     const fieldSchema = ([name, , type]) => ({
       name,
@@ -34,7 +35,8 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
         (kind === "boiler" && name === "boiler_entity") ||
         (kind === "air" && name === "air_entity") ||
         (kind === "socket" && name === "switch_entity") ||
-        (kind === "tv" && name === "remote_entity"),
+        (kind === "tv" && name === "remote_entity") ||
+        (kind === "outage" && name === "outage_entity"),
       default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
       selector:
         type === "text"

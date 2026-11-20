@@ -1,7 +1,7 @@
 # Home Device Cards
 
-Custom Home Assistant cards for a water heater, air conditioner, EcoFlow RIVER,
-smart socket, and room temperature/humidity.
+Custom Home Assistant cards for power outage schedules, a water heater, air
+conditioner, EcoFlow RIVER, smart socket, and room temperature/humidity.
 
 ## HACS installation
 
@@ -44,6 +44,7 @@ the browser, for example `/local/home-device-cards.js?v=2`.
 - `custom:home-river-card`
 - `custom:home-socket-card`
 - `custom:home-room-card`
+- `custom:home-outage-card`
 - `custom:home-tv-card`
 - `custom:home-leak-card`
 - `custom:home-door-card`
@@ -52,6 +53,12 @@ Select entities and names in each card's visual editor. Entity defaults were
 cleared for this repository; existing installations should keep their explicit
 card configuration. Device features require matching entities/integrations;
 these cards do not add device protocol support.
+
+The outage card uses entities from the Ukraine Energy Monitor Home Assistant
+integration. Select its outage binary sensor in the visual editor. Select the
+schedule event to show changes. The card reads the group and today's schedule
+from the binary sensor. Source status, next outage, power return, and schedule
+update entities are optional.
 
 The Android TV remote card needs a `remote` entity from the Android TV Remote
 integration. Its optional `media_player` entity provides the active app name;

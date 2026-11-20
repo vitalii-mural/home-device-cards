@@ -23,6 +23,7 @@ export const SOURCE_FILES = Object.freeze({
     'src/cards/socket-card.js',
     'src/cards/river-card.js',
     'src/cards/energy-card.js',
+    'src/cards/outage-card.js',
     'src/cards/battery-card.js',
     'src/cards/tv-card.js',
     'src/device-cards/register.js',

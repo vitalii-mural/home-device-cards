@@ -142,6 +142,78 @@ test("sensor cards reflect leak, door, vibration, battery and unavailable states
   } finally { await page.close(); }
 });
 
+test("outage card shows this group's schedule changes and stale-source state", async () => {
+  const page = await openFixture(360);
+  try {
+    await page.evaluate(() => {
+      const { hass } = window.fixture;
+      const dateParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Kyiv", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+      const parts = Object.fromEntries(dateParts.map(part => [part.type, part.value]));
+      const today = `${parts.year}-${parts.month}-${parts.day}`;
+      const next = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString();
+      hass.states["binary_sensor.outage_fixture"] = { state: "off", last_updated: new Date().toISOString(), last_reported: new Date().toISOString(), attributes: { group: "3.1", today: ["16:30–20:00"], today_possible: [], tomorrow: null, tomorrow_possible: null } };
+      hass.states["event.schedule_fixture"] = { state: new Date().toISOString(), attributes: { event_type: "schedule_changed", date: today, day: "today", outages: ["16:30–20:00"], previous: ["17:00–20:00"], possible: [], previous_possible: [] } };
+      hass.states["binary_sensor.source_fixture"] = { state: "on", attributes: {} };
+      hass.states["sensor.next_fixture"] = { state: next, attributes: {} };
+      const card = document.createElement("home-outage-card");
+      card.setConfig({ type: "custom:home-outage-card", outage_entity: "binary_sensor.outage_fixture", schedule_event: "event.schedule_fixture", source_entity: "binary_sensor.source_fixture", next_outage_entity: "sensor.next_fixture" });
+      document.querySelector("main").append(card);
+      card.hass = { ...hass };
+      window.outageCard = card;
+      window.fixtureDay = today;
+    });
+    const card = page.locator("home-outage-card");
+    const shadow = card.locator(".outage-card");
+    assert.equal(await shadow.locator('[data-live="outage-group"]').innerText(), "Група 3.1");
+    assert.equal(await shadow.locator('[data-live="outage-status"]').innerText(), "За графіком зараз світло має бути");
+    assert.equal(await shadow.locator('[data-live="outage-change"]').isVisible(), true);
+    assert.match(await shadow.locator('[data-live="change-comparison"]').innerText(), /Було[\s\S]*17:00–20:00[\s\S]*Стало[\s\S]*16:30–20:00/);
+    assert.equal(await shadow.locator('[data-live="outage-track"] .outage-cell').count(), 48);
+    assert.equal(await shadow.locator('[data-live="source-warning"]').isVisible(), false);
+    if (process.env.OUTAGE_CARD_SCREENSHOT) await card.screenshot({ path: process.env.OUTAGE_CARD_SCREENSHOT });
+    const track = await shadow.locator('[data-live="outage-track"]').elementHandle();
+    await page.evaluate(() => {
+      const { hass } = window.fixture;
+      const card = window.outageCard;
+      hass.states["binary_sensor.outage_fixture"].attributes.today = [];
+      hass.states["event.schedule_fixture"] = { state: new Date().toISOString(), attributes: { event_type: "schedule_changed", date: window.fixtureDay, day: "today", outages: [], previous: ["16:30–20:00"], possible: [], previous_possible: [] } };
+      card.hass = { ...hass };
+    });
+    assert.equal(await shadow.locator('[data-live="outage-change"]').isVisible(), true, "removing the final outage is shown as a change");
+    assert.equal(await shadow.locator('[data-live="outage-track"]').evaluate((node, original) => node === original, track), true, "schedule updates preserve the grid node");
+    await page.evaluate(() => {
+      const { hass } = window.fixture;
+      hass.states["binary_sensor.outage_fixture"].attributes.today = ["16:30–20:00"];
+      hass.states["event.schedule_fixture"] = { state: new Date().toISOString(), attributes: { event_type: "schedule_changed", date: window.fixtureDay, day: "today", outages: ["16:30–20:00"], previous: ["16:30–20:00"], possible: [], previous_possible: [] } };
+      window.outageCard.hass = { ...hass };
+    });
+    assert.equal(await shadow.locator('[data-live="outage-change"]').isVisible(), false, "an unchanged group is not alerted");
+    await page.evaluate(() => {
+      const { hass } = window.fixture;
+      hass.states["event.stale_fixture"] = { state: new Date().toISOString(), attributes: { event_type: "schedule_changed", date: window.fixtureDay, day: "today", outages: [], previous: ["16:30–20:00"], possible: [], previous_possible: [] } };
+      window.outageCard.setConfig({ ...window.outageCard._config, schedule_event: "event.stale_fixture" });
+    });
+    assert.equal(await card.locator('[data-live="outage-change"]').isVisible(), false, "reconfiguration hides a previously recorded event");
+    await page.evaluate(() => {
+      const { hass } = window.fixture;
+      hass.states["binary_sensor.source_fixture"].state = "off";
+      hass.states["binary_sensor.outage_fixture"].state = "unavailable";
+      window.outageCard.hass = { ...hass };
+    });
+    assert.equal(await shadow.locator('[data-live="source-warning"]').isVisible(), true);
+    assert.equal(await shadow.locator('[data-live="outage-countdown"]').isVisible(), false);
+    await shadow.locator('[data-day="tomorrow"]').click();
+    assert.equal(await shadow.locator('[data-live="outage-intervals"]').innerText(), "Графік на цей день ще не опубліковано");
+    assert.equal(await shadow.evaluate(el => el.scrollWidth <= el.clientWidth), true);
+    await page.evaluate(() => { window.fixture.hass.themes = { darkMode: true }; window.outageCard.hass = { ...window.fixture.hass }; });
+    assert.notEqual(await shadow.locator(".outage-change").evaluate(el => getComputedStyle(el).backgroundColor), "rgba(0, 0, 0, 0)");
+    await page.evaluate(() => window.outageCard.remove());
+    assert.equal(await page.evaluate(() => window.outageCard._outageTimer), null, "disconnect clears the countdown timer");
+  } finally {
+    await page.close();
+  }
+});
+
 test("two room cards align without overflow on a phone", async () => {
   const page = await openFixture(320);
   try {
