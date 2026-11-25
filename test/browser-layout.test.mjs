@@ -142,6 +142,52 @@ test("sensor cards reflect leak, door, vibration, battery and unavailable states
   } finally { await page.close(); }
 });
 
+test("door card opens its sensor history with pointer and keyboard", async () => {
+  const page = await openFixture(360);
+  try {
+    const card = page.locator("home-door-card");
+    await card.evaluate(element => {
+      window.doorHistoryEvents = [];
+      element.addEventListener("hass-more-info", event => window.doorHistoryEvents.push(event.detail.entityId));
+    });
+    const history = card.getByRole("button", { name: /^Історія відкривань:/ });
+    const entity = await card.evaluate(element => element._config.door_entity);
+    assert.equal(await history.getAttribute("data-entity"), entity);
+    await history.click({ position: { x: 8, y: 8 } });
+    await history.focus();
+    await page.keyboard.press("Enter");
+    await page.keyboard.press("Space");
+    assert.deepEqual(await page.evaluate(() => window.doorHistoryEvents), [entity, entity, entity]);
+    await card.evaluate(element => {
+      const { hass } = window.fixture;
+      hass.states[element._config.door_entity].state = "unavailable";
+      element.hass = { ...hass };
+    });
+    assert.ok(await history.isEnabled(), "unavailable sensors still have history");
+    await history.click();
+    assert.equal(await page.evaluate(() => window.doorHistoryEvents.at(-1)), entity);
+    await card.evaluate(element => {
+      const { hass } = window.fixture;
+      hass.states["binary_sensor.other_door"] = { state: "on", attributes: {} };
+      element.setConfig({ ...element._config, door_entity: "binary_sensor.other_door", title: "Балкон" });
+      element.hass = { ...hass };
+    });
+    const otherHistory = card.getByRole("button", { name: "Історія відкривань: Балкон", exact: true });
+    await otherHistory.click();
+    assert.equal(await page.evaluate(() => window.doorHistoryEvents.at(-1)), "binary_sensor.other_door");
+    await card.evaluate(element => {
+      const { hass } = window.fixture;
+      delete hass.states[element._config.door_entity];
+      element.hass = { ...hass };
+    });
+    assert.ok(await otherHistory.isDisabled(), "a missing entity cannot open history");
+    assert.equal(await page.locator("home-leak-card .door-history").count(), 0);
+    assert.equal(await card.locator(".sensor-status-card").evaluate(element => element.scrollWidth <= element.clientWidth), true);
+  } finally {
+    await page.close();
+  }
+});
+
 test("outage card shows this group's schedule changes and stale-source state", async () => {
   const page = await openFixture(360);
   try {

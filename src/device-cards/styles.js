@@ -195,6 +195,9 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 @media(pointer:coarse){.single-card [data-live-panel="boiler"] .adjust .round{width:44px;height:44px;min-width:44px;min-height:44px;flex-basis:44px}}
 @media(prefers-reduced-motion:reduce){.round[data-pending="true"] .pending-spinner{animation:none}}
 .single-card .sensor-status-card{display:flex;flex-direction:column;width:100%;height:100%;margin:0;padding:16px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif;overflow-wrap:anywhere}
+.single-card .sensor-status-card[data-kind=door]{position:relative}
+.single-card .door-history{position:absolute;inset:0;width:100%;height:100%;padding:0;border-radius:inherit;background:transparent}
+.single-card .door-history:disabled{opacity:1}
 .single-card .sensor-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0}
 .single-card .sensor-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:14px;background:var(--k-accent-bg);color:var(--k-accent)}
 .single-card .sensor-icon svg,.single-card .sensor-caption svg,.single-card .sensor-inline-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}

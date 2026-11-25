@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.16 — bundled base and standalone cards.
+// Home Device Cards v1.1.17 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -722,6 +722,9 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 @media(pointer:coarse){.single-card [data-live-panel="boiler"] .adjust .round{width:44px;height:44px;min-width:44px;min-height:44px;flex-basis:44px}}
 @media(prefers-reduced-motion:reduce){.round[data-pending="true"] .pending-spinner{animation:none}}
 .single-card .sensor-status-card{display:flex;flex-direction:column;width:100%;height:100%;margin:0;padding:16px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif;overflow-wrap:anywhere}
+.single-card .sensor-status-card[data-kind=door]{position:relative}
+.single-card .door-history{position:absolute;inset:0;width:100%;height:100%;padding:0;border-radius:inherit;background:transparent}
+.single-card .door-history:disabled{opacity:1}
 .single-card .sensor-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0}
 .single-card .sensor-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:14px;background:var(--k-accent-bg);color:var(--k-accent)}
 .single-card .sensor-icon svg,.single-card .sensor-caption svg,.single-card .sensor-inline-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
@@ -2827,6 +2830,7 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
     const name = this._sensorName();
     this._setText('[data-live="sensor-name"]', name);
     this._setHidden('.sensor-heading p', name === this._config.location);
+    this.shadowRoot.querySelector('.door-history')?.setAttribute('aria-label', `Історія відкривань: ${name}`);
   }
 
   _reading(key, name) {
@@ -2852,6 +2856,8 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
     this._reading('battery_entity', 'battery');
     this._reading('linkquality_entity', 'lqi');
     if (this._cardType !== 'door') return;
+    const history = this.shadowRoot.querySelector('.door-history');
+    if (history) history.disabled = !this._state(this._config.door_entity);
 
     const vibrationId = this._config.vibration_entity,
       vibration = this._state(vibrationId),
@@ -2872,6 +2878,7 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
     const lqi = this._config.linkquality_entity ? `<span class="sensor-reading" data-live="sensor-lqi" hidden><span class="sensor-inline-icon">${this._lucideIcon('chart-no-axes-column')}</span><span class="sensor-reading-label">Якість зв’язку Zigbee (LQI) </span><span data-live="sensor-lqi-value"></span></span>` : '';
     const vibration = !leak && vibrationId ? `<div class="sensor-extra" data-live="vibration" hidden><span class="sensor-caption">${this._lucideIcon('activity')}Вібрація</span><span class="sensor-extra-value" data-live="vibration-value"></span></div><div class="sensor-extra sensor-extra-missing" data-live="vibration-missing" hidden>Вібрація: немає зв’язку</div>` : '';
     return `<article class="sensor-status-card" data-live-panel="sensor" data-kind="${leak ? 'leak' : 'door'}" data-state="${state.state}">
+      ${!leak ? `<button type="button" class="door-history" data-action="more" data-entity="${this._escape(this._config.door_entity)}" aria-label="${this._escape(`Історія відкривань: ${title}`)}" ${this._disabled(!this._state(this._config.door_entity))}></button>` : ''}
       <header class="sensor-header">
         <span class="sensor-icon">${this._lucideIcon(icon)}</span>
         <div class="sensor-meta">${battery}${lqi}</div>

@@ -16,6 +16,7 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
     const name = this._sensorName();
     this._setText('[data-live="sensor-name"]', name);
     this._setHidden('.sensor-heading p', name === this._config.location);
+    this.shadowRoot.querySelector('.door-history')?.setAttribute('aria-label', `Історія відкривань: ${name}`);
   }
 
   _reading(key, name) {
@@ -41,6 +42,8 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
     this._reading('battery_entity', 'battery');
     this._reading('linkquality_entity', 'lqi');
     if (this._cardType !== 'door') return;
+    const history = this.shadowRoot.querySelector('.door-history');
+    if (history) history.disabled = !this._state(this._config.door_entity);
 
     const vibrationId = this._config.vibration_entity,
       vibration = this._state(vibrationId),
@@ -61,6 +64,7 @@ class HomeSensorStatusCard extends HomeDeviceStandaloneCard {
     const lqi = this._config.linkquality_entity ? `<span class="sensor-reading" data-live="sensor-lqi" hidden><span class="sensor-inline-icon">${this._lucideIcon('chart-no-axes-column')}</span><span class="sensor-reading-label">Якість зв’язку Zigbee (LQI) </span><span data-live="sensor-lqi-value"></span></span>` : '';
     const vibration = !leak && vibrationId ? `<div class="sensor-extra" data-live="vibration" hidden><span class="sensor-caption">${this._lucideIcon('activity')}Вібрація</span><span class="sensor-extra-value" data-live="vibration-value"></span></div><div class="sensor-extra sensor-extra-missing" data-live="vibration-missing" hidden>Вібрація: немає зв’язку</div>` : '';
     return `<article class="sensor-status-card" data-live-panel="sensor" data-kind="${leak ? 'leak' : 'door'}" data-state="${state.state}">
+      ${!leak ? `<button type="button" class="door-history" data-action="more" data-entity="${this._escape(this._config.door_entity)}" aria-label="${this._escape(`Історія відкривань: ${title}`)}" ${this._disabled(!this._state(this._config.door_entity))}></button>` : ''}
       <header class="sensor-header">
         <span class="sensor-icon">${this._lucideIcon(icon)}</span>
         <div class="sensor-meta">${battery}${lqi}</div>
