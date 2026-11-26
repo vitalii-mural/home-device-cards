@@ -19,12 +19,12 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-tabs button{flex:1;min-height:44px;border-radius:0;background:transparent;color:var(--k-muted);font-size:12px;padding:0;border-bottom:2px solid transparent}
 .single-card .outage-tabs button[aria-selected=true]{background:none;color:var(--k-accent);border-bottom-color:var(--k-accent)}
 .single-card .outage-date{font-size:11px;color:var(--k-muted);margin:8px 0 6px;text-transform:capitalize}
-.single-card .outage-ticks{display:flex;justify-content:space-between;color:var(--k-muted);font-size:10px;font-variant-numeric:tabular-nums;margin:5px 0 0}
-.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:1px;height:20px;border-radius:5px;overflow:hidden}
-.single-card .outage-cell{min-width:0;border-radius:0;background:color-mix(in srgb,var(--k-accent) 45%,var(--k-card))}
-.single-card .outage-cell.is-off{background:var(--k-danger)}
+.single-card .outage-ticks{display:flex;justify-content:space-between;margin-bottom:4px;color:var(--k-muted);font-size:11px;font-variant-numeric:tabular-nums}
+.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px;height:24px}
+.single-card .outage-cell{min-width:0;border-radius:3px;background:var(--k-accent-bg)}
+.single-card .outage-cell.is-off{background:var(--k-muted)}
 .single-card .outage-cell.is-possible{background:repeating-linear-gradient(135deg,var(--k-warm-bg) 0 3px,var(--k-warm) 3px 4px)}
-.single-card .outage-cell.is-changed{box-shadow:inset 0 -3px var(--k-warm)}
+.single-card .outage-cell.is-changed{background:var(--k-warm)}
 .single-card .outage-cell.is-possible.is-changed{background:repeating-linear-gradient(135deg,var(--k-warm) 0 3px,var(--k-warm-bg) 3px 5px)}
 .single-card .outage-cell.is-unknown{background:var(--k-soft)}
 .single-card .outage-legend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:9px;color:var(--k-muted);font-size:10px}
@@ -39,15 +39,13 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-header-tools a{color:var(--k-accent);text-decoration:none;padding:3px 0}
 .single-card .outage-status svg{width:30px;height:30px;flex-shrink:0}
 .single-card .outage-status strong{display:block;font-size:17px;font-weight:600}
-.single-card .outage-status-note{display:block;font-size:11px;margin-top:3px}
 .single-card .outage-comparison:after{content:'→';position:absolute;left:50%;top:24px;transform:translateX(-50%)}
 .single-card .outage-comparison>div:nth-child(even){text-align:right}
 .single-card .outage-change-label,.single-card .outage-change-values{display:block}
 .single-card .outage-day-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
 .single-card .outage-duration{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
-.single-card .outage-key-off{background:var(--k-danger)}
 .single-card .outage-card [hidden]{display:none!important}
-@media(max-width:360px){.single-card .outage-card{padding:15px}.single-card .outage-track{gap:1px}}
+@media(max-width:360px){.single-card .outage-card{padding:15px}.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px;height:24px}}
 .single-card .socket-card,.single-card .room-sensor-card{width:100%;margin:0;padding:20px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
 .single-card .socket-card *,.single-card .room-sensor-card *{box-sizing:border-box}
 .single-card .socket-card svg,.single-card .room-sensor-card svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}

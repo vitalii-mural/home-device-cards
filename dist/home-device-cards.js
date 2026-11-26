@@ -544,12 +544,12 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-tabs button{flex:1;min-height:44px;border-radius:0;background:transparent;color:var(--k-muted);font-size:12px;padding:0;border-bottom:2px solid transparent}
 .single-card .outage-tabs button[aria-selected=true]{background:none;color:var(--k-accent);border-bottom-color:var(--k-accent)}
 .single-card .outage-date{font-size:11px;color:var(--k-muted);margin:8px 0 6px;text-transform:capitalize}
-.single-card .outage-ticks{display:flex;justify-content:space-between;color:var(--k-muted);font-size:10px;font-variant-numeric:tabular-nums;margin:5px 0 0}
-.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:1px;height:20px;border-radius:5px;overflow:hidden}
-.single-card .outage-cell{min-width:0;border-radius:0;background:color-mix(in srgb,var(--k-accent) 45%,var(--k-card))}
-.single-card .outage-cell.is-off{background:var(--k-danger)}
+.single-card .outage-ticks{display:flex;justify-content:space-between;margin-bottom:4px;color:var(--k-muted);font-size:11px;font-variant-numeric:tabular-nums}
+.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px;height:24px}
+.single-card .outage-cell{min-width:0;border-radius:3px;background:var(--k-accent-bg)}
+.single-card .outage-cell.is-off{background:var(--k-muted)}
 .single-card .outage-cell.is-possible{background:repeating-linear-gradient(135deg,var(--k-warm-bg) 0 3px,var(--k-warm) 3px 4px)}
-.single-card .outage-cell.is-changed{box-shadow:inset 0 -3px var(--k-warm)}
+.single-card .outage-cell.is-changed{background:var(--k-warm)}
 .single-card .outage-cell.is-possible.is-changed{background:repeating-linear-gradient(135deg,var(--k-warm) 0 3px,var(--k-warm-bg) 3px 5px)}
 .single-card .outage-cell.is-unknown{background:var(--k-soft)}
 .single-card .outage-legend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:9px;color:var(--k-muted);font-size:10px}
@@ -564,15 +564,13 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-header-tools a{color:var(--k-accent);text-decoration:none;padding:3px 0}
 .single-card .outage-status svg{width:30px;height:30px;flex-shrink:0}
 .single-card .outage-status strong{display:block;font-size:17px;font-weight:600}
-.single-card .outage-status-note{display:block;font-size:11px;margin-top:3px}
 .single-card .outage-comparison:after{content:'→';position:absolute;left:50%;top:24px;transform:translateX(-50%)}
 .single-card .outage-comparison>div:nth-child(even){text-align:right}
 .single-card .outage-change-label,.single-card .outage-change-values{display:block}
 .single-card .outage-day-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
 .single-card .outage-duration{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
-.single-card .outage-key-off{background:var(--k-danger)}
 .single-card .outage-card [hidden]{display:none!important}
-@media(max-width:360px){.single-card .outage-card{padding:15px}.single-card .outage-track{gap:1px}}
+@media(max-width:360px){.single-card .outage-card{padding:15px}.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px;height:24px}}
 .single-card .socket-card,.single-card .room-sensor-card{width:100%;margin:0;padding:20px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
 .single-card .socket-card *,.single-card .room-sensor-card *{box-sizing:border-box}
 .single-card .socket-card svg,.single-card .room-sensor-card svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
@@ -4104,12 +4102,12 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
   _content() {
     return `<article class="panel outage-card" aria-label="Графік відключень">
       <header class="outage-header"><div><h2>Графік відключень</h2><span class="outage-group" data-live="outage-group">—</span></div><div class="outage-header-tools"><span data-live="outage-updated"></span><a data-live="operator-link" target="_blank" rel="noopener noreferrer" hidden>Графік оператора ↗</a></div></header>
-      <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M3 6h18M5 6v4m14-4v4M7 3v3m10-3v3M8 22l4-12 4 12M6 14h12"/></svg><div><strong data-live="outage-status-title">Виберіть сутність графіка</strong><span class="outage-status-note">За графіком</span><p class="outage-countdown" data-live="outage-countdown" hidden></p></div></div>
+      <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M3 6h18M5 6v4m14-4v4M7 3v3m10-3v3M8 22l4-12 4 12M6 14h12"/></svg><div><strong data-live="outage-status-title">Виберіть сутність графіка</strong><p class="outage-countdown" data-live="outage-countdown" hidden></p></div></div>
       <div class="outage-change" data-live="outage-change" aria-live="polite" hidden><strong data-live="change-title">Графік змінився</strong><span class="outage-change-date" data-live="change-date"></span><div class="outage-comparison" data-live="change-comparison"></div></div>
       <div class="outage-source-warning" data-live="source-warning" role="status" hidden>Джерело графіка зараз не відповідає. Показано останній відомий графік.</div>
       <div class="outage-day-row"><div class="outage-tabs" role="group" aria-label="День графіка"><button type="button" aria-pressed="true" data-action="outage-day" data-day="today">Сьогодні</button><button type="button" aria-pressed="false" data-action="outage-day" data-day="tomorrow">Завтра</button></div><span class="outage-duration" data-live="outage-duration"></span></div>
       <p class="outage-date" data-live="outage-date"></p>
-      <div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div><div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+      <div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div>
       <div class="outage-intervals" data-live="outage-intervals" aria-live="polite"></div>
       <div class="outage-legend"><span><i class="outage-key outage-key-off"></i>Без світла</span><span><i class="outage-key outage-key-possible"></i>Можливе</span><span><i class="outage-key outage-key-changed"></i>Зміни</span></div>
     </article>`;
