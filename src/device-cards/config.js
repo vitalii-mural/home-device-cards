@@ -43,6 +43,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     humidity_label: 'Вологість',
   },
   light: { switch_entity: null },
+  weather: { weather_entity: null, location: null },
   socket: {
     switch_entity: null,
     power_entity: null,
@@ -165,6 +166,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї датчика', 'sensor'],
   ],
   light: [['switch_entity', 'Реле світла', 'switch']],
+  weather: [['weather_entity', 'Погода', 'weather'], ['location', 'Назва місця · необов’язково', 'text']],
   socket: [
     ['switch_entity', 'Керування розеткою', 'switch'],
     ['power_entity', 'Поточна потужність', 'sensor'],
@@ -247,6 +249,7 @@ const HOME_DEVICE_CARD_META = {
   rooms: ['home-rooms-card', 'Мікроклімат', 'Список температури та вологості по кімнатах.'],
   room: ['home-room-card', 'Температура й вологість', 'Показує температуру, вологість і заряд батареї датчика.'],
   light: ['home-light-card', 'Підсвітка', 'Показує стан підсвітки та керує реле.'],
+  weather: ['home-weather-card', 'Погода', 'Поточна погода та компактний погодинний і денний прогноз.'],
   socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],

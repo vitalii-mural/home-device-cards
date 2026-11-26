@@ -1,3 +1,9 @@
+## 1.1.21
+
+- Add a compact weather card with current conditions, hourly and five-day forecasts, and a visual entity selector.
+- Support UkrHMC weather locations through native forecast subscriptions; omit precipitation percentages from hourly slots.
+- Handle missing data, unavailable sources, configuration changes, and disconnect cleanup.
+
 ## 1.1.20
 
 - Remove calendar dates from the outage card and schedule comparison; keep Today/Tomorrow and the update time.

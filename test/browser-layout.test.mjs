@@ -996,6 +996,114 @@ test("dark mode, offline recovery, and controls stay synthetic", async () => {
 });
 
 
+test("weather location forecasts stay compact, use entity units and omit hourly precipitation", async () => {
+  const page = await openFixture(360);
+  try {
+    await page.evaluate(() => {
+      const hass = { ...window.fixture.hass, config: { time_zone: 'Europe/Kyiv', unit_system: { temperature: '°C' } } };
+      const now = Date.now();
+      const hourly = Array.from({ length: 7 }, (_, i) => ({ datetime: new Date(now + i * 3600000).toISOString(), condition: 'partlycloudy', temperature: 7 + i, precipitation: 0.5, precipitation_probability: 60 }));
+      const daily = Array.from({ length: 5 }, (_, i) => ({ datetime: new Date(now + i * 86400000).toISOString(), condition: 'rainy', temperature: 9 - i, templow: 3 - i }));
+      hass.states['weather.location_fixture'] = { state: 'partlycloudy', last_updated: new Date(now).toISOString(), attributes: { friendly_name: 'Львів', supported_features: 3, temperature: 7, temperature_unit: '°C', humidity: 78, wind_speed: 3, wind_speed_unit: 'm/s', wind_bearing: 315 } };
+      window.weatherCalls = []; window.weatherUnsubscribed = []; window.weatherCallbacks = {};
+      hass.connection = { subscribeMessage: async (callback, message) => {
+        window.weatherCalls.push(message);
+        window.weatherCallbacks[message.forecast_type] = callback;
+        callback({ type: message.forecast_type, forecast: message.forecast_type === 'daily' ? daily : hourly });
+        return () => window.weatherUnsubscribed.push(message.forecast_type);
+      } };
+      const card = document.createElement('home-weather-card');
+      card.setConfig({ weather_entity: 'weather.location_fixture' });
+      document.querySelector('main').append(card);
+      card.hass = hass;
+      window.weatherCard = card;
+      window.weatherHass = hass;
+    });
+    const card = page.locator('home-weather-card');
+    await page.waitForFunction(() => window.weatherCard.shadowRoot.querySelectorAll('.weather-slot').length === 5);
+    assert.equal(await card.locator('[data-weather="temperature"]').innerText(), '+7°');
+    assert.equal(await card.locator('[data-weather="location"]').innerText(), 'Львів');
+    assert.match(await card.locator('[data-weather="metrics"]').innerText(), /3 м\/с ПнЗх/);
+    assert.doesNotMatch(await card.locator('[data-weather="forecast"]').innerText(), /%/);
+    assert.equal(await card.locator('[data-weather="feels"]').innerText(), '');
+    assert.deepEqual(await page.evaluate(() => window.weatherCalls.map(m => [m.type, m.entity_id, m.forecast_type])), [
+      ['weather/subscribe_forecast', 'weather.location_fixture', 'hourly'],
+      ['weather/subscribe_forecast', 'weather.location_fixture', 'daily'],
+    ]);
+    const tabs = card.locator('[data-period="daily"]');
+    await tabs.click();
+    assert.equal(await tabs.getAttribute('aria-pressed'), 'true');
+    assert.match(await card.locator('.weather-slot').first().innerText(), /Сьогодні[\s\S]*\+9°[\s\S]*\+3°/);
+    for (const width of [320, 360, 900]) {
+      await card.evaluate((node, width) => { node.style.width = `${width - 32}px`; }, width);
+      assert.equal(await card.locator('.weather-card').evaluate(node => node.scrollWidth <= node.clientWidth), true, `no overflow at ${width}px`);
+    }
+    await card.evaluate(node => { node.style.width = '328px'; });
+    if (process.env.WEATHER_CARD_SCREENSHOT) await card.screenshot({ path: process.env.WEATHER_CARD_SCREENSHOT });
+    assert.ok((await card.boundingBox()).height < 280, `weather card stays compact: ${(await card.boundingBox()).height}px`);
+    await page.evaluate(() => {
+      const hass = window.weatherHass;
+      hass.states['weather.location_fixture'].attributes.temperature_unit = '°F';
+      hass.states['weather.location_fixture'].attributes.temperature = 45;
+      hass.themes = { darkMode: true };
+      window.weatherCard.hass = { ...hass };
+    });
+    assert.equal(await card.locator('[data-weather="temperature"]').innerText(), '+45°F');
+    assert.equal(await card.getAttribute('dark'), '');
+    assert.equal(await page.evaluate(() => window.weatherCalls.length), 2, 'state changes do not duplicate subscriptions');
+    await page.evaluate(() => {
+      window.weatherHass.states['weather.location_fixture'].state = 'unavailable';
+      window.weatherCard.hass = { ...window.weatherHass };
+    });
+    assert.equal(await card.locator('[data-weather="temperature"]').innerText(), '—');
+    assert.equal(await card.locator('.weather-slot').count(), 0);
+    assert.equal(await page.evaluate(() => window.weatherUnsubscribed.length), 2);
+    await page.evaluate(() => {
+      window.weatherCallbacks.hourly({ forecast: [{ datetime: new Date().toISOString(), temperature: 99 }] });
+      window.weatherCard.remove();
+    });
+    assert.equal(await page.evaluate(() => window.weatherCard._weatherTimer), null);
+  } finally { await page.close(); }
+});
+
+test("weather subscriptions ignore old entities and late disconnect responses", async () => {
+  const page = await openFixture(360);
+  try {
+    await page.evaluate(() => {
+      const hass = { ...window.fixture.hass };
+      for (const id of ['weather.first', 'weather.second']) hass.states[id] = { state: 'sunny', attributes: { supported_features: 1, temperature: 8 } };
+      window.pendingWeather = []; window.closedWeather = [];
+      hass.connection = { subscribeMessage: (callback, message) => new Promise(resolve => window.pendingWeather.push({ callback, message, resolve })) };
+      const card = document.createElement('home-weather-card');
+      card.setConfig({ weather_entity: 'weather.first' });
+      document.querySelector('main').append(card);
+      card.hass = hass;
+      window.weatherCard = card;
+    });
+    await page.waitForFunction(() => window.pendingWeather.length === 1);
+    assert.equal(await page.locator('home-weather-card [data-period="hourly"]').isVisible(), false);
+    await page.evaluate(() => window.weatherCard.setConfig({ weather_entity: 'weather.second' }));
+    await page.waitForFunction(() => window.pendingWeather.length === 2);
+    await page.evaluate(() => {
+      window.pendingWeather[0].callback({ forecast: [{ datetime: new Date().toISOString(), temperature: 99 }] });
+      window.pendingWeather[0].resolve(() => window.closedWeather.push('first'));
+    });
+    assert.equal(await page.locator('home-weather-card .weather-slot').count(), 0);
+    await page.evaluate(() => {
+      window.weatherCard.remove();
+      window.pendingWeather[1].resolve(() => window.closedWeather.push('second'));
+    });
+    await page.waitForFunction(() => window.closedWeather.length === 2);
+    await page.evaluate(() => document.querySelector('main').append(window.weatherCard));
+    await page.waitForFunction(() => window.pendingWeather.length === 3);
+    await page.evaluate(() => {
+      window.pendingWeather[2].callback({ forecast: [] });
+      window.pendingWeather[2].resolve(() => window.closedWeather.push('reconnected'));
+    });
+    assert.equal(await page.locator('home-weather-card .weather-empty').innerText(), 'Немає прогнозу');
+  } finally { await page.close(); }
+});
+
 test("outage operator link follows the selected day and ignores a disconnected response", async () => {
   const page = await openFixture(360);
   try {

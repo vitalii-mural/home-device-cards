@@ -46,6 +46,7 @@ the browser, for example `/local/home-device-cards.js?v=2`.
 - `custom:home-light-card`
 - `custom:home-room-card`
 - `custom:home-outage-card`
+- `custom:home-weather-card`
 - `custom:home-tv-card`
 - `custom:home-leak-card`
 - `custom:home-door-card`
@@ -63,6 +64,23 @@ integration. Select its outage binary sensor in the visual editor. Select the
 schedule event to show changes. The card reads the group and today's schedule
 from the binary sensor. Source status, next outage, power return, and schedule
 update entities are optional.
+
+The weather card uses a `weather` entity, including UkrHMC (`ukr_hmc`).
+Choose the **weather location** (map point) entity for hourly and daily forecasts.
+The card shows up to five forecast periods; hourly slots omit precipitation
+percentages. Unsupported forecast tabs and missing optional readings are hidden.
+Temperatures and wind use the entity's units; times use Home Assistant's time zone.
+The update time is the entity's latest report in Home Assistant.
+Forecasts update through Home Assistant's weather subscription API.
+
+```yaml
+type: custom:home-weather-card
+weather_entity: weather.example_location
+location: Львів
+```
+
+`location` is optional and otherwise uses the entity's friendly name.
+Select the real entity in the visual editor; the example ID is a placeholder.
 
 The Android TV remote card needs a `remote` entity from the Android TV Remote
 integration. Its optional `media_player` entity provides the active app name;
