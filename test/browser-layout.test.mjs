@@ -211,7 +211,8 @@ test("outage card shows this group's schedule changes and stale-source state", a
     const card = page.locator("home-outage-card");
     const shadow = card.locator(".outage-card");
     assert.equal(await shadow.locator('[data-live="outage-group"]').innerText(), "Група 3.1");
-    assert.equal(await shadow.locator('[data-live="outage-status"]').innerText(), "За графіком зараз світло має бути");
+    assert.equal(await shadow.locator('[data-live="outage-status-title"]').innerText(), "Світло є");
+    assert.equal(await shadow.locator('[data-live="outage-duration"]').innerText(), "Без світла · 3 год 30 хв");
     assert.equal(await shadow.locator('[data-live="outage-change"]').isVisible(), true);
     assert.match(await shadow.locator('[data-live="change-comparison"]').innerText(), /Було[\s\S]*17:00–20:00[\s\S]*Стало[\s\S]*16:30–20:00/);
     assert.equal(await shadow.locator('[data-live="outage-track"] .outage-cell').count(), 48);
@@ -226,6 +227,7 @@ test("outage card shows this group's schedule changes and stale-source state", a
       card.hass = { ...hass };
     });
     assert.equal(await shadow.locator('[data-live="outage-change"]').isVisible(), true, "removing the final outage is shown as a change");
+    assert.equal(await shadow.locator('[data-live="outage-duration"]').innerText(), "Без світла · 0 хв");
     assert.equal(await shadow.locator('[data-live="outage-track"]').evaluate((node, original) => node === original, track), true, "schedule updates preserve the grid node");
     await page.evaluate(() => {
       const { hass } = window.fixture;
@@ -988,6 +990,56 @@ test("dark mode, offline recovery, and controls stay synthetic", async () => {
     assert.equal(airControls.temperature, true);
     await air.locator('[data-action="air-plus"]').click();
     assert.equal(await page.evaluate(() => window.fixture.serviceCalls), 1);
+  } finally {
+    await page.close();
+  }
+});
+
+
+test("outage operator link follows the selected day and ignores a disconnected response", async () => {
+  const page = await openFixture(360);
+  try {
+    await page.evaluate(() => {
+      const card = document.createElement("home-outage-card");
+      card.setConfig({ type: "custom:home-outage-card", outage_entity: "binary_sensor.operator_fixture" });
+      document.querySelector("main").append(card);
+      const today = card._kyivDate();
+      const tomorrow = card._dayOffset(today, 1);
+      window.operatorCalls = [];
+      card.hass = {
+        ...window.fixture.hass,
+        entities: { "binary_sensor.operator_fixture": { device_id: "fixture-device" } },
+        states: { "binary_sensor.operator_fixture": { state: "off", last_updated: new Date().toISOString(), attributes: { group: "3.1", today: ["13:30–17:00"], tomorrow: [] } } },
+        callWS: async (request) => {
+          window.operatorCalls.push(request);
+          return { operator: "Львівобленерго", days: [
+            { date: today, image_url: "https://example.org/today.png", updated_at: new Date().toISOString() },
+            { date: tomorrow, image_url: "javascript:alert(1)" },
+          ] };
+        },
+      };
+      window.operatorCard = card;
+    });
+    const card = page.locator("home-outage-card");
+    const link = card.locator('[data-live="operator-link"]');
+    await link.waitFor({ state: "visible" });
+    assert.equal(await link.getAttribute("href"), "https://example.org/today.png");
+    assert.equal(await card.locator('[data-live="outage-group"]').innerText(), "Львівобленерго · Група 3.1");
+    assert.deepEqual(await page.evaluate(() => window.operatorCalls), [{ type: "ukraine_outages/card", device_id: "fixture-device" }]);
+    assert.equal(await card.locator(".outage-card").evaluate(node => node.scrollWidth <= node.clientWidth), true);
+    await card.locator('[data-day="tomorrow"]').click();
+    assert.equal(await link.isVisible(), false);
+    assert.equal(await link.getAttribute("href"), null);
+    assert.equal(await card.locator('[data-live="outage-duration"]').innerText(), "Без світла · 0 хв");
+    await page.evaluate(() => {
+      const card = window.operatorCard;
+      card._operatorFetchedAt = 0;
+      card._hass.callWS = () => new Promise(resolve => { window.resolveOperator = resolve; });
+      card._fetchOperatorSchedule();
+      card.remove();
+      window.resolveOperator({ operator: "Late result", days: [] });
+    });
+    assert.equal(await page.evaluate(() => window.operatorCard._operatorData.operator), "Львівобленерго");
   } finally {
     await page.close();
   }

@@ -19,17 +19,15 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
 
   _content() {
     return `<article class="panel outage-card" aria-label="Графік відключень">
-      <header class="outage-header"><h2>Графік відключень</h2><span class="outage-group" data-live="outage-group">—</span></header>
-      <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite">Виберіть сутність графіка</div>
-      <p class="secondary outage-countdown" data-live="outage-countdown" hidden></p>
+      <header class="outage-header"><div><h2>Графік відключень</h2><span class="outage-group" data-live="outage-group">—</span></div><div class="outage-header-tools"><span data-live="outage-updated"></span><a data-live="operator-link" target="_blank" rel="noopener noreferrer" hidden>Графік оператора ↗</a></div></header>
+      <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M3 6h18M5 6v4m14-4v4M7 3v3m10-3v3M8 22l4-12 4 12M6 14h12"/></svg><div><strong data-live="outage-status-title">Виберіть сутність графіка</strong><span class="outage-status-note">За графіком</span><p class="outage-countdown" data-live="outage-countdown" hidden></p></div></div>
       <div class="outage-change" data-live="outage-change" aria-live="polite" hidden><strong data-live="change-title">Графік змінився</strong><span class="outage-change-date" data-live="change-date"></span><div class="outage-comparison" data-live="change-comparison"></div></div>
       <div class="outage-source-warning" data-live="source-warning" role="status" hidden>Джерело графіка зараз не відповідає. Показано останній відомий графік.</div>
-      <div class="outage-tabs" role="group" aria-label="День графіка"><button type="button" aria-pressed="true" data-action="outage-day" data-day="today">Сьогодні</button><button type="button" aria-pressed="false" data-action="outage-day" data-day="tomorrow">Завтра</button></div>
+      <div class="outage-day-row"><div class="outage-tabs" role="group" aria-label="День графіка"><button type="button" aria-pressed="true" data-action="outage-day" data-day="today">Сьогодні</button><button type="button" aria-pressed="false" data-action="outage-day" data-day="tomorrow">Завтра</button></div><span class="outage-duration" data-live="outage-duration"></span></div>
       <p class="outage-date" data-live="outage-date"></p>
-      <div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div>
-      <div class="outage-legend"><span><i class="outage-key outage-key-off"></i>За графіком без світла</span><span><i class="outage-key outage-key-possible"></i>Можливе відключення</span><span><i class="outage-key outage-key-changed"></i>Зміни</span></div>
+      <div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div><div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
       <div class="outage-intervals" data-live="outage-intervals" aria-live="polite"></div>
-      <footer class="outage-footer"><span data-live="outage-updated"></span></footer>
+      <div class="outage-legend"><span><i class="outage-key outage-key-off"></i>Без світла</span><span><i class="outage-key outage-key-possible"></i>Можливе</span><span><i class="outage-key outage-key-changed"></i>Зміни</span></div>
     </article>`;
   }
 
@@ -43,6 +41,8 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
   disconnectedCallback() {
     if (this._outageTimer) clearInterval(this._outageTimer);
     this._outageTimer = null;
+    this._operatorRequest = null;
+    this._operatorFetchedAt = 0;
     super.disconnectedCallback?.();
   }
 
@@ -56,6 +56,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
       }
       if (config?.outage_entity !== this._config.outage_entity) this._outageDay = "today";
     }
+    this._operatorRequest = null;
+    this._operatorData = null;
+    this._operatorFetchedAt = 0;
     super.setConfig(config);
   }
 
@@ -80,6 +83,7 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
 
   _updateCardDynamic() {
     this._updateOutageView();
+    this._fetchOperatorSchedule();
     if (this.isConnected && !this._outageTimer) {
       this._outageTimer = setInterval(() => this._tickOutageClock(), 30000);
     }
@@ -180,7 +184,7 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     );
     panel.hidden = !relevantDate || !fresh || !changedForGroup;
     if (panel.hidden) return;
-    this._setText('[data-live="change-title"]', "Графік змінився для цієї групи");
+    this._setText('[data-live="change-title"]', "Графік змінився");
     this._setText('[data-live="change-date"]', this._formatDate(eventDate));
     const comparison = this.shadowRoot.querySelector('[data-live="change-comparison"]');
     comparison.replaceChildren();
@@ -193,7 +197,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     for (const row of rows) {
       const label = document.createElement("span"); label.className = "outage-change-label"; label.textContent = row.label;
       const values = document.createElement("strong"); values.className = "outage-change-values"; values.textContent = row.values.length ? row.values.join(", ") : "Немає";
-      comparison.append(label, values);
+      const column = document.createElement("div");
+      column.append(label, values);
+      comparison.append(column);
     }
   }
 
@@ -212,9 +218,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const outageStatus = !state || ["unknown", "unavailable"].includes(state.state) || !["on", "off"].includes(state.state) || todaySchedule === null
       ? "unknown" : state.state === "on" ? "outage" : "available";
     this.shadowRoot.querySelector('[data-live="outage-status"]')?.setAttribute("data-status", outageStatus);
-    this._setText('[data-live="outage-status"]', outageStatus === "unknown"
+    this._setText('[data-live="outage-status-title"]', outageStatus === "unknown"
       ? "Немає даних про графік"
-      : outageStatus === "outage" ? "За графіком зараз відключення" : "За графіком зараз світло має бути");
+      : outageStatus === "outage" ? "Світла немає" : "Світло є");
     this._setText('[data-live="outage-date"]', this._formatDate(date));
     for (const button of this.shadowRoot.querySelectorAll('[data-action="outage-day"]')) {
       const selected = button.dataset.day === this._outageDay;
@@ -238,6 +244,11 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const outageUpdatedDate = outageUpdated ? this._kyivDate(new Date(outageUpdated)) : today;
     const staleSchedule = !!state && outageUpdatedDate !== today;
     const scheduleForView = staleSchedule ? null : schedule;
+    if (staleSchedule) {
+      this.shadowRoot.querySelector('[data-live="outage-status"]').setAttribute("data-status", "unknown");
+      this._setText('[data-live="outage-status-title"]', "Графік застарів");
+    }
+    this._setText('[data-live="outage-duration"]', scheduleForView === null ? "Ще не опубліковано" : "Без світла · " + this._duration(scheduleForView));
     const displayedIntervals = scheduleForView || [];
     const displayedPossible = staleSchedule || scheduleForView === null ? [] : possible;
     this._renderIntervals(displayedIntervals, displayedPossible, changed, previousRegular || displayedIntervals, previousPossible || displayedPossible, scheduleForView !== null && !staleSchedule);
@@ -255,8 +266,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const updated = this._state(this._config.updated_entity)?.state;
     const updatedDate = updated && updated !== "unknown" && updated !== "unavailable" ? new Date(updated) : null;
     this._setText('[data-live="outage-updated"]', updatedDate && Number.isFinite(updatedDate.getTime())
-      ? `Графік оновлено · ${new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(updatedDate)}`
+      ? `Оновлено ${new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(updatedDate)}`
       : "Оновлення графіка невідоме");
+    this._updateOperatorHeader(date);
     this._updateOutageCountdown();
   }
 
@@ -266,6 +278,7 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     if (!countdown) return;
     const outage = this._state(this._config.outage_entity);
     const status = outage?.state;
+    if (this.shadowRoot.querySelector('[data-live="outage-status"]')?.dataset.status === "unknown") { countdown.hidden = true; return; }
     if (!outage || ["unknown", "unavailable"].includes(status) || !["on", "off"].includes(status) || this._intervals(outage.attributes?.today) === null) { countdown.hidden = true; return; }
     const targetId = status === "on" ? this._config.power_back_entity : this._config.next_outage_entity;
     const target = this._state(targetId)?.state;
@@ -274,16 +287,67 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const minutes = Math.max(0, Math.ceil((timestamp - Date.now()) / 60000));
     if (minutes === 0) { countdown.hidden = true; return; }
     const hours = Math.floor(minutes / 60), remainder = minutes % 60;
-    const label = status === "on" ? "До повернення світла за графіком" : "До відключення за графіком";
+    const label = status === "on" ? "Увімкнуть" : "Вимкнуть";
     const time = new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(timestamp);
-    countdown.textContent = `${label} · ${hours ? `${hours} год ` : ""}${remainder} хв · о ${time}`;
+    countdown.textContent = `${label} о ${time} · через ${hours ? `${hours} год ` : ""}${remainder} хв`;
     countdown.hidden = false;
+  }
+
+  _duration(intervals) {
+    const minutes = new Set();
+    for (const interval of intervals) {
+      const [from, to] = interval.split("–").map(value => {
+        const [hours, minutes] = value.split(":").map(Number);
+        return Math.min(1440, hours * 60 + minutes);
+      });
+      for (let minute = from; minute < to; minute++) minutes.add(minute);
+    }
+    const hours = Math.floor(minutes.size / 60), remainder = minutes.size % 60;
+    return [hours ? hours + " год" : "", remainder || !hours ? remainder + " хв" : ""].filter(Boolean).join(" ");
+  }
+
+  async _fetchOperatorSchedule() {
+    const deviceId = this._hass?.entities?.[this._config?.outage_entity]?.device_id;
+    if (!deviceId || !this._hass.callWS || !this.isConnected || this._operatorRequest || Date.now() - (this._operatorFetchedAt || 0) < 60000) return;
+    const request = {};
+    this._operatorRequest = request;
+    this._operatorFetchedAt = Date.now();
+    try {
+      const data = await this._hass.callWS({ type: "ukraine_outages/card", device_id: deviceId });
+      if (this._operatorRequest !== request || !this.isConnected) return;
+      this._operatorData = data;
+      this._updateOutageView();
+    } catch {
+      if (this._operatorRequest === request) {
+        this._operatorData = null;
+        this._updateOutageView();
+      }
+    } finally {
+      if (this._operatorRequest === request) this._operatorRequest = null;
+    }
+  }
+
+  _updateOperatorHeader(date) {
+    const data = this._operatorData;
+    const group = this._state(this._config.outage_entity)?.attributes?.group;
+    this._setText('[data-live="outage-group"]', [data?.operator, group ? "Група " + group : ""].filter(Boolean).join(" · "));
+    const day = data?.days?.find(day => day.date === date);
+    const link = this.shadowRoot.querySelector('[data-live="operator-link"]');
+    let url;
+    try { url = new URL(day?.image_url); } catch { /* No operator image for this day. */ }
+    link.hidden = url?.protocol !== "https:";
+    if (link.hidden) link.removeAttribute("href");
+    else link.href = url.href;
+    if (!this._config.updated_entity && day?.updated_at && Number.isFinite(Date.parse(day.updated_at))) {
+      this._setText('[data-live="outage-updated"]', "Оновлено " + new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(new Date(day.updated_at)));
+    }
   }
 
   _tickOutageClock() {
     if (!this.isConnected) return;
     if (this._outageRenderedDate !== this._kyivDate()) this._updateOutageView();
     else this._updateOutageCountdown();
+    this._fetchOperatorSchedule();
   }
 }
 

@@ -86,15 +86,6 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     slave_max_cells_entity: null,
     slave_cycles_entity: null,
   },
-  energy: {
-    power_entity: null,
-    voltage_entity: null,
-    current_entity: null,
-    energy_daily: null,
-    energy_monthly: null,
-    energy_total: null,
-    energy_path: '/home-cards/energy',
-  },
   outage: {
     outage_entity: null,
     schedule_event: null,
@@ -211,15 +202,6 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['main_temperature_entity', 'Температура основної батареї', 'sensor'],
     ['slave_temperature_entity', 'Температура додаткової батареї', 'sensor'],
   ],
-  energy: [
-    ['power_entity', 'Потужність', 'sensor'],
-    ['voltage_entity', 'Напруга', 'sensor'],
-    ['current_entity', 'Струм', 'sensor'],
-    ['energy_daily', 'Енергія сьогодні', 'sensor'],
-    ['energy_monthly', 'Енергія за місяць', 'sensor'],
-    ['energy_total', 'Енергія від початку обліку', 'sensor'],
-    ['energy_path', 'Шлях до деталей енергії', 'text'],
-  ],
   outage: [
     ['outage_entity', 'Графік відключення', 'binary_sensor'],
     ['schedule_event', 'Подія зміни графіка · необов’язково', 'event'],
@@ -268,7 +250,6 @@ const HOME_DEVICE_CARD_META = {
   socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
-  energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],
   outage: ['home-outage-card', 'Графік відключень', 'Показує графік відключень і зміни для групи.'],
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],
 };

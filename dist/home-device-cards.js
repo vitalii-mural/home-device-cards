@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.18 — bundled base and standalone cards.
+// Home Device Cards v1.1.19 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -527,32 +527,32 @@ const HOME_DEVICE_CARD_STYLE = ":host{display:block;color-scheme:light;--k-bg:#f
 
 const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-card{padding:18px;border-radius:23px}
-.single-card .outage-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 0 14px}
-.single-card .outage-header h2{font-size:16px;font-weight:500}
-.single-card .outage-group{padding:6px 10px;border-radius:12px;background:var(--k-soft);font-size:16px;font-variant-numeric:tabular-nums}
-.single-card .outage-status{padding:12px 13px;border-radius:15px;background:var(--k-accent-bg);color:var(--k-accent);font-size:13px;font-weight:500}
+.single-card .outage-header{display:grid;align-items:start;justify-content:space-between;gap:10px;padding:0 0 13px;grid-template-columns:minmax(0,1fr) auto}
+.single-card .outage-header h2{font-size:16px;font-weight:600}
+.single-card .outage-group{padding:0;border-radius:12px;background:none;font-size:11px;font-variant-numeric:tabular-nums;display:block;margin-top:4px;color:var(--k-muted)}
+.single-card .outage-status{padding:13px;border-radius:15px;background:var(--k-accent-bg);color:var(--k-accent);font-size:13px;font-weight:500;display:flex;align-items:center;gap:12px}
 .single-card .outage-status[data-status=outage]{background:var(--k-warm-bg);color:var(--k-warm)}
 .single-card .outage-status[data-status=unknown]{background:var(--k-soft);color:var(--k-muted)}
-.single-card .outage-countdown{margin-top:6px;font-variant-numeric:tabular-nums}
-.single-card .outage-change{display:grid;grid-template-columns:1fr;gap:7px;margin-top:11px;padding:12px 13px;border-left:3px solid var(--k-warm);border-radius:13px;background:var(--k-warm-bg);color:var(--k-warm);font-size:13px}
-.single-card .outage-change-date{font-size:12px}
-.single-card .outage-comparison{display:grid;grid-template-columns:minmax(66px,auto) 1fr;gap:5px 9px;border-top:1px solid color-mix(in srgb,var(--k-warm) 24%,transparent);padding-top:8px;font-size:12px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.single-card .outage-countdown{font-variant-numeric:tabular-nums;margin:3px 0 0;font-size:11px;line-height:1.5}
+.single-card .outage-change{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:11px;padding:12px 13px;border-left:0;border-radius:13px;background:var(--k-warm-bg);color:var(--k-warm);font-size:13px}
+.single-card .outage-change-date{font-size:10px;align-self:center}
+.single-card .outage-comparison{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 24px;border-top:1px solid color-mix(in srgb,var(--k-warm) 24%,transparent);padding-top:8px;font-size:12px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;grid-column:1/-1;position:relative}
 .single-card .outage-change-label{color:var(--k-muted)}
-.single-card .outage-change-values{font-weight:500}
+.single-card .outage-change-values{font-weight:600;margin-top:4px;font-size:13px}
 .single-card .outage-source-warning{margin-top:10px;padding:10px 12px;border-radius:13px;background:var(--k-soft);color:var(--k-muted);font-size:11px;line-height:1.45}
-.single-card .outage-tabs{display:flex;gap:5px;margin:13px 0 9px;padding:4px;border-radius:12px;background:var(--k-soft)}
-.single-card .outage-tabs button{flex:1;min-height:38px;border-radius:9px;background:transparent;color:var(--k-muted);font-size:12px}
-.single-card .outage-tabs button[aria-selected=true]{background:var(--k-card);color:var(--k-text)}
-.single-card .outage-date{font-size:11px;color:var(--k-muted);margin:0 0 6px;text-transform:capitalize}
-.single-card .outage-ticks{display:flex;justify-content:space-between;margin-bottom:4px;color:var(--k-muted);font-size:11px;font-variant-numeric:tabular-nums}
-.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px;height:24px}
-.single-card .outage-cell{min-width:0;border-radius:3px;background:var(--k-accent-bg)}
-.single-card .outage-cell.is-off{background:var(--k-muted)}
+.single-card .outage-tabs{display:flex;gap:12px;margin:0;padding:0;border-radius:0;background:none}
+.single-card .outage-tabs button{flex:1;min-height:44px;border-radius:0;background:transparent;color:var(--k-muted);font-size:12px;padding:0;border-bottom:2px solid transparent}
+.single-card .outage-tabs button[aria-selected=true]{background:none;color:var(--k-accent);border-bottom-color:var(--k-accent)}
+.single-card .outage-date{font-size:11px;color:var(--k-muted);margin:8px 0 6px;text-transform:capitalize}
+.single-card .outage-ticks{display:flex;justify-content:space-between;color:var(--k-muted);font-size:10px;font-variant-numeric:tabular-nums;margin:5px 0 0}
+.single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:1px;height:20px;border-radius:5px;overflow:hidden}
+.single-card .outage-cell{min-width:0;border-radius:0;background:color-mix(in srgb,var(--k-accent) 45%,var(--k-card))}
+.single-card .outage-cell.is-off{background:var(--k-danger)}
 .single-card .outage-cell.is-possible{background:repeating-linear-gradient(135deg,var(--k-warm-bg) 0 3px,var(--k-warm) 3px 4px)}
-.single-card .outage-cell.is-changed{background:var(--k-warm)}
+.single-card .outage-cell.is-changed{box-shadow:inset 0 -3px var(--k-warm)}
 .single-card .outage-cell.is-possible.is-changed{background:repeating-linear-gradient(135deg,var(--k-warm) 0 3px,var(--k-warm-bg) 3px 5px)}
 .single-card .outage-cell.is-unknown{background:var(--k-soft)}
-.single-card .outage-legend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:9px;color:var(--k-muted);font-size:11px}
+.single-card .outage-legend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:9px;color:var(--k-muted);font-size:10px}
 .single-card .outage-key{display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:2px;background:var(--k-muted)}
 .single-card .outage-key-possible{background:var(--k-warm-bg);box-shadow:inset 0 0 0 1px var(--k-warm)}
 .single-card .outage-key-changed{background:var(--k-warm)}
@@ -560,7 +560,17 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-interval{padding:5px 8px;border-radius:8px;background:var(--k-soft);font-size:11px;font-variant-numeric:tabular-nums}
 .single-card .outage-interval.is-possible{background:var(--k-warm-bg);color:var(--k-warm)}
 .single-card .outage-interval.is-changed{box-shadow:inset 0 0 0 1px var(--k-warm)}
-.single-card .outage-footer{display:flex;justify-content:space-between;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--k-line);font-size:11px;color:var(--k-muted)}
+.single-card .outage-header-tools{display:grid;justify-items:end;gap:5px;max-width:130px;text-align:right;font-size:10px;color:var(--k-muted)}
+.single-card .outage-header-tools a{color:var(--k-accent);text-decoration:none;padding:3px 0}
+.single-card .outage-status svg{width:30px;height:30px;flex-shrink:0}
+.single-card .outage-status strong{display:block;font-size:17px;font-weight:600}
+.single-card .outage-status-note{display:block;font-size:11px;margin-top:3px}
+.single-card .outage-comparison:after{content:'→';position:absolute;left:50%;top:24px;transform:translateX(-50%)}
+.single-card .outage-comparison>div:nth-child(even){text-align:right}
+.single-card .outage-change-label,.single-card .outage-change-values{display:block}
+.single-card .outage-day-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+.single-card .outage-duration{font-size:11px;text-align:right;font-variant-numeric:tabular-nums}
+.single-card .outage-key-off{background:var(--k-danger)}
 .single-card .outage-card [hidden]{display:none!important}
 @media(max-width:360px){.single-card .outage-card{padding:15px}.single-card .outage-track{gap:1px}}
 .single-card .socket-card,.single-card .room-sensor-card{width:100%;margin:0;padding:20px;border-radius:24px;background:var(--k-card);color:var(--k-text);font:14px/1.4 system-ui,sans-serif}
@@ -1003,15 +1013,6 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     slave_max_cells_entity: null,
     slave_cycles_entity: null,
   },
-  energy: {
-    power_entity: null,
-    voltage_entity: null,
-    current_entity: null,
-    energy_daily: null,
-    energy_monthly: null,
-    energy_total: null,
-    energy_path: '/home-cards/energy',
-  },
   outage: {
     outage_entity: null,
     schedule_event: null,
@@ -1128,15 +1129,6 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['main_temperature_entity', 'Температура основної батареї', 'sensor'],
     ['slave_temperature_entity', 'Температура додаткової батареї', 'sensor'],
   ],
-  energy: [
-    ['power_entity', 'Потужність', 'sensor'],
-    ['voltage_entity', 'Напруга', 'sensor'],
-    ['current_entity', 'Струм', 'sensor'],
-    ['energy_daily', 'Енергія сьогодні', 'sensor'],
-    ['energy_monthly', 'Енергія за місяць', 'sensor'],
-    ['energy_total', 'Енергія від початку обліку', 'sensor'],
-    ['energy_path', 'Шлях до деталей енергії', 'text'],
-  ],
   outage: [
     ['outage_entity', 'Графік відключення', 'binary_sensor'],
     ['schedule_event', 'Подія зміни графіка · необов’язково', 'event'],
@@ -1185,7 +1177,6 @@ const HOME_DEVICE_CARD_META = {
   socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
-  energy: ['home-energy-card', 'Енергія бойлера', 'Лічильники й графік потужності.'],
   outage: ['home-outage-card', 'Графік відключень', 'Показує графік відключень і зміни для групи.'],
   battery: ['home-battery-card', 'Батареї EcoFlow', 'Ємності, струми, комірки й температури.'],
 };
@@ -1219,7 +1210,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       light: "switch_entity",
       tv: "remote_entity",
       river: "river_status",
-      energy: "power_entity",
       outage: "outage_entity",
     }[kind];
     const fieldSchema = ([name, , type]) => ({
@@ -1322,7 +1312,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       tv: 8,
       air: 8,
       river: 8,
-      energy: 8,
       battery: 8,
     }[this._cardType] || 5;
   }
@@ -1332,7 +1321,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       boiler: 5,
       air: 8,
       river: 8,
-      energy: 5,
       battery: 5,
       light: 2,
       socket: 4,
@@ -1341,12 +1329,12 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       leak: 3,
       door: 3,
     }[kind] || 5;
-    return kind === "energy" || kind === "river"
+    return kind === "river"
       ? {
           columns: 12,
           rows,
           min_columns: 6,
-          min_rows: kind === "river" ? 5 : 4,
+          min_rows: 5,
         }
       : {
           columns: 6,
@@ -4094,46 +4082,6 @@ class HomeRiverCard extends HomeDeviceStandaloneCard {
 }
 if (!customElements.get("home-river-card"))
   customElements.define("home-river-card", HomeRiverCard);
-class HomeEnergyCard extends HomeDeviceStandaloneCard {
-  static get cardType() {
-    return "energy";
-  }
-  static get cardTitle() {
-    return ["power_entity", "Споживання"];
-  }
-  _content() {
-    return `<div class="desktop-board">${this._energyOverview()}</div>`;
-  }
-  _energyOverview() {
-    const c = this._config;
-    return `<article class="panel desktop-energy" aria-label="Енергія бойлера"><div class="energy-heading"><div><h2>Споживання бойлера</h2><span class="secondary">Потужність та історія</span></div><span class="power-now"><span data-live="power">${this._format(this._value(c.power_entity), 0)}</span> <small>Вт зараз</small></span></div><div class="energy-stats"><div><span class="secondary">Сьогодні</span><strong><span data-live="energy-daily">${this._format(this._value(c.energy_daily), 2)}</span> <small>кВт·год</small></strong></div><div><span class="secondary">Цього місяця</span><strong><span data-live="energy-monthly">${this._format(this._value(c.energy_monthly), 2)}</span> <small>кВт·год</small></strong></div></div><div class="graph-slot" data-graph="boiler"><span class="secondary">Завантаження історії…</span></div><button class="text-button" data-action="view-energy">Детальні показники${this._icon("arrow-top-right")}</button></article>`;
-  }
-  _updateCardDynamic({ all, has }) {
-    const sources = [
-      this._config.power_entity,
-      this._config.voltage_entity,
-      this._config.current_entity,
-      this._config.energy_total,
-      this._config.energy_daily,
-      this._config.energy_monthly,
-    ];
-    if (all || sources.some(has)) this._updateEnergy();
-  }
-  _graphDefinitions() {
-    return {
-      boiler: {
-        entities: [this._config.power_entity],
-        show_names: false,
-        grid_options: { rows: 4 },
-      },
-    };
-  }
-  _graphCardHeight() {
-    return "200px";
-  }
-}
-if (!customElements.get("home-energy-card"))
-  customElements.define("home-energy-card", HomeEnergyCard);
 class HomeOutageCard extends HomeDeviceStandaloneCard {
   constructor() {
     super();
@@ -4155,17 +4103,15 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
 
   _content() {
     return `<article class="panel outage-card" aria-label="Графік відключень">
-      <header class="outage-header"><h2>Графік відключень</h2><span class="outage-group" data-live="outage-group">—</span></header>
-      <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite">Виберіть сутність графіка</div>
-      <p class="secondary outage-countdown" data-live="outage-countdown" hidden></p>
+      <header class="outage-header"><div><h2>Графік відключень</h2><span class="outage-group" data-live="outage-group">—</span></div><div class="outage-header-tools"><span data-live="outage-updated"></span><a data-live="operator-link" target="_blank" rel="noopener noreferrer" hidden>Графік оператора ↗</a></div></header>
+      <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M3 6h18M5 6v4m14-4v4M7 3v3m10-3v3M8 22l4-12 4 12M6 14h12"/></svg><div><strong data-live="outage-status-title">Виберіть сутність графіка</strong><span class="outage-status-note">За графіком</span><p class="outage-countdown" data-live="outage-countdown" hidden></p></div></div>
       <div class="outage-change" data-live="outage-change" aria-live="polite" hidden><strong data-live="change-title">Графік змінився</strong><span class="outage-change-date" data-live="change-date"></span><div class="outage-comparison" data-live="change-comparison"></div></div>
       <div class="outage-source-warning" data-live="source-warning" role="status" hidden>Джерело графіка зараз не відповідає. Показано останній відомий графік.</div>
-      <div class="outage-tabs" role="group" aria-label="День графіка"><button type="button" aria-pressed="true" data-action="outage-day" data-day="today">Сьогодні</button><button type="button" aria-pressed="false" data-action="outage-day" data-day="tomorrow">Завтра</button></div>
+      <div class="outage-day-row"><div class="outage-tabs" role="group" aria-label="День графіка"><button type="button" aria-pressed="true" data-action="outage-day" data-day="today">Сьогодні</button><button type="button" aria-pressed="false" data-action="outage-day" data-day="tomorrow">Завтра</button></div><span class="outage-duration" data-live="outage-duration"></span></div>
       <p class="outage-date" data-live="outage-date"></p>
-      <div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div>
-      <div class="outage-legend"><span><i class="outage-key outage-key-off"></i>За графіком без світла</span><span><i class="outage-key outage-key-possible"></i>Можливе відключення</span><span><i class="outage-key outage-key-changed"></i>Зміни</span></div>
+      <div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div><div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
       <div class="outage-intervals" data-live="outage-intervals" aria-live="polite"></div>
-      <footer class="outage-footer"><span data-live="outage-updated"></span></footer>
+      <div class="outage-legend"><span><i class="outage-key outage-key-off"></i>Без світла</span><span><i class="outage-key outage-key-possible"></i>Можливе</span><span><i class="outage-key outage-key-changed"></i>Зміни</span></div>
     </article>`;
   }
 
@@ -4179,6 +4125,8 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
   disconnectedCallback() {
     if (this._outageTimer) clearInterval(this._outageTimer);
     this._outageTimer = null;
+    this._operatorRequest = null;
+    this._operatorFetchedAt = 0;
     super.disconnectedCallback?.();
   }
 
@@ -4192,6 +4140,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
       }
       if (config?.outage_entity !== this._config.outage_entity) this._outageDay = "today";
     }
+    this._operatorRequest = null;
+    this._operatorData = null;
+    this._operatorFetchedAt = 0;
     super.setConfig(config);
   }
 
@@ -4216,6 +4167,7 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
 
   _updateCardDynamic() {
     this._updateOutageView();
+    this._fetchOperatorSchedule();
     if (this.isConnected && !this._outageTimer) {
       this._outageTimer = setInterval(() => this._tickOutageClock(), 30000);
     }
@@ -4316,7 +4268,7 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     );
     panel.hidden = !relevantDate || !fresh || !changedForGroup;
     if (panel.hidden) return;
-    this._setText('[data-live="change-title"]', "Графік змінився для цієї групи");
+    this._setText('[data-live="change-title"]', "Графік змінився");
     this._setText('[data-live="change-date"]', this._formatDate(eventDate));
     const comparison = this.shadowRoot.querySelector('[data-live="change-comparison"]');
     comparison.replaceChildren();
@@ -4329,7 +4281,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     for (const row of rows) {
       const label = document.createElement("span"); label.className = "outage-change-label"; label.textContent = row.label;
       const values = document.createElement("strong"); values.className = "outage-change-values"; values.textContent = row.values.length ? row.values.join(", ") : "Немає";
-      comparison.append(label, values);
+      const column = document.createElement("div");
+      column.append(label, values);
+      comparison.append(column);
     }
   }
 
@@ -4348,9 +4302,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const outageStatus = !state || ["unknown", "unavailable"].includes(state.state) || !["on", "off"].includes(state.state) || todaySchedule === null
       ? "unknown" : state.state === "on" ? "outage" : "available";
     this.shadowRoot.querySelector('[data-live="outage-status"]')?.setAttribute("data-status", outageStatus);
-    this._setText('[data-live="outage-status"]', outageStatus === "unknown"
+    this._setText('[data-live="outage-status-title"]', outageStatus === "unknown"
       ? "Немає даних про графік"
-      : outageStatus === "outage" ? "За графіком зараз відключення" : "За графіком зараз світло має бути");
+      : outageStatus === "outage" ? "Світла немає" : "Світло є");
     this._setText('[data-live="outage-date"]', this._formatDate(date));
     for (const button of this.shadowRoot.querySelectorAll('[data-action="outage-day"]')) {
       const selected = button.dataset.day === this._outageDay;
@@ -4374,6 +4328,11 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const outageUpdatedDate = outageUpdated ? this._kyivDate(new Date(outageUpdated)) : today;
     const staleSchedule = !!state && outageUpdatedDate !== today;
     const scheduleForView = staleSchedule ? null : schedule;
+    if (staleSchedule) {
+      this.shadowRoot.querySelector('[data-live="outage-status"]').setAttribute("data-status", "unknown");
+      this._setText('[data-live="outage-status-title"]', "Графік застарів");
+    }
+    this._setText('[data-live="outage-duration"]', scheduleForView === null ? "Ще не опубліковано" : "Без світла · " + this._duration(scheduleForView));
     const displayedIntervals = scheduleForView || [];
     const displayedPossible = staleSchedule || scheduleForView === null ? [] : possible;
     this._renderIntervals(displayedIntervals, displayedPossible, changed, previousRegular || displayedIntervals, previousPossible || displayedPossible, scheduleForView !== null && !staleSchedule);
@@ -4391,8 +4350,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const updated = this._state(this._config.updated_entity)?.state;
     const updatedDate = updated && updated !== "unknown" && updated !== "unavailable" ? new Date(updated) : null;
     this._setText('[data-live="outage-updated"]', updatedDate && Number.isFinite(updatedDate.getTime())
-      ? `Графік оновлено · ${new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(updatedDate)}`
+      ? `Оновлено ${new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(updatedDate)}`
       : "Оновлення графіка невідоме");
+    this._updateOperatorHeader(date);
     this._updateOutageCountdown();
   }
 
@@ -4402,6 +4362,7 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     if (!countdown) return;
     const outage = this._state(this._config.outage_entity);
     const status = outage?.state;
+    if (this.shadowRoot.querySelector('[data-live="outage-status"]')?.dataset.status === "unknown") { countdown.hidden = true; return; }
     if (!outage || ["unknown", "unavailable"].includes(status) || !["on", "off"].includes(status) || this._intervals(outage.attributes?.today) === null) { countdown.hidden = true; return; }
     const targetId = status === "on" ? this._config.power_back_entity : this._config.next_outage_entity;
     const target = this._state(targetId)?.state;
@@ -4410,16 +4371,67 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     const minutes = Math.max(0, Math.ceil((timestamp - Date.now()) / 60000));
     if (minutes === 0) { countdown.hidden = true; return; }
     const hours = Math.floor(minutes / 60), remainder = minutes % 60;
-    const label = status === "on" ? "До повернення світла за графіком" : "До відключення за графіком";
+    const label = status === "on" ? "Увімкнуть" : "Вимкнуть";
     const time = new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(timestamp);
-    countdown.textContent = `${label} · ${hours ? `${hours} год ` : ""}${remainder} хв · о ${time}`;
+    countdown.textContent = `${label} о ${time} · через ${hours ? `${hours} год ` : ""}${remainder} хв`;
     countdown.hidden = false;
+  }
+
+  _duration(intervals) {
+    const minutes = new Set();
+    for (const interval of intervals) {
+      const [from, to] = interval.split("–").map(value => {
+        const [hours, minutes] = value.split(":").map(Number);
+        return Math.min(1440, hours * 60 + minutes);
+      });
+      for (let minute = from; minute < to; minute++) minutes.add(minute);
+    }
+    const hours = Math.floor(minutes.size / 60), remainder = minutes.size % 60;
+    return [hours ? hours + " год" : "", remainder || !hours ? remainder + " хв" : ""].filter(Boolean).join(" ");
+  }
+
+  async _fetchOperatorSchedule() {
+    const deviceId = this._hass?.entities?.[this._config?.outage_entity]?.device_id;
+    if (!deviceId || !this._hass.callWS || !this.isConnected || this._operatorRequest || Date.now() - (this._operatorFetchedAt || 0) < 60000) return;
+    const request = {};
+    this._operatorRequest = request;
+    this._operatorFetchedAt = Date.now();
+    try {
+      const data = await this._hass.callWS({ type: "ukraine_outages/card", device_id: deviceId });
+      if (this._operatorRequest !== request || !this.isConnected) return;
+      this._operatorData = data;
+      this._updateOutageView();
+    } catch {
+      if (this._operatorRequest === request) {
+        this._operatorData = null;
+        this._updateOutageView();
+      }
+    } finally {
+      if (this._operatorRequest === request) this._operatorRequest = null;
+    }
+  }
+
+  _updateOperatorHeader(date) {
+    const data = this._operatorData;
+    const group = this._state(this._config.outage_entity)?.attributes?.group;
+    this._setText('[data-live="outage-group"]', [data?.operator, group ? "Група " + group : ""].filter(Boolean).join(" · "));
+    const day = data?.days?.find(day => day.date === date);
+    const link = this.shadowRoot.querySelector('[data-live="operator-link"]');
+    let url;
+    try { url = new URL(day?.image_url); } catch { /* No operator image for this day. */ }
+    link.hidden = url?.protocol !== "https:";
+    if (link.hidden) link.removeAttribute("href");
+    else link.href = url.href;
+    if (!this._config.updated_entity && day?.updated_at && Number.isFinite(Date.parse(day.updated_at))) {
+      this._setText('[data-live="outage-updated"]', "Оновлено " + new Intl.DateTimeFormat("uk-UA", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Kyiv" }).format(new Date(day.updated_at)));
+    }
   }
 
   _tickOutageClock() {
     if (!this.isConnected) return;
     if (this._outageRenderedDate !== this._kyivDate()) this._updateOutageView();
     else this._updateOutageCountdown();
+    this._fetchOperatorSchedule();
   }
 }
 

@@ -461,7 +461,6 @@ test("registers the dashboard and standalone card types", async () => {
     "home-door-card",
     "home-socket-card",
     "home-river-card",
-    "home-energy-card",
     "home-battery-card",
     "home-tv-card",
   ]) {
@@ -792,12 +791,6 @@ test("standalone card markup and sizing match pre-refactor characterization", as
       { columns: 12, rows: 8, min_columns: 6, min_rows: 5 },
     ],
     [
-      "home-energy-card",
-      "cb92c06c9bdd5ece9a6b1649d66c93428f2085676266a55763532506323d9d6f",
-      8,
-      { columns: 12, rows: 5, min_columns: 6, min_rows: 4 },
-    ],
-    [
       "home-battery-card",
       "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c",
       8,
@@ -838,7 +831,6 @@ test("configured live-card markup matches pre-refactor characterization", async 
     ["home-room-card", "26cf1a038b7fcf7a8f53377ced22c86bcbebd4be5c72ed1e04db85ad173550f3"],
     ["home-socket-card", "1341683b9d882828aed918dc3d6fb2983ec9cce7e4bd933d0945c41583b76d82"],
     ["home-river-card", "e5643629beb69ba09093c07d76a6821b5c2c938545b5a4811e11eab69fd97a6c"],
-    ["home-energy-card", "55a435ec8720739986a6eabbc50fb02554e54619c59e68029762b1fc012bf0c3"],
     ["home-battery-card", "016c8b1138c5bbe6af21cc90b26987fea518694ccb6eb8c2ae1acfe0fd7b5d9c"],
   ];
 
@@ -1041,9 +1033,9 @@ test("air power preserves the device mode instead of selecting cooling", async (
   }
 });
 
-test("configured energy and battery paths are navigated by standalone cards", async () => {
+test("configured detail paths are navigated by standalone cards", async () => {
   const { registry } = await loadCards();
-  const card = new (registry.get("home-energy-card"))();
+  const card = new (registry.get("home-river-card"))();
   card.shadowRoot.querySelector = () => null;
   card._config = { energy_path: "/custom/energy", battery_path: "/custom/battery" };
   const navigated = [];

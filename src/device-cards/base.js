@@ -27,7 +27,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       light: "switch_entity",
       tv: "remote_entity",
       river: "river_status",
-      energy: "power_entity",
       outage: "outage_entity",
     }[kind];
     const fieldSchema = ([name, , type]) => ({
@@ -130,7 +129,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       tv: 8,
       air: 8,
       river: 8,
-      energy: 8,
       battery: 8,
     }[this._cardType] || 5;
   }
@@ -140,7 +138,6 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       boiler: 5,
       air: 8,
       river: 8,
-      energy: 5,
       battery: 5,
       light: 2,
       socket: 4,
@@ -149,12 +146,12 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       leak: 3,
       door: 3,
     }[kind] || 5;
-    return kind === "energy" || kind === "river"
+    return kind === "river"
       ? {
           columns: 12,
           rows,
           min_columns: 6,
-          min_rows: kind === "river" ? 5 : 4,
+          min_rows: 5,
         }
       : {
           columns: 6,
