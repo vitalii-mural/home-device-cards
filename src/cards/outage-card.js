@@ -21,10 +21,9 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     return `<article class="panel outage-card" aria-label="Графік відключень">
       <header class="outage-header"><div><h2>Графік відключень</h2><span class="outage-group" data-live="outage-group">—</span></div><div class="outage-header-tools"><span data-live="outage-updated"></span><a data-live="operator-link" target="_blank" rel="noopener noreferrer" hidden>Графік оператора ↗</a></div></header>
       <div class="outage-status" data-live="outage-status" data-status="unknown" aria-live="polite"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v20M3 6h18M5 6v4m14-4v4M7 3v3m10-3v3M8 22l4-12 4 12M6 14h12"/></svg><div><strong data-live="outage-status-title">Виберіть сутність графіка</strong><p class="outage-countdown" data-live="outage-countdown" hidden></p></div></div>
-      <div class="outage-change" data-live="outage-change" aria-live="polite" hidden><strong data-live="change-title">Графік змінився</strong><span class="outage-change-date" data-live="change-date"></span><div class="outage-comparison" data-live="change-comparison"></div></div>
+      <div class="outage-change" data-live="outage-change" aria-live="polite" hidden><strong data-live="change-title">Графік змінився</strong><div class="outage-comparison" data-live="change-comparison"></div></div>
       <div class="outage-source-warning" data-live="source-warning" role="status" hidden>Джерело графіка зараз не відповідає. Показано останній відомий графік.</div>
       <div class="outage-day-row"><div class="outage-tabs" role="group" aria-label="День графіка"><button type="button" aria-pressed="true" data-action="outage-day" data-day="today">Сьогодні</button><button type="button" aria-pressed="false" data-action="outage-day" data-day="tomorrow">Завтра</button></div><span class="outage-duration" data-live="outage-duration"></span></div>
-      <p class="outage-date" data-live="outage-date"></p>
       <div class="outage-ticks" aria-hidden="true"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div><div class="outage-track" data-live="outage-track" role="img" aria-label="Графік ще не завантажено"></div>
       <div class="outage-intervals" data-live="outage-intervals" aria-live="polite"></div>
       <div class="outage-legend"><span><i class="outage-key outage-key-off"></i>Без світла</span><span><i class="outage-key outage-key-possible"></i>Можливе</span><span><i class="outage-key outage-key-changed"></i>Зміни</span></div>
@@ -109,12 +108,6 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     return Array.isArray(value) ? value.filter((item) => typeof item === "string" && /^\d{2}:\d{2}–\d{2}:\d{2}$/.test(item)) : null;
   }
 
-  _formatDate(value) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || "")) return "";
-    const [year, month, day] = value.split("-").map(Number);
-    return new Intl.DateTimeFormat("uk-UA", { day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, day)));
-  }
-
   _renderIntervals(intervals, possible, changed, previous, previousPossible, published = true) {
     const regular = intervals || [];
     const uncertain = possible || [];
@@ -185,7 +178,6 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     panel.hidden = !relevantDate || !fresh || !changedForGroup;
     if (panel.hidden) return;
     this._setText('[data-live="change-title"]', "Графік змінився");
-    this._setText('[data-live="change-date"]', this._formatDate(eventDate));
     const comparison = this.shadowRoot.querySelector('[data-live="change-comparison"]');
     comparison.replaceChildren();
     const regularChanged = previous && current && JSON.stringify(previous) !== JSON.stringify(current);
@@ -221,7 +213,6 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
     this._setText('[data-live="outage-status-title"]', outageStatus === "unknown"
       ? "Немає даних про графік"
       : outageStatus === "outage" ? "Світла немає" : "Світло є");
-    this._setText('[data-live="outage-date"]', this._formatDate(date));
     for (const button of this.shadowRoot.querySelectorAll('[data-action="outage-day"]')) {
       const selected = button.dataset.day === this._outageDay;
       button.setAttribute("aria-selected", String(selected));

@@ -1,3 +1,8 @@
+## 1.1.20
+
+- Remove calendar dates from the outage card and schedule comparison; keep Today/Tomorrow and the update time.
+- Include the restored timeline with hour labels above it and removal of the status caption.
+
 ## 1.1.16
 
 - Add a compact outage schedule card with group-specific schedule changes and source status.

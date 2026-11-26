@@ -10,7 +10,6 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-status[data-status=unknown]{background:var(--k-soft);color:var(--k-muted)}
 .single-card .outage-countdown{font-variant-numeric:tabular-nums;margin:3px 0 0;font-size:11px;line-height:1.5}
 .single-card .outage-change{display:grid;grid-template-columns:1fr auto;gap:8px;margin-top:11px;padding:12px 13px;border-left:0;border-radius:13px;background:var(--k-warm-bg);color:var(--k-warm);font-size:13px}
-.single-card .outage-change-date{font-size:10px;align-self:center}
 .single-card .outage-comparison{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px 24px;border-top:1px solid color-mix(in srgb,var(--k-warm) 24%,transparent);padding-top:8px;font-size:12px;overflow-wrap:anywhere;font-variant-numeric:tabular-nums;grid-column:1/-1;position:relative}
 .single-card .outage-change-label{color:var(--k-muted)}
 .single-card .outage-change-values{font-weight:600;margin-top:4px;font-size:13px}
@@ -18,7 +17,6 @@ const HOME_DEVICE_FEEDBACK_STYLE = `
 .single-card .outage-tabs{display:flex;gap:12px;margin:0;padding:0;border-radius:0;background:none}
 .single-card .outage-tabs button{flex:1;min-height:44px;border-radius:0;background:transparent;color:var(--k-muted);font-size:12px;padding:0;border-bottom:2px solid transparent}
 .single-card .outage-tabs button[aria-selected=true]{background:none;color:var(--k-accent);border-bottom-color:var(--k-accent)}
-.single-card .outage-date{font-size:11px;color:var(--k-muted);margin:8px 0 6px;text-transform:capitalize}
 .single-card .outage-ticks{display:flex;justify-content:space-between;margin-bottom:4px;color:var(--k-muted);font-size:11px;font-variant-numeric:tabular-nums}
 .single-card .outage-track{display:grid;grid-template-columns:repeat(48,minmax(0,1fr));gap:2px;height:24px}
 .single-card .outage-cell{min-width:0;border-radius:3px;background:var(--k-accent-bg)}
