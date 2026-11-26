@@ -49,7 +49,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     const advancedFields = kind === "boiler" ? field.slice(1) : [];
     return {
       schema: [
-        ...(kind === "battery"
+        ...(["battery", "weather"].includes(kind)
           ? []
           : [
               {

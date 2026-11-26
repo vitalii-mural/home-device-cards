@@ -442,7 +442,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     humidity_label: 'Вологість',
   },
   light: { switch_entity: null },
-  weather: { weather_entity: null, location: null },
+  weather: { weather_entity: null },
   socket: {
     switch_entity: null,
     power_entity: null,
@@ -565,7 +565,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї датчика', 'sensor'],
   ],
   light: [['switch_entity', 'Реле світла', 'switch']],
-  weather: [['weather_entity', 'Погода', 'weather'], ['location', 'Назва місця · необов’язково', 'text']],
+  weather: [['weather_entity', 'Погода', 'weather']],
   socket: [
     ['switch_entity', 'Керування розеткою', 'switch'],
     ['power_entity', 'Поточна потужність', 'sensor'],
@@ -707,7 +707,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
     const advancedFields = kind === "boiler" ? field.slice(1) : [];
     return {
       schema: [
-        ...(kind === "battery"
+        ...(["battery", "weather"].includes(kind)
           ? []
           : [
               {
@@ -3906,7 +3906,7 @@ class HomeOutageCard extends HomeDeviceStandaloneCard {
 if (!customElements.get("home-outage-card")) customElements.define("home-outage-card", HomeOutageCard);
 class HomeWeatherCard extends HomeDeviceStandaloneCard {
   static get cardType() { return 'weather'; }
-  static get cardTitle() { return ['weather_entity', 'Погода']; }
+  static get cardTitle() { return []; }
   getCardSize() { return 3; }
   getGridOptions() { return { columns: 6, rows: 4, min_columns: 6, min_rows: 3 }; }
 
@@ -3998,8 +3998,7 @@ class HomeWeatherCard extends HomeDeviceStandaloneCard {
   _content() {
     return `<style>
       .weather-card{padding:12px 16px;border-radius:20px;background:var(--k-card);font-variant-numeric:tabular-nums;line-height:1.4}
-      .weather-card header{padding:0;align-items:start;gap:10px}.weather-card h2{font-size:15px}.weather-location{display:block;margin-top:3px;overflow-wrap:anywhere}
-      .weather-muted{font-size:11px;color:var(--k-muted)}.weather-updated{text-align:right;flex-shrink:0;padding-top:3px}
+      .weather-muted{font-size:11px;color:var(--k-muted)}
       .weather-current{display:grid;grid-template-columns:auto minmax(0,1fr) 34px;align-items:center;gap:12px;padding:8px 0}
       .weather-temperature{font-size:40px;line-height:1.1;letter-spacing:-1.5px}.weather-condition{font-size:12px;overflow-wrap:anywhere}.weather-feels{margin-top:3px}
       .weather-symbol svg{width:34px;height:34px;color:var(--k-accent)}.weather-card svg{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
@@ -4008,7 +4007,6 @@ class HomeWeatherCard extends HomeDeviceStandaloneCard {
       .weather-tabs{display:flex;gap:12px}.weather-tabs button{min-height:44px;padding:0;background:transparent;border-bottom:2px solid transparent;border-radius:0;font-size:11px;color:var(--k-muted)}.weather-tabs button[aria-pressed=true]{color:var(--k-accent);border-bottom-color:var(--k-accent)}
       .weather-forecast{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding-top:6px}.weather-slot{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;font-size:11px}.weather-slot strong{font-size:12px;font-weight:500}.weather-slot svg{width:19px;height:19px;color:var(--k-accent)}.weather-empty{grid-column:1/-1;font-size:11px;color:var(--k-muted);padding-bottom:3px}
     </style><article class="weather-card" aria-label="Погода">
-      <header><div><h2>Погода</h2><span class="weather-location weather-muted" data-weather="location"></span></div><span class="weather-updated weather-muted" data-weather="updated"></span></header>
       <div class="weather-current"><span class="weather-temperature" data-weather="temperature">—</span><div><div class="weather-condition" data-weather="condition"></div><div class="weather-feels weather-muted" data-weather="feels"></div></div><span class="weather-symbol" data-weather="icon" aria-hidden="true"></span></div>
       <div class="weather-metrics" data-weather="metrics"></div>
       <div class="weather-forecast-header"><div class="weather-tabs" role="group" aria-label="Період прогнозу"><button type="button" data-action="weather-period" data-period="hourly" aria-pressed="true">Погодинно</button><button type="button" data-action="weather-period" data-period="daily" aria-pressed="false">На 5 днів</button></div><span class="weather-muted" data-weather="range"></span></div>
@@ -4082,9 +4080,6 @@ class HomeWeatherCard extends HomeDeviceStandaloneCard {
     const time = value => new Intl.DateTimeFormat('uk-UA', { timeZone: zone, hour: '2-digit', minute: '2-digit' }).format(new Date(value));
     const set = (key, value) => this._setText(`[data-weather="${key}"]`, value);
     const unit = attrs.temperature_unit || this._hass?.config?.unit_system?.temperature || '°C';
-    set('location', this._config.location || state?.attributes?.friendly_name || '');
-    const updated = state?.last_reported || state?.last_updated;
-    set('updated', available && Number.isFinite(Date.parse(updated)) ? `Оновлено ${time(updated)}` : '');
     set('temperature', this._weatherTemp(attrs.temperature, unit === '°C' ? '°' : unit));
     const [condition] = this._weatherCondition(available ? state.state : null);
     set('condition', !this._config.weather_entity ? 'Виберіть сутність погоди' : condition);

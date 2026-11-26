@@ -67,19 +67,17 @@ update entities are optional.
 
 The weather card uses a `weather` entity, including UkrHMC (`ukr_hmc`).
 Choose the **weather location** (map point) entity for hourly and daily forecasts.
-The card shows up to five forecast periods; hourly slots omit precipitation
+The card starts with the current temperature, without a title, location or update time.
+It shows up to five forecast periods; hourly slots omit precipitation
 percentages. Unsupported forecast tabs and missing optional readings are hidden.
 Temperatures and wind use the entity's units; times use Home Assistant's time zone.
-The update time is the entity's latest report in Home Assistant.
 Forecasts update through Home Assistant's weather subscription API.
 
 ```yaml
 type: custom:home-weather-card
 weather_entity: weather.example_location
-location: Львів
 ```
 
-`location` is optional and otherwise uses the entity's friendly name.
 Select the real entity in the visual editor; the example ID is a placeholder.
 
 The Android TV remote card needs a `remote` entity from the Android TV Remote

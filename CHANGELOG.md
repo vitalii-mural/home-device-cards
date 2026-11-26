@@ -1,3 +1,7 @@
+## 1.1.22
+
+- Remove the weather card header, location and update time for a more compact layout.
+
 ## 1.1.21
 
 - Add a compact weather card with current conditions, hourly and five-day forecasts, and a visual entity selector.

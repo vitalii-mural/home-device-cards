@@ -43,7 +43,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     humidity_label: 'Вологість',
   },
   light: { switch_entity: null },
-  weather: { weather_entity: null, location: null },
+  weather: { weather_entity: null },
   socket: {
     switch_entity: null,
     power_entity: null,
@@ -166,7 +166,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї датчика', 'sensor'],
   ],
   light: [['switch_entity', 'Реле світла', 'switch']],
-  weather: [['weather_entity', 'Погода', 'weather'], ['location', 'Назва місця · необов’язково', 'text']],
+  weather: [['weather_entity', 'Погода', 'weather']],
   socket: [
     ['switch_entity', 'Керування розеткою', 'switch'],
     ['power_entity', 'Поточна потужність', 'sensor'],

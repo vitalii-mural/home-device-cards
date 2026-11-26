@@ -1022,7 +1022,7 @@ test("weather location forecasts stay compact, use entity units and omit hourly 
     const card = page.locator('home-weather-card');
     await page.waitForFunction(() => window.weatherCard.shadowRoot.querySelectorAll('.weather-slot').length === 5);
     assert.equal(await card.locator('[data-weather="temperature"]').innerText(), '+7°');
-    assert.equal(await card.locator('[data-weather="location"]').innerText(), 'Львів');
+    assert.equal(await card.locator('header, h2, [data-weather="location"], [data-weather="updated"]').count(), 0);
     assert.match(await card.locator('[data-weather="metrics"]').innerText(), /3 м\/с ПнЗх/);
     assert.doesNotMatch(await card.locator('[data-weather="forecast"]').innerText(), /%/);
     assert.equal(await card.locator('[data-weather="feels"]').innerText(), '');
@@ -1040,7 +1040,7 @@ test("weather location forecasts stay compact, use entity units and omit hourly 
     }
     await card.evaluate(node => { node.style.width = '328px'; });
     if (process.env.WEATHER_CARD_SCREENSHOT) await card.screenshot({ path: process.env.WEATHER_CARD_SCREENSHOT });
-    assert.ok((await card.boundingBox()).height < 280, `weather card stays compact: ${(await card.boundingBox()).height}px`);
+    assert.ok((await card.boundingBox()).height < 245, `weather card stays compact: ${(await card.boundingBox()).height}px`);
     await page.evaluate(() => {
       const hass = window.weatherHass;
       hass.states['weather.location_fixture'].attributes.temperature_unit = '°F';
