@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.17 — bundled base and standalone cards.
+// Home Device Cards v1.1.18 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -520,8 +520,6 @@ class HomeDashboard extends HTMLElement {
 }
 
 if(!customElements.get('home-dashboard'))customElements.define('home-dashboard',HomeDashboard);
-window.customCards=window.customCards||[];
-if(!window.customCards.some(card=>card.type==='home-dashboard'))window.customCards.push({type:'home-dashboard',name:'Домашня панель',description:'Бойлер, клімат, EcoFlow та енергія.'});
 
 ;
 customElements.whenDefined('home-dashboard').then(() => {
@@ -961,6 +959,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
     room_temperature_label: 'Температура',
     humidity_label: 'Вологість',
   },
+  light: { switch_entity: null },
   socket: {
     switch_entity: null,
     power_entity: null,
@@ -1091,6 +1090,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['humidity_label', 'Назва вологості', 'text'],
     ['battery_entity', 'Заряд батареї датчика', 'sensor'],
   ],
+  light: [['switch_entity', 'Реле світла', 'switch']],
   socket: [
     ['switch_entity', 'Керування розеткою', 'switch'],
     ['power_entity', 'Поточна потужність', 'sensor'],
@@ -1181,6 +1181,7 @@ const HOME_DEVICE_CARD_META = {
   leak_list: ['home-leak-list-card', 'Протікання води', 'Список станів датчиків протікання.'],
   rooms: ['home-rooms-card', 'Мікроклімат', 'Список температури та вологості по кімнатах.'],
   room: ['home-room-card', 'Температура й вологість', 'Показує температуру, вологість і заряд батареї датчика.'],
+  light: ['home-light-card', 'Підсвітка', 'Показує стан підсвітки та керує реле.'],
   socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
   river: ['home-river-card', 'EcoFlow RIVER Max', 'Заряд, батареї та потужність кожного виходу.'],
@@ -1215,6 +1216,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       leak: "leak_entity",
       door: "door_entity",
       socket: "switch_entity",
+      light: "switch_entity",
       tv: "remote_entity",
       river: "river_status",
       energy: "power_entity",
@@ -1225,7 +1227,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       required:
         (kind === "boiler" && name === "boiler_entity") ||
         (kind === "air" && name === "air_entity") ||
-        (kind === "socket" && name === "switch_entity") ||
+        ((kind === "socket" || kind === "light") && name === "switch_entity") ||
         (kind === "tv" && name === "remote_entity") ||
         (kind === "outage" && name === "outage_entity"),
       default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
@@ -1315,6 +1317,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       room: 3,
       leak: 3,
       door: 3,
+      light: 2,
       socket: 4,
       tv: 8,
       air: 8,
@@ -1331,6 +1334,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       river: 8,
       energy: 5,
       battery: 5,
+      light: 2,
       socket: 4,
       tv: 8,
       room: 3,
@@ -3761,6 +3765,60 @@ class HomeSocketCard extends HomeDeviceStandaloneCard {
 }
 if (!customElements.get("home-socket-card"))
   customElements.define("home-socket-card", HomeSocketCard);
+class HomeLightCard extends HomeDeviceStandaloneCard {
+  static get cardType() { return 'light'; }
+  static get cardTitle() { return ['switch_entity', 'Підсвітка']; }
+
+  _content() {
+    return `<style>
+      .light-card{display:grid;grid-template-columns:42px minmax(0,1fr) 48px;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--k-line);border-radius:18px;background:var(--k-card)}
+      .light-card .device-icon{width:42px;height:42px;border-radius:13px}
+      .light-card .device-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+      .light-card[data-on="true"] .device-icon{background:var(--k-warm-bg);color:var(--k-warm)}
+      .light-card h2{font-weight:650;overflow-wrap:anywhere}
+      .light-card .secondary{font-size:13px}
+      .light-toggle{display:grid;place-items:center;min-height:44px;background:transparent;padding:0}
+      .light-toggle span{display:flex;align-items:center;width:38px;height:22px;padding:2px 3px;border:1px solid var(--k-line);border-radius:99px;background:var(--k-soft)}
+      .light-toggle span::before{content:"";width:16px;height:16px;border-radius:50%;background:var(--k-muted)}
+      .light-toggle[aria-checked="true"] span{justify-content:flex-end;background:var(--k-warm-bg);border-color:var(--k-warm)}
+      .light-toggle[aria-checked="true"] span::before{background:var(--k-warm)}
+    </style><article class="light-card">
+      <span class="device-icon neutral">${this._lucideIcon('lightbulb')}</span>
+      <div><h2></h2><span class="secondary" data-live="light-status" aria-live="polite"></span></div>
+      <button type="button" class="light-toggle" data-action="light-toggle" role="switch" aria-checked="false" aria-label="Підсвітка" disabled><span aria-hidden="true"></span></button>
+    </article>`;
+  }
+
+  _updateCardDynamic({ all, has, serviceEntity }) {
+    const entity = this._config.switch_entity;
+    if (!all && !has(entity) && serviceEntity !== entity) return;
+    const state = this._state(entity)?.state;
+    const on = state === 'on';
+    const available = on || state === 'off';
+    const status = available ? (on ? 'Увімкнено' : 'Вимкнено')
+      : (state === 'unknown' ? 'Стан невідомий' : 'Немає зв’язку');
+    const card = this.shadowRoot.querySelector('.light-card');
+    const button = this.shadowRoot.querySelector('.light-toggle');
+    if (!card || !button) return;
+    card.setAttribute('data-on', String(on));
+    button.setAttribute('aria-checked', String(on));
+    button.setAttribute('aria-label', this._displayName('switch_entity', this._config.title, 'Підсвітка'));
+    button.disabled = !available || this._busy(entity);
+    this._setText('[data-live="light-status"]', status);
+  }
+
+  _click(event) {
+    if (!event.target.closest('button[data-action="light-toggle"]')) return;
+    const entity = this._config.switch_entity;
+    const state = this._state(entity)?.state;
+    if (state === 'on' || state === 'off') {
+      return this._service('switch', state === 'on' ? 'turn_off' : 'turn_on', { entity_id: entity });
+    }
+  }
+}
+
+if (!customElements.get('home-light-card'))
+  customElements.define('home-light-card', HomeLightCard);
 class HomeRiverCard extends HomeDeviceStandaloneCard {
   static get cardType() {
     return "river";
@@ -4684,7 +4742,7 @@ if (!customElements.get("home-tv-card"))
   customElements.define("home-tv-card", HomeTvCard);
 window.customCards = window.customCards || [];
 for (const [type, name, description] of Object.values(HOME_DEVICE_CARD_META)) {
-  if (!window.customCards.some(card => card.type === type)) window.customCards.push({ type, name, description });
+  if (!window.customCards.some(card => card.type === type)) window.customCards.push({ type, name, description, preview: true });
 }
 
 });

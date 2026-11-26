@@ -136,6 +136,63 @@ test("HACS bundle registers the same card contracts as the two manual resources"
   );
 });
 
+test("light card sends relay commands and follows the reported state", async () => {
+  const { registry } = await loadCards();
+  const card = new (registry.get("home-light-card"))();
+  const entity = "switch.kitchen_backlight";
+  const calls = [];
+  const attributes = new Map();
+  const button = { setAttribute: (name, value) => attributes.set(name, value) };
+  const status = {};
+  card.shadowRoot.querySelector = (selector) => ({
+    ".light-toggle": button,
+    ".light-card": { setAttribute() {} },
+    '[data-live="light-status"]': status,
+  })[selector];
+  card._render = () => {};
+  card.setConfig({ switch_entity: entity });
+  const report = (state) => {
+    card._hass = {
+      states: { [entity]: { state, attributes: {} } },
+      callService: async (...args) => { calls.push(args); },
+    };
+    card._updateCardDynamic({ all: true });
+  };
+  const click = () => card._click({ target: { closest: () => button } });
+
+  report("off");
+  const turningOn = click();
+  assert.equal(attributes.get("aria-checked"), "false");
+  assert.equal(button.disabled, true);
+  await turningOn;
+  report("on");
+  assert.equal(attributes.get("aria-checked"), "true");
+  await click();
+  report("unavailable");
+  assert.equal(button.disabled, true);
+  assert.equal(status.textContent, "Немає зв’язку");
+  click();
+  assert.deepEqual(calls.map(([domain, service, data]) => [domain, service, data.entity_id]), [
+    ["switch", "turn_on", entity],
+    ["switch", "turn_off", entity],
+  ]);
+});
+
+test("picker offers previews for standalone cards and hides their shared dashboard base", async () => {
+  const { window, registry } = await loadCards(true);
+  assert.ok(registry.has("home-dashboard"));
+  assert.deepEqual(
+    window.customCards.map(({ type }) => type).sort(),
+    [...registry.keys()].filter((type) => type !== "home-dashboard").sort(),
+  );
+  for (const { type, preview } of window.customCards) {
+    const Card = registry.get(type);
+    const config = Card.getStubConfig();
+    assert.equal(preview, true, type);
+    assert.doesNotThrow(() => new Card().setConfig(config), type);
+  }
+});
+
 test("room card renders independent, compact 24-hour histories and caches results", async () => {
   const { registry } = await loadCards();
   const card = new (registry.get("home-room-card"))();

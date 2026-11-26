@@ -24,6 +24,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       leak: "leak_entity",
       door: "door_entity",
       socket: "switch_entity",
+      light: "switch_entity",
       tv: "remote_entity",
       river: "river_status",
       energy: "power_entity",
@@ -34,7 +35,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       required:
         (kind === "boiler" && name === "boiler_entity") ||
         (kind === "air" && name === "air_entity") ||
-        (kind === "socket" && name === "switch_entity") ||
+        ((kind === "socket" || kind === "light") && name === "switch_entity") ||
         (kind === "tv" && name === "remote_entity") ||
         (kind === "outage" && name === "outage_entity"),
       default: HOME_DEVICE_CARD_DEFAULTS[kind][name],
@@ -124,6 +125,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       room: 3,
       leak: 3,
       door: 3,
+      light: 2,
       socket: 4,
       tv: 8,
       air: 8,
@@ -140,6 +142,7 @@ class HomeDeviceStandaloneCard extends HOME_DEVICE_BASE {
       river: 8,
       energy: 5,
       battery: 5,
+      light: 2,
       socket: 4,
       tv: 8,
       room: 3,

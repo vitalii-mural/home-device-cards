@@ -43,6 +43,7 @@ the browser, for example `/local/home-device-cards.js?v=2`.
 - `custom:home-air-card`
 - `custom:home-river-card`
 - `custom:home-socket-card`
+- `custom:home-light-card`
 - `custom:home-room-card`
 - `custom:home-outage-card`
 - `custom:home-tv-card`
@@ -53,6 +54,9 @@ Select entities and names in each card's visual editor. Entity defaults were
 cleared for this repository; existing installations should keep their explicit
 card configuration. Device features require matching entities/integrations;
 these cards do not add device protocol support.
+
+Select a `switch` entity for the light card. The card shows the relay state
+and has a switch to turn the light on or off.
 
 The outage card uses entities from the Ukraine Energy Monitor Home Assistant
 integration. Select its outage binary sensor in the visual editor. Select the

@@ -21,6 +21,7 @@ export const SOURCE_FILES = Object.freeze({
     'src/cards/rooms-card.js',
     'src/cards/room-card.js',
     'src/cards/socket-card.js',
+    'src/cards/light-card.js',
     'src/cards/river-card.js',
     'src/cards/energy-card.js',
     'src/cards/outage-card.js',
