@@ -47,6 +47,7 @@ the browser, for example `/local/home-device-cards.js?v=2`.
 - `custom:home-room-card`
 - `custom:home-outage-card`
 - `custom:home-weather-card`
+- `custom:home-motion-card`
 - `custom:home-tv-card`
 - `custom:home-leak-card`
 - `custom:home-door-card`
@@ -64,6 +65,23 @@ integration. Select its outage binary sensor in the visual editor. Select the
 schedule event to show changes. The card reads the group and today's schedule
 from the binary sensor. Source status, next outage, power return, and schedule
 update entities are optional.
+
+The motion card shows a selected motion or occupancy binary sensor. Clicking it
+opens that entity's standard history dialog. Battery and a timestamp entity for
+the last activity are optional. Without a timestamp, it remembers activity seen
+while the card is open; an initially idle sensor shows time since it became idle
+instead of presenting that time as the last motion event.
+
+```yaml
+type: custom:home-motion-card
+motion_entity: binary_sensor.example_motion
+title: Кухня
+battery_entity: sensor.example_motion_battery
+```
+
+Use the visual editor to select entities. `last_motion_entity`, when configured,
+should contain an ISO timestamp with a time zone. Occupancy/presence sensors use
+presence labels. No device actions are called.
 
 The weather card uses a `weather` entity, including UkrHMC (`ukr_hmc`).
 Choose the **weather location** (map point) entity for hourly and daily forecasts.

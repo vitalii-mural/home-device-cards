@@ -996,6 +996,80 @@ test("dark mode, offline recovery, and controls stay synthetic", async () => {
 });
 
 
+test("motion card shows activity, battery and history and clears its clock", async () => {
+  const page = await openFixture(360);
+  try {
+    await page.evaluate(() => {
+      const hass = { ...window.fixture.hass };
+      hass.states['binary_sensor.motion_fixture'] = { state: 'off', last_changed: new Date(Date.now() - 300000).toISOString(), attributes: { device_class: 'motion' } };
+      hass.states['sensor.motion_battery'] = { state: '18', attributes: { unit_of_measurement: '%' } };
+      const card = document.createElement('home-motion-card');
+      card.setConfig({ motion_entity: 'binary_sensor.motion_fixture', battery_entity: 'sensor.motion_battery', title: 'Кухня' });
+      card.addEventListener('hass-more-info', e => { window.motionHistory = e.detail.entityId; });
+      document.querySelector('main').append(card);
+      card.hass = hass;
+      window.motionCard = card; window.motionHass = hass;
+    });
+    const card = page.locator('home-motion-card');
+    assert.equal(await card.locator('h2').innerText(), 'Кухня');
+    assert.equal(await card.locator('[data-motion="state"]').innerText(), 'Немає руху');
+    assert.equal(await card.locator('[data-motion="time"]').innerText(), 'Без руху 5 хв');
+    assert.equal(await card.locator('[data-motion="battery-value"]').innerText(), '18%');
+    assert.equal(await card.locator('[data-motion="battery"]').getAttribute('data-low'), 'true');
+    await card.locator('button').click();
+    assert.equal(await page.evaluate(() => window.motionHistory), 'binary_sensor.motion_fixture');
+    await page.evaluate(() => { window.motionHistory = null; });
+    await card.locator('button').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => window.motionHistory), 'binary_sensor.motion_fixture');
+    await page.evaluate(() => {
+      window.motionHass.states['binary_sensor.motion_fixture'] = { state: 'on', last_changed: new Date(Date.now() - 120000).toISOString(), attributes: { device_class: 'motion' } };
+      window.motionCard.hass = { ...window.motionHass };
+    });
+    assert.equal(await card.locator('[data-motion="state"]').innerText(), 'Є рух');
+    assert.equal(await card.locator('.motion-card').getAttribute('data-state'), 'active');
+    assert.equal(await card.locator('[data-motion="time"]').isVisible(), false);
+    for (const width of [280, 328, 700]) {
+      await card.evaluate((node, width) => { node.style.width = `${width}px`; }, width);
+      assert.equal(await card.locator('.motion-card').evaluate(node => node.scrollWidth <= node.clientWidth), true);
+    }
+    await card.evaluate(node => { node.style.width = '328px'; });
+    if (process.env.MOTION_CARD_SCREENSHOT) await card.screenshot({ path: process.env.MOTION_CARD_SCREENSHOT });
+    await page.evaluate(() => {
+      window.motionHass.states['binary_sensor.motion_fixture'].state = 'off';
+      window.motionHass.states['binary_sensor.motion_fixture'].last_changed = new Date().toISOString();
+      window.motionCard.hass = { ...window.motionHass };
+    });
+    assert.equal(await card.locator('[data-motion="time"]').innerText(), 'Остання активність 2 хв тому');
+    await page.evaluate(() => {
+      window.motionHass.states['binary_sensor.motion_fixture'].state = 'unavailable';
+      window.motionHass.states['sensor.motion_battery'].state = 'unavailable';
+      window.motionHass.themes = { darkMode: true };
+      window.motionCard.hass = { ...window.motionHass };
+    });
+    assert.equal(await card.locator('[data-motion="state"]').innerText(), 'Немає зв’язку');
+    assert.equal(await card.locator('[data-motion="time"]').isVisible(), false);
+    assert.equal(await card.locator('[data-motion="battery"]').isVisible(), false);
+    assert.equal(await card.getAttribute('dark'), '');
+    await page.evaluate(() => {
+      window.motionHass.states['binary_sensor.occupancy_fixture'] = { state: 'off', last_changed: new Date(Date.now() - 60000).toISOString(), attributes: { device_class: 'occupancy' } };
+      window.motionCard.setConfig({ motion_entity: 'binary_sensor.occupancy_fixture' });
+      window.motionCard.hass = { ...window.motionHass };
+    });
+    assert.equal(await card.locator('[data-motion="state"]').innerText(), 'Немає присутності');
+    assert.equal(await card.locator('[data-motion="time"]').innerText(), 'Без присутності 1 хв');
+    await page.evaluate(() => {
+      window.motionHass.states['sensor.last_activity'] = { state: new Date(Date.now() - 600000).toISOString(), attributes: {} };
+      window.motionCard.setConfig({ motion_entity: 'binary_sensor.occupancy_fixture', last_motion_entity: 'sensor.last_activity' });
+    });
+    assert.equal(await card.locator('[data-motion="time"]').innerText(), 'Остання активність 10 хв тому');
+    await page.evaluate(() => window.motionCard.remove());
+    assert.equal(await page.evaluate(() => window.motionCard._motionTimer), null);
+    await page.evaluate(() => document.querySelector('main').append(window.motionCard));
+    assert.equal(await page.evaluate(() => !!window.motionCard._motionTimer), true);
+  } finally { await page.close(); }
+});
+
 test("weather location forecasts stay compact, use entity units and omit hourly precipitation", async () => {
   const page = await openFixture(360);
   try {

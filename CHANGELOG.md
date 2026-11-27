@@ -1,3 +1,8 @@
+## 1.1.23
+
+- Add a compact motion and occupancy card with activity status, optional battery level and last-activity timestamp.
+- Open sensor history by pointer or keyboard and distinguish idle duration from last observed activity.
+
 ## 1.1.22
 
 - Remove the weather card header, location and update time for a more compact layout.

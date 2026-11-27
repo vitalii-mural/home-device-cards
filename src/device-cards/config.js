@@ -44,6 +44,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
   },
   light: { switch_entity: null },
   weather: { weather_entity: null },
+  motion: { motion_entity: null, battery_entity: null, last_motion_entity: null },
   socket: {
     switch_entity: null,
     power_entity: null,
@@ -166,6 +167,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї датчика', 'sensor'],
   ],
   light: [['switch_entity', 'Реле світла', 'switch']],
+  motion: [['motion_entity', 'Датчик руху / присутності', 'binary_sensor'], ['battery_entity', 'Заряд батареї · необов’язково', 'sensor'], ['last_motion_entity', 'Час останнього руху · необов’язково', 'sensor,input_datetime']],
   weather: [['weather_entity', 'Погода', 'weather']],
   socket: [
     ['switch_entity', 'Керування розеткою', 'switch'],
@@ -249,6 +251,7 @@ const HOME_DEVICE_CARD_META = {
   rooms: ['home-rooms-card', 'Мікроклімат', 'Список температури та вологості по кімнатах.'],
   room: ['home-room-card', 'Температура й вологість', 'Показує температуру, вологість і заряд батареї датчика.'],
   light: ['home-light-card', 'Підсвітка', 'Показує стан підсвітки та керує реле.'],
+  motion: ['home-motion-card', 'Рух і присутність', 'Компактний стан датчика руху, час активності й історія.'],
   weather: ['home-weather-card', 'Погода', 'Поточна погода та компактний погодинний і денний прогноз.'],
   socket: ['home-socket-card', 'Розетка й енергоспоживання', 'Керує живленням і показує потужність та енергоспоживання.'],
   tv: ['home-tv-card', 'Пульт Android TV', 'Компактне керування Android TV через сутність remote.'],
