@@ -158,7 +158,7 @@ test("light card sends relay commands and follows the reported state", async () 
     };
     card._updateCardDynamic({ all: true });
   };
-  const click = () => card._click({ target: { closest: () => button } });
+  const click = () => card._click({ target: { closest: selector => selector === 'button.light-history' ? null : button } });
 
   report("off");
   const turningOn = click();

@@ -1006,14 +1006,14 @@ test("light card opens relay history without toggling and keeps its switch indep
       hass.callService = async (...args) => window.lightCalls.push(args);
       const card = document.createElement('home-light-card');
       card.setConfig({ switch_entity: 'switch.light_fixture', title: 'Кухня' });
-      card.addEventListener('hass-more-info', event => window.lightHistory.push(event.detail.entityId));
+      card.addEventListener('hass-more-info', event => window.lightHistory.push(event.detail));
       document.querySelector('main').append(card);
       card.hass = hass;
       window.lightCard = card; window.lightHass = hass;
     });
     const card = page.locator('home-light-card');
     await card.locator('.light-history').click({ position: { x: 25, y: 25 } });
-    assert.deepEqual(await page.evaluate(() => window.lightHistory), ['switch.light_fixture']);
+    assert.deepEqual(await page.evaluate(() => window.lightHistory), [{ entityId: 'switch.light_fixture', view: 'history' }]);
     assert.equal(await page.evaluate(() => window.lightCalls.length), 0);
     await card.locator('.light-history').focus();
     await page.keyboard.press('Enter');

@@ -1,3 +1,7 @@
+## 1.1.25
+
+- Fix relay card clicks to open the History view directly instead of the default control view.
+
 ## 1.1.24
 
 - Open relay history from the light card while keeping the power switch independent.

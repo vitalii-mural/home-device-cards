@@ -1,4 +1,4 @@
-// Home Device Cards v1.1.24 — bundled base and standalone cards.
+// Home Device Cards v1.1.25 — bundled base and standalone cards.
 /* Lucide icon license:
 ISC License
 
@@ -3901,6 +3901,17 @@ class HomeLightCard extends HomeDeviceStandaloneCard {
   }
 
   _click(event) {
+    const history = event.target.closest('button.light-history');
+    if (history) {
+      if (!history.disabled && this._state(this._config.switch_entity)) {
+        this.dispatchEvent(new CustomEvent('hass-more-info', {
+          detail: { entityId: this._config.switch_entity, view: 'history' },
+          bubbles: true,
+          composed: true,
+        }));
+      }
+      return;
+    }
     if (!event.target.closest('button[data-action="light-toggle"]')) return super._click(event);
     const entity = this._config.switch_entity;
     const state = this._state(entity)?.state;
