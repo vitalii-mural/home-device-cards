@@ -58,7 +58,8 @@ card configuration. Device features require matching entities/integrations;
 these cards do not add device protocol support.
 
 Select a `switch` entity for the light card. The card shows the relay state
-and has a switch to turn the light on or off.
+and has a switch to turn the light on or off. Click the icon or name to open
+the relay's history; the switch continues to control the relay independently.
 
 The outage card uses entities from the Ukraine Energy Monitor Home Assistant
 integration. Select its outage binary sensor in the visual editor. Select the
@@ -77,11 +78,14 @@ type: custom:home-motion-card
 motion_entity: binary_sensor.example_motion
 title: Кухня
 battery_entity: sensor.example_motion_battery
+illuminance_entity: sensor.example_illuminance
 ```
 
 Use the visual editor to select entities. `last_motion_entity`, when configured,
 should contain an ISO timestamp with a time zone. Occupancy/presence sensors use
-presence labels. No device actions are called.
+presence labels. Optional `illuminance_entity` displays illuminance in lux when
+the sensor provides a nonnegative reading in `lx` or `lux`; unavailable values
+are hidden and zero remains visible. No device actions are called.
 
 The weather card uses a `weather` entity, including UkrHMC (`ukr_hmc`).
 Choose the **weather location** (map point) entity for hourly and daily forecasts.

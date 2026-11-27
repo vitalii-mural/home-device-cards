@@ -44,7 +44,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
   },
   light: { switch_entity: null },
   weather: { weather_entity: null },
-  motion: { motion_entity: null, battery_entity: null, last_motion_entity: null },
+  motion: { motion_entity: null, battery_entity: null, last_motion_entity: null, illuminance_entity: null },
   socket: {
     switch_entity: null,
     power_entity: null,
@@ -167,7 +167,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї датчика', 'sensor'],
   ],
   light: [['switch_entity', 'Реле світла', 'switch']],
-  motion: [['motion_entity', 'Датчик руху / присутності', 'binary_sensor'], ['battery_entity', 'Заряд батареї · необов’язково', 'sensor'], ['last_motion_entity', 'Час останнього руху · необов’язково', 'sensor,input_datetime']],
+  motion: [['motion_entity', 'Датчик руху / присутності', 'binary_sensor'], ['illuminance_entity', 'Освітленість · необов’язково', 'sensor'], ['battery_entity', 'Заряд батареї · необов’язково', 'sensor'], ['last_motion_entity', 'Час останнього руху · необов’язково', 'sensor,input_datetime']],
   weather: [['weather_entity', 'Погода', 'weather']],
   socket: [
     ['switch_entity', 'Керування розеткою', 'switch'],

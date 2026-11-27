@@ -1,3 +1,8 @@
+## 1.1.24
+
+- Open relay history from the light card while keeping the power switch independent.
+- Add optional illuminance readings to the motion and presence card, including zero lux and unavailable-state handling.
+
 ## 1.1.23
 
 - Add a compact motion and occupancy card with activity status, optional battery level and last-activity timestamp.

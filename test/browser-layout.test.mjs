@@ -996,6 +996,42 @@ test("dark mode, offline recovery, and controls stay synthetic", async () => {
 });
 
 
+test("light card opens relay history without toggling and keeps its switch independent", async () => {
+  const page = await openFixture(360);
+  try {
+    await page.evaluate(() => {
+      const hass = { ...window.fixture.hass };
+      hass.states['switch.light_fixture'] = { state: 'off', attributes: {} };
+      window.lightCalls = []; window.lightHistory = [];
+      hass.callService = async (...args) => window.lightCalls.push(args);
+      const card = document.createElement('home-light-card');
+      card.setConfig({ switch_entity: 'switch.light_fixture', title: 'Кухня' });
+      card.addEventListener('hass-more-info', event => window.lightHistory.push(event.detail.entityId));
+      document.querySelector('main').append(card);
+      card.hass = hass;
+      window.lightCard = card; window.lightHass = hass;
+    });
+    const card = page.locator('home-light-card');
+    await card.locator('.light-history').click({ position: { x: 25, y: 25 } });
+    assert.deepEqual(await page.evaluate(() => window.lightHistory), ['switch.light_fixture']);
+    assert.equal(await page.evaluate(() => window.lightCalls.length), 0);
+    await card.locator('.light-history').focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => window.lightHistory.length), 2);
+    await card.locator('.light-toggle').click();
+    assert.equal(await page.evaluate(() => window.lightHistory.length), 2);
+    assert.deepEqual(await page.evaluate(() => window.lightCalls), [['switch', 'turn_on', { entity_id: 'switch.light_fixture' }]]);
+    await page.evaluate(() => {
+      window.lightHass.states['switch.light_fixture'].state = 'unavailable';
+      window.lightCard.hass = { ...window.lightHass };
+    });
+    assert.equal(await card.locator('.light-toggle').isDisabled(), true);
+    assert.equal(await card.locator('.light-history').isDisabled(), false);
+    await card.locator('.light-history').click();
+    assert.equal(await page.evaluate(() => window.lightHistory.length), 3);
+  } finally { await page.close(); }
+});
+
 test("motion card shows activity, battery and history and clears its clock", async () => {
   const page = await openFixture(360);
   try {
@@ -1003,8 +1039,9 @@ test("motion card shows activity, battery and history and clears its clock", asy
       const hass = { ...window.fixture.hass };
       hass.states['binary_sensor.motion_fixture'] = { state: 'off', last_changed: new Date(Date.now() - 300000).toISOString(), attributes: { device_class: 'motion' } };
       hass.states['sensor.motion_battery'] = { state: '18', attributes: { unit_of_measurement: '%' } };
+      hass.states['sensor.motion_lux'] = { state: '125', attributes: { unit_of_measurement: 'lx' } };
       const card = document.createElement('home-motion-card');
-      card.setConfig({ motion_entity: 'binary_sensor.motion_fixture', battery_entity: 'sensor.motion_battery', title: 'Кухня' });
+      card.setConfig({ motion_entity: 'binary_sensor.motion_fixture', battery_entity: 'sensor.motion_battery', illuminance_entity: 'sensor.motion_lux', title: 'Кухня' });
       card.addEventListener('hass-more-info', e => { window.motionHistory = e.detail.entityId; });
       document.querySelector('main').append(card);
       card.hass = hass;
@@ -1015,6 +1052,13 @@ test("motion card shows activity, battery and history and clears its clock", asy
     assert.equal(await card.locator('[data-motion="state"]').innerText(), 'Немає руху');
     assert.equal(await card.locator('[data-motion="time"]').innerText(), 'Без руху 5 хв');
     assert.equal(await card.locator('[data-motion="battery-value"]').innerText(), '18%');
+    assert.equal(await card.locator('[data-motion="illuminance"]').innerText(), '125 лк');
+    await page.evaluate(() => {
+      window.motionHass.states['sensor.motion_lux'].state = '0';
+      window.motionCard.hass = { ...window.motionHass };
+    });
+    assert.equal(await card.locator('[data-motion="illuminance"]').innerText(), '0 лк');
+    assert.equal(await card.locator('[data-motion="illuminance"]').isVisible(), true);
     assert.equal(await card.locator('[data-motion="battery"]').getAttribute('data-low'), 'true');
     await card.locator('button').click();
     assert.equal(await page.evaluate(() => window.motionHistory), 'binary_sensor.motion_fixture');
@@ -1044,12 +1088,14 @@ test("motion card shows activity, battery and history and clears its clock", asy
     await page.evaluate(() => {
       window.motionHass.states['binary_sensor.motion_fixture'].state = 'unavailable';
       window.motionHass.states['sensor.motion_battery'].state = 'unavailable';
+      window.motionHass.states['sensor.motion_lux'].state = 'unavailable';
       window.motionHass.themes = { darkMode: true };
       window.motionCard.hass = { ...window.motionHass };
     });
     assert.equal(await card.locator('[data-motion="state"]').innerText(), 'Немає зв’язку');
     assert.equal(await card.locator('[data-motion="time"]').isVisible(), false);
     assert.equal(await card.locator('[data-motion="battery"]').isVisible(), false);
+    assert.equal(await card.locator('[data-motion="illuminance"]').isVisible(), false);
     assert.equal(await card.getAttribute('dark'), '');
     await page.evaluate(() => {
       window.motionHass.states['binary_sensor.occupancy_fixture'] = { state: 'off', last_changed: new Date(Date.now() - 60000).toISOString(), attributes: { device_class: 'occupancy' } };

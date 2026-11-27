@@ -443,7 +443,7 @@ const HOME_DEVICE_CARD_DEFAULTS = {
   },
   light: { switch_entity: null },
   weather: { weather_entity: null },
-  motion: { motion_entity: null, battery_entity: null, last_motion_entity: null },
+  motion: { motion_entity: null, battery_entity: null, last_motion_entity: null, illuminance_entity: null },
   socket: {
     switch_entity: null,
     power_entity: null,
@@ -566,7 +566,7 @@ const HOME_DEVICE_CARD_FIELDS = {
     ['battery_entity', 'Заряд батареї датчика', 'sensor'],
   ],
   light: [['switch_entity', 'Реле світла', 'switch']],
-  motion: [['motion_entity', 'Датчик руху / присутності', 'binary_sensor'], ['battery_entity', 'Заряд батареї · необов’язково', 'sensor'], ['last_motion_entity', 'Час останнього руху · необов’язково', 'sensor,input_datetime']],
+  motion: [['motion_entity', 'Датчик руху / присутності', 'binary_sensor'], ['illuminance_entity', 'Освітленість · необов’язково', 'sensor'], ['battery_entity', 'Заряд батареї · необов’язково', 'sensor'], ['last_motion_entity', 'Час останнього руху · необов’язково', 'sensor,input_datetime']],
   weather: [['weather_entity', 'Погода', 'weather']],
   socket: [
     ['switch_entity', 'Керування розеткою', 'switch'],
@@ -2416,13 +2416,14 @@ class HomeMotionCard extends HomeDeviceStandaloneCard {
       .motion-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
       .motion-card[data-state=active] .motion-icon{background:var(--k-accent-bg);color:var(--k-accent)}
       .motion-card h2{font-size:14px;overflow-wrap:anywhere}.motion-state{font-size:12px;margin-top:3px}.motion-card[data-state=active] .motion-state{color:var(--k-accent)}
-      .motion-time{font-size:11px;color:var(--k-muted);margin-top:3px}.motion-battery{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--k-muted);white-space:nowrap}
+      .motion-time{font-size:11px;color:var(--k-muted);margin-top:3px}.motion-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px}.motion-illuminance{font-size:11px;color:var(--k-muted);white-space:nowrap}
+      .motion-battery{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--k-muted);white-space:nowrap}
       .motion-battery svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6}.motion-battery[data-low=true]{color:var(--k-danger)}
       .motion-history{position:absolute;inset:0;width:100%;height:100%;background:transparent;border-radius:20px}.motion-history:focus-visible{outline-offset:-3px}
     </style><article class="motion-card" data-state="offline">
       <span class="motion-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="13" cy="4" r="2"/><path d="m7 21 3-6m6 6-2-5-3-3 1-5m-5 5 3-5 4 1 3 4h3M3 8h2M2 12h2"/></svg></span>
       <div><h2></h2><div class="motion-state" data-motion="state" aria-live="polite"></div><div class="motion-time" data-motion="time" hidden></div></div>
-      <span class="motion-battery" data-motion="battery" hidden>${this._lucideIcon('battery-medium')}<span data-motion="battery-value"></span></span>
+      <div class="motion-meta"><span class="motion-illuminance" data-motion="illuminance" hidden></span><span class="motion-battery" data-motion="battery" hidden>${this._lucideIcon('battery-medium')}<span data-motion="battery-value"></span></span></div>
       <button type="button" class="motion-history" data-action="more" data-entity="${this._escape(this._config.motion_entity || '')}" aria-label="Історія руху" disabled></button>
     </article>`;
   }
@@ -2462,6 +2463,11 @@ class HomeMotionCard extends HomeDeviceStandaloneCard {
     }
     this._setText('[data-motion="time"]', time);
     this._setHidden('[data-motion="time"]', !time);
+    const illuminanceState = this._state(this._config.illuminance_entity);
+    const illuminance = this._number(illuminanceState?.state);
+    const validIlluminance = illuminance !== null && illuminance >= 0 && ['lx', 'lux'].includes(illuminanceState?.attributes?.unit_of_measurement);
+    this._setHidden('[data-motion="illuminance"]', !validIlluminance);
+    this._setText('[data-motion="illuminance"]', validIlluminance ? `${this._format(illuminance, 0)} лк` : '');
     const battery = this._value(this._config.battery_entity);
     const validBattery = battery !== null && battery >= 0 && battery <= 100;
     this._setHidden('[data-motion="battery"]', !validBattery);
@@ -3327,18 +3333,20 @@ class HomeLightCard extends HomeDeviceStandaloneCard {
 
   _content() {
     return `<style>
-      .light-card{display:grid;grid-template-columns:42px minmax(0,1fr) 48px;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--k-line);border-radius:18px;background:var(--k-card)}
+      .light-card{position:relative;display:grid;grid-template-columns:42px minmax(0,1fr) 48px;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--k-line);border-radius:18px;background:var(--k-card)}
       .light-card .device-icon{width:42px;height:42px;border-radius:13px}
       .light-card .device-icon svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
       .light-card[data-on="true"] .device-icon{background:var(--k-warm-bg);color:var(--k-warm)}
       .light-card h2{font-weight:650;overflow-wrap:anywhere}
       .light-card .secondary{font-size:13px}
-      .light-toggle{display:grid;place-items:center;min-height:44px;background:transparent;padding:0}
+      .light-history{position:absolute;inset:0;width:100%;height:100%;background:transparent;border-radius:18px}.light-history:focus-visible{outline-offset:-3px}
+      .light-toggle{position:relative;z-index:1;display:grid;place-items:center;min-height:44px;background:transparent;padding:0}
       .light-toggle span{display:flex;align-items:center;width:38px;height:22px;padding:2px 3px;border:1px solid var(--k-line);border-radius:99px;background:var(--k-soft)}
       .light-toggle span::before{content:"";width:16px;height:16px;border-radius:50%;background:var(--k-muted)}
       .light-toggle[aria-checked="true"] span{justify-content:flex-end;background:var(--k-warm-bg);border-color:var(--k-warm)}
       .light-toggle[aria-checked="true"] span::before{background:var(--k-warm)}
     </style><article class="light-card">
+      <button type="button" class="light-history" data-action="more" data-entity="${this._escape(this._config.switch_entity || '')}" aria-label="Історія підсвітки" disabled></button>
       <span class="device-icon neutral">${this._lucideIcon('lightbulb')}</span>
       <div><h2></h2><span class="secondary" data-live="light-status" aria-live="polite"></span></div>
       <button type="button" class="light-toggle" data-action="light-toggle" role="switch" aria-checked="false" aria-label="Підсвітка" disabled><span aria-hidden="true"></span></button>
@@ -3360,11 +3368,16 @@ class HomeLightCard extends HomeDeviceStandaloneCard {
     button.setAttribute('aria-checked', String(on));
     button.setAttribute('aria-label', this._displayName('switch_entity', this._config.title, 'Підсвітка'));
     button.disabled = !available || this._busy(entity);
+    const history = this.shadowRoot.querySelector('.light-history');
+    if (history) {
+      history.disabled = !this._state(entity);
+      history.setAttribute('aria-label', `Історія підсвітки: ${this._displayName('switch_entity', this._config.title, 'Підсвітка')}`);
+    }
     this._setText('[data-live="light-status"]', status);
   }
 
   _click(event) {
-    if (!event.target.closest('button[data-action="light-toggle"]')) return;
+    if (!event.target.closest('button[data-action="light-toggle"]')) return super._click(event);
     const entity = this._config.switch_entity;
     const state = this._state(entity)?.state;
     if (state === 'on' || state === 'off') {
